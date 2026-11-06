@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coureurs — F1 Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --surface-1: #15151e;
+    --page: #0a0a0c;
+    --ink-primary: #ffffff;
+    --ink-secondary: #9a9aa2;
+    --ink-muted: #6b6b72;
+    --grid: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.12);
+    --accent: #e10600;
+    --good: #19a974;
+    --warn: #ffb800;
+    --critical: #e10600;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Titillium Web', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(ellipse 900px 300px at 50% -80px, rgba(225,6,0,0.10), transparent 70%),
+      var(--page);
+    color: var(--ink-primary);
+    padding: 0 0 32px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- top navigation ---------- */
+  .topnav { background: #000; border-bottom: 1px solid var(--border); }
+  .topnav-inner {
+    max-width: 1180px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between; height: 56px;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+  .brand-mark {
+    background: var(--accent); color: #fff; font-weight: 900; font-size: 13px;
+    padding: 3px 7px; border-radius: 3px; letter-spacing: 0.01em; font-style: italic;
+  }
+  .brand-text { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-secondary); }
+  .nav-links { display: flex; gap: 28px; height: 100%; }
+  .nav-link {
+    display: flex; align-items: center; height: 100%;
+    color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent;
+    transition: color 0.15s;
+  }
+  .nav-link:hover { color: var(--ink-primary); }
+  .nav-link.active { color: var(--ink-primary); border-bottom-color: var(--accent); }
+  @media (max-width: 640px) { .nav-links { gap: 14px; } .brand-text { display: none; } }
+
+  /* ---------- hero / page header ---------- */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #000 0%, #0f0f12 60%, #1a1a1e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 16px;
+    margin-bottom: 20px;
+  }
+  .hero::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 40px);
+    pointer-events: none;
+  }
+  .hero-inner { max-width: 1180px; margin: 0 auto; position: relative; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 8px;
+  }
+  .eyebrow::before { content: ""; width: 16px; height: 2px; background: var(--accent); display: inline-block; }
+  h1 { font-size: 21px; font-weight: 900; text-transform: uppercase; margin: 0 0 4px; letter-spacing: -0.01em; line-height: 1.05; }
+  .subtitle { color: var(--ink-secondary); font-size: 13px; margin-bottom: 0; }
+  .subtitle a { color: var(--accent); text-decoration: none; }
+  .subtitle a:hover { text-decoration: underline; }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-secondary); margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+
+  .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; }
+  label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-secondary); margin-bottom: 6px; }
+  select {
+    width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 4px;
+    border: 1px solid var(--border); background: var(--page); color: var(--ink-primary); font-family: inherit;
+  }
+
+  #status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; margin-top: 10px; }
+  #status.error { color: var(--critical); }
+
+  /* ---------- driver grid ---------- */
+  .driver-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .driver-card {
+    background: var(--page); border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+    position: relative; transition: border-color 0.15s, transform 0.15s;
+    display: block; text-decoration: none; color: inherit;
+  }
+  .driver-card:hover { border-color: var(--ink-secondary); transform: translateY(-2px); }
+  .driver-card .accent-bar { height: 4px; background: var(--card-color, var(--accent)); }
+  .driver-card .photo-wrap {
+    background: linear-gradient(165deg, var(--card-color, #222) 0%, #0a0a0c 85%);
+    display: flex; align-items: flex-end; justify-content: center; height: 150px; overflow: hidden; position: relative;
+  }
+  .driver-card .photo-wrap img { height: 165px; width: auto; object-fit: cover; object-position: top center; }
+  .driver-card .num-watermark {
+    position: absolute; top: 6px; right: 10px; font-size: 44px; font-weight: 900; font-style: italic;
+    color: rgba(255,255,255,0.14); line-height: 1; pointer-events: none;
+  }
+  .driver-card .info { padding: 12px 14px 14px; }
+  .driver-card .d-name { font-weight: 700; font-size: 14px; text-transform: uppercase; line-height: 1.2; }
+  .driver-card .d-team { font-size: 11px; color: var(--ink-secondary); margin-top: 2px; }
+  .driver-card .d-country { font-size: 10px; color: var(--ink-muted); margin-top: 2px; letter-spacing: 0.04em; }
+  .driver-card .d-stats {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
+  }
+  .driver-card .d-pos { font-size: 18px; font-weight: 900; color: var(--ink-primary); }
+  .driver-card .d-pos span, .driver-card .d-pts span { font-size: 10px; color: var(--ink-muted); font-weight: 700; display: block; text-transform: uppercase; letter-spacing: 0.04em; }
+  .driver-card .d-pts { font-size: 15px; font-weight: 700; text-align: right; }
+
+  footer.site-footer {
+    max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0;
+    border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px;
+  }
+
+  .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
+  .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
+  @media (max-width: 860px) {
+    .nav-toggle { display: flex; }
+    .topnav { position: relative; }
+    .nav-links {
+      display: none; position: absolute; top: 56px; left: 0; right: 0;
+      background: #000; border-bottom: 1px solid var(--border);
+      flex-direction: column; gap: 0; height: auto; padding: 8px 0; z-index: 50;
+    }
+    .nav-links.open { display: flex; }
+    .nav-link { height: auto; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-link.active { border-left-color: var(--accent); }
+    .brand-text { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="topnav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">F1</span>
+      <span class="brand-text">Dashboard</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="results.html">Resultaten</a>
+      <a class="nav-link active" href="drivers.html">Coureurs</a>
+      <a class="nav-link" href="history.html">Historie</a>
+      <a class="nav-link" href="head2head.html">Head-to-head</a>
+      <a class="nav-link" href="records.html">Hall of Fame</a>
+      <a class="nav-link" href="circuit.html">Circuit</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('navToggle').addEventListener('click', function() {
+    var nl = document.getElementById('navLinks');
+    var open = nl.classList.toggle('open');
+    this.setAttribute('aria-expanded', open);
+  });
+</script>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">OpenF1 · Onofficieel</div>
+    <h1>Coureurs</h1>
+    <div class="subtitle">Line-up en WK-stand na de laatst afgeronde race van het geselecteerde seizoen.</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>Seizoen</h2>
+    <div class="controls-grid">
+      <div>
+        <label for="yearSelect">Jaar</label>
+        <select id="yearSelect"></select>
+      </div>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div class="card">
+    <h2>Line-up &amp; WK-posities</h2>
+    <div class="driver-grid" id="driverGrid"></div>
+  </div>
+
+  <footer class="site-footer">Foto's, teamnamen en resultaten via de gratis <a href="https://openf1.org/docs" target="_blank" rel="noopener" style="color:inherit;">OpenF1 API</a> — onofficieel project, geen affiliatie met Formula 1®.</footer>
+
+</div>
+
+<script>
+const API = 'https://api.openf1.org/v1';
+
+let lastCallAt = 0;
+async function apiGet(path, attempt = 0) {
+  const minGap = 360;
+  const wait = Math.max(0, minGap - (Date.now() - lastCallAt));
+  if (wait) await sleep(wait);
+  lastCallAt = Date.now();
+  let res;
+  try {
+    res = await fetch(`${API}/${path}`);
+  } catch (e) {
+    throw new Error('Netwerkfout — kon de OpenF1 API niet bereiken.');
+  }
+  if (res.status === 429 && attempt < 6) {
+    await sleep(800 * (attempt + 1));
+    return apiGet(path, attempt + 1);
+  }
+  if (!res.ok) throw new Error(`API-fout ${res.status} bij ${path}`);
+  return res.json();
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function setStatus(msg, isError) {
+  const el = document.getElementById('status');
+  el.textContent = msg || '';
+  el.classList.toggle('error', !!isError);
+}
+
+/* ---------- find the most recently completed race of a season ---------- */
+async function findLatestCompletedMeeting(year) {
+  const now = new Date();
+  const meetings = (await apiGet(`meetings?year=${year}`))
+    .filter(m => !/pre-season|testing/i.test(m.meeting_name))
+    .filter(m => new Date(m.date_start) < now)
+    .sort((a, b) => new Date(b.date_start) - new Date(a.date_start));
+  for (const m of meetings) {
+    const sessions = await apiGet(`sessions?meeting_key=${m.meeting_key}`);
+    const race = sessions.find(s => s.session_name === 'Race');
+    if (!race) continue;
+    const results = await apiGet(`session_result?session_key=${race.session_key}`).catch(() => []);
+    if (results.length) return { meeting: m, session: race };
+  }
+  return null;
+}
+
+/* ---------- driver card rendering (shared markup also used on index.html) ---------- */
+function driverCardHTML(d, standing, year, meetingKey, sessionKey) {
+  const color = '#' + (d.team_colour || '898781');
+  const photo = d.headshot_url
+    ? `<img src="${d.headshot_url}" alt="${d.full_name || d.broadcast_name}" loading="lazy" onerror="this.remove()">`
+    : '';
+  const posBlock = standing
+    ? `<div class="d-pos">${standing.position_current}<span>Positie</span></div>
+       <div class="d-pts">${standing.points_current.toFixed(0)}<span>Punten</span></div>`
+    : `<div class="d-pos">–<span>Positie</span></div><div class="d-pts">–<span>Punten</span></div>`;
+  const href = `driver.html?number=${d.driver_number}&year=${year}&meeting=${meetingKey}&session=${sessionKey}`;
+  return `
+    <a class="driver-card" style="--card-color:${color}" href="${href}">
+      <div class="accent-bar"></div>
+      <div class="photo-wrap">
+        <div class="num-watermark">${d.driver_number}</div>
+        ${photo}
+      </div>
+      <div class="info">
+        <div class="d-name">${d.full_name || d.broadcast_name || d.name_acronym}</div>
+        <div class="d-team">${d.team_name || '–'}</div>
+        <div class="d-country">${d.country_code || ''}</div>
+        <div class="d-stats">${posBlock}</div>
+      </div>
+    </a>`;
+}
+
+const yearSelect = document.getElementById('yearSelect');
+const grid = document.getElementById('driverGrid');
+
+(function initYears() {
+  const years = [2026, 2025, 2024, 2023];
+  yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+})();
+
+yearSelect.addEventListener('change', () => loadGrid(yearSelect.value));
+loadGrid(yearSelect.value);
+
+async function loadGrid(year) {
+  grid.innerHTML = '';
+  setStatus('Laatste afgeronde race zoeken…');
+  try {
+    const found = await findLatestCompletedMeeting(year);
+    if (!found) {
+      setStatus(`Geen afgeronde races gevonden voor ${year}.`, true);
+      return;
+    }
+    setStatus('Coureurs & WK-stand laden…');
+    const [drivers, champDrivers] = await Promise.all([
+      apiGet(`drivers?session_key=${found.session.session_key}`),
+      apiGet(`championship_drivers?session_key=${found.session.session_key}`).catch(() => [])
+    ]);
+
+    const byDriver = new Map(champDrivers.map(c => [c.driver_number, c]));
+    const uniqueDrivers = Array.from(new Map(drivers.map(d => [d.driver_number, d])).values());
+    uniqueDrivers.sort((a, b) => {
+      const pa = byDriver.get(a.driver_number)?.position_current ?? 999;
+      const pb = byDriver.get(b.driver_number)?.position_current ?? 999;
+      return pa - pb;
+    });
+
+    grid.innerHTML = uniqueDrivers.map(d => driverCardHTML(d, byDriver.get(d.driver_number), year, found.meeting.meeting_key, found.session.session_key)).join('');
+    setStatus(`Line-up & WK-stand na ${found.meeting.meeting_name} (${year}).`);
+  } catch (e) {
+    setStatus(e.message, true);
+  }
+}
+</script>
+</body>
+</html>

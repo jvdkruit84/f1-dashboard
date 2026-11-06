@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resultaten — F1 Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --surface-1: #15151e;
+    --page: #0a0a0c;
+    --ink-primary: #ffffff;
+    --ink-secondary: #9a9aa2;
+    --ink-muted: #6b6b72;
+    --grid: rgba(255,255,255,0.08);
+    --baseline: #38383f;
+    --border: rgba(255,255,255,0.12);
+    --accent: #e10600;
+    --good: #19a974;
+    --warn: #ffb800;
+    --critical: #e10600;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --surface-1: #fcfcfb;
+    --page: #f9f9f7;
+    --ink-primary: #0b0b0b;
+    --ink-secondary: #52514e;
+    --ink-muted: #898781;
+    --grid: #e1e0d9;
+    --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --accent: #e10600;
+    --good: #0ca30c;
+    --warn: #c47f00;
+    --critical: #c21a1a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Titillium Web', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(ellipse 900px 300px at 50% -80px, rgba(225,6,0,0.10), transparent 70%),
+      var(--page);
+    color: var(--ink-primary);
+    padding: 0 0 32px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- top navigation ---------- */
+  .topnav { background: #000; border-bottom: 1px solid var(--border); }
+  .topnav-inner {
+    max-width: 1180px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between; height: 56px;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+  .brand-mark {
+    background: var(--accent); color: #fff; font-weight: 900; font-size: 13px;
+    padding: 3px 7px; border-radius: 3px; letter-spacing: 0.01em; font-style: italic;
+  }
+  .brand-text { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-secondary); }
+  .nav-links { display: flex; gap: 28px; height: 100%; }
+  .nav-link {
+    display: flex; align-items: center; height: 100%;
+    color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent;
+    transition: color 0.15s;
+  }
+  .nav-link:hover { color: var(--ink-primary); }
+  .nav-link.active { color: var(--ink-primary); border-bottom-color: var(--accent); }
+  @media (max-width: 640px) { .nav-links { gap: 14px; } .brand-text { display: none; } }
+
+  /* ---------- hero / page header ---------- */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #000 0%, #0f0f12 60%, #1a1a1e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 24px 22px;
+    margin-bottom: 20px;
+  }
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 40px);
+    pointer-events: none;
+  }
+  .hero-inner { max-width: 1180px; margin: 0 auto; position: relative; }
+  .hero.compact { padding: 18px 24px 16px; }
+  .hero.compact h1 { font-size: 21px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 8px;
+  }
+  .eyebrow::before { content: ""; width: 16px; height: 2px; background: var(--accent); display: inline-block; }
+  h1 {
+    font-size: 34px; font-weight: 900; text-transform: uppercase;
+    margin: 0 0 4px; letter-spacing: -0.01em; line-height: 1.05;
+  }
+  .subtitle { color: var(--ink-secondary); font-size: 13px; margin-bottom: 0; }
+  .subtitle a { color: var(--accent); text-decoration: none; }
+  .subtitle a:hover { text-decoration: underline; }
+  .hero-cta { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .btn-link {
+    display: inline-block; padding: 10px 18px; border-radius: 4px; font-weight: 700; font-size: 12px;
+    text-transform: uppercase; letter-spacing: 0.04em; text-decoration: none; transition: opacity 0.15s, border-color 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-ghost { background: transparent; color: var(--ink-primary); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--ink-secondary); }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-secondary);
+    margin: 0 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .card h2 a { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: none; color: var(--accent); text-decoration: none; }
+  .card h2 a:hover { text-decoration: underline; }
+
+  .controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    align-items: end;
+  }
+  label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-secondary); margin-bottom: 6px; }
+  select, button {
+    width: 100%;
+    font-size: 13px;
+    padding: 9px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--page);
+    color: var(--ink-primary);
+    font-family: inherit;
+  }
+  button {
+    background: var(--accent);
+    color: #fff;
+    border: 1px solid var(--accent);
+    cursor: pointer;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 12px;
+    transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.88; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.secondary {
+    background: transparent;
+    color: var(--ink-secondary);
+    border: 1px solid var(--border);
+    font-weight: 700;
+    border-radius: 999px;
+  }
+  button.secondary:hover { border-color: var(--ink-secondary); opacity: 1; color: var(--ink-primary); }
+
+  .checkbox-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-secondary); }
+
+  #driverPicker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .driver-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px 5px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    background: var(--page);
+    transition: border-color 0.15s;
+  }
+  .driver-chip:hover { border-color: var(--ink-secondary); }
+  .driver-chip.checked { border-color: var(--swatch, var(--accent)); box-shadow: inset 0 0 0 1.5px var(--swatch, var(--accent)); }
+  .driver-chip .swatch { width: 9px; height: 9px; border-radius: 50%; background: var(--swatch, var(--accent)); flex: none; }
+  .driver-chip input { display: none; }
+
+  #status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; margin-top: 10px; }
+  #status.error { color: var(--critical); }
+
+  .chart-wrap { position: relative; height: 420px; }
+  .chart-caption { font-size: 11px; color: var(--ink-muted); margin-top: 8px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table caption { text-align: left; font-size: 11px; color: var(--ink-muted); margin-bottom: 6px; }
+  th, td { text-align: right; padding: 9px 10px; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  thead th {
+    color: var(--ink-secondary);
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    position: sticky;
+    top: 0;
+    background: var(--surface-1);
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr { transition: background 0.1s; }
+  tbody tr:hover { background: rgba(255,255,255,0.04); }
+  .table-scroll { max-height: 360px; overflow-y: auto; overflow-x: auto; }
+
+  .stint-row { display: grid; grid-template-columns: 70px 1fr; gap: 10px; align-items: center; margin-bottom: 8px; }
+  .stint-row .name { font-size: 12px; font-weight: 600; }
+  .stint-track { display: flex; height: 18px; border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
+  .stint-seg { display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: rgba(0,0,0,0.65); }
+
+  .weather-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px,1fr)); gap: 10px; }
+  .stat-tile { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .stat-tile .label { font-size: 11px; color: var(--ink-muted); }
+  .stat-tile .value { font-size: 18px; font-weight: 700; margin-top: 2px; }
+
+  #raceControlList { max-height: 220px; overflow-y: auto; font-size: 12px; }
+  #raceControlList div { padding: 5px 0; border-bottom: 1px solid var(--grid); display: flex; gap: 8px; }
+  #raceControlList .lap { color: var(--ink-muted); min-width: 48px; flex: none; }
+  .flag-SafetyCar, .flag-Red { color: var(--critical); font-weight: 600; }
+  .flag-Yellow { color: var(--warn); font-weight: 600; }
+  .flag-Green { color: var(--good); font-weight: 600; }
+
+  details > summary { cursor: pointer; font-weight: 600; font-size: 13px; color: var(--ink-primary); }
+  details[open] > summary { margin-bottom: 10px; }
+  .more-list { font-size: 13px; line-height: 1.6; color: var(--ink-secondary); }
+  .more-list code { background: var(--page); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+  .more-list li { margin-bottom: 6px; }
+
+  .legend-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 12px; }
+  .legend-row .item { display: flex; align-items: center; gap: 6px; }
+  .legend-row .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .legend-row .dash { width: 16px; height: 0; border-top: 2px dashed var(--ink-muted); flex: none; }
+
+  .tab-row { display: flex; gap: 24px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .tab-btn {
+    width: auto; padding: 10px 2px 12px; border-radius: 0;
+    background: transparent; color: var(--ink-secondary); border: none;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; font-size: 13px;
+    cursor: pointer; transition: color 0.15s;
+  }
+  .tab-btn:hover { color: var(--ink-primary); }
+  .tab-btn.active { color: var(--ink-primary); border-bottom-color: var(--accent); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .standings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 760px) { .standings-grid { grid-template-columns: 1fr; } }
+  .standings-table td, .standings-table th { text-align: left; }
+  .standings-table td:last-child, .standings-table th:last-child,
+  .standings-table td:nth-child(3), .standings-table th:nth-child(3) { text-align: right; }
+  .pos-up { color: var(--good); font-weight: 700; }
+  .pos-down { color: #ff4d4d; font-weight: 700; }
+  .pos-same { color: var(--ink-muted); }
+  .delta-pts { color: var(--ink-muted); font-size: 11px; }
+  .standings-note { font-size: 12px; color: var(--ink-muted); margin-bottom: 12px; }
+
+  footer.site-footer {
+    max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0;
+    border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px;
+  }
+
+  .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
+  .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
+  @media (max-width: 860px) {
+    .nav-toggle { display: flex; }
+    .topnav { position: relative; }
+    .nav-links {
+      display: none; position: absolute; top: 56px; left: 0; right: 0;
+      background: #000; border-bottom: 1px solid var(--border);
+      flex-direction: column; gap: 0; height: auto; padding: 8px 0; z-index: 50;
+    }
+    .nav-links.open { display: flex; }
+    .nav-link { height: auto; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-link.active { border-left-color: var(--accent); }
+    .brand-text { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="topnav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">F1</span>
+      <span class="brand-text">Dashboard</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link active" href="results.html">Resultaten</a>
+      <a class="nav-link" href="drivers.html">Coureurs</a>
+      <a class="nav-link" href="history.html">Historie</a>
+      <a class="nav-link" href="head2head.html">Head-to-head</a>
+      <a class="nav-link" href="records.html">Hall of Fame</a>
+      <a class="nav-link" href="circuit.html">Circuit</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('navToggle').addEventListener('click', function() {
+    var nl = document.getElementById('navLinks');
+    var open = nl.classList.toggle('open');
+    this.setAttribute('aria-expanded', open);
+  });
+</script>
+
+<div class="hero compact">
+  <div class="hero-inner">
+    <div class="eyebrow">OpenF1 · Onofficieel</div>
+    <h1>Rondetijden &amp; Resultaten</h1>
+    <div class="subtitle">Live data via de <a href="https://openf1.org/docs" target="_blank" rel="noopener">OpenF1 API</a> — historische sessies vanaf 2023, geen API-key nodig.</div>
+  </div>
+</div>
+<div class="wrap">
+
+  <div class="card">
+    <h2>Selectie</h2>
+    <div class="controls-grid">
+      <div>
+        <label for="yearSelect">Jaar</label>
+        <select id="yearSelect"></select>
+      </div>
+      <div>
+        <label for="meetingSelect">Grand Prix</label>
+        <select id="meetingSelect"><option>Laden…</option></select>
+      </div>
+      <div>
+        <label for="sessionSelect">Sessie</label>
+        <select id="sessionSelect"><option>Laden…</option></select>
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button id="loadBtn">Ophalen &amp; visualiseren</button>
+      </div>
+    </div>
+
+    <div style="margin-top:14px;">
+      <label>Coureurs (max 8)</label>
+      <div id="driverPicker"><span style="font-size:12px;color:var(--ink-muted)">Kies eerst jaar / GP / sessie…</span></div>
+    </div>
+
+    <div style="margin-top:14px;" class="checkbox-row">
+      <input type="checkbox" id="compareYoY">
+      <label for="compareYoY" style="margin:0;">Vergelijk met dezelfde race van vorig jaar (extra optie)</label>
+    </div>
+
+    <div id="status"></div>
+  </div>
+
+  <div class="tab-row">
+    <button class="tab-btn active" id="tabBtnLaps">Rondetijden</button>
+    <button class="tab-btn" id="tabBtnPosition">Positieverloop</button>
+    <button class="tab-btn" id="tabBtnStandings">WK-stand</button>
+  </div>
+
+  <div class="tab-panel active" id="tabPanelLaps">
+
+  <div class="card">
+    <h2>Rondetijden</h2>
+    <div class="chart-wrap"><canvas id="lapChart"></canvas></div>
+    <div class="chart-caption" id="chartCaption"></div>
+    <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center;">
+      <div class="legend-row">
+        <div class="item"><span class="dash"></span> gestreept = vorig jaar</div>
+        <div class="item">▲ = pitstop</div>
+      </div>
+      <button class="secondary" id="toggleTableBtn" style="width:auto;">Toon als tabel</button>
+    </div>
+    <div id="tableView" style="display:none; margin-top:14px;"></div>
+  </div>
+
+  <div class="card" id="stintCard" style="display:none;">
+    <h2>Bandenstrategie (geselecteerde sessie)</h2>
+    <div id="stintView"></div>
+  </div>
+
+  <div class="card" id="weatherCard" style="display:none;">
+    <h2>Weer tijdens de sessie</h2>
+    <div class="weather-grid" id="weatherView"></div>
+  </div>
+
+  <div class="card" id="rcCard" style="display:none;">
+    <h2>Race control (vlaggen, safety car, incidenten)</h2>
+    <div id="raceControlList"></div>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>Wat is er nog meer mogelijk met OpenF1? (onderzoeksnotities)</summary>
+      <ul class="more-list">
+        <li><strong>Telemetrie &amp; trackpositie</strong> — <code>car_data</code> (~3.7 Hz: snelheid, RPM, gas/rem, versnelling, DRS) en <code>location</code> (3D-coördinaten) zouden een rondje-replay-animatie of snelheidsprofiel per ronde mogelijk maken. Hoogfrequent, dus zwaar qua requests.</li>
+        <li><strong>Inhaalacties</strong> — <code>overtakes</code> geeft per inhaalactie welke coureur wie passeerde en op welke ronde; leuk voor een "meeste inhaalacties"-ranglijst.</li>
+        <li><strong>Positieverloop</strong> — <code>position</code> geeft positiewijzigingen door de race heen; goed voor een classificatie-lijngrafiek (positie per ronde, zoals de bekende F1 "race story" grafiek).</li>
+        <li><strong>Startopstelling &amp; eindklassement</strong> — <code>starting_grid</code> en <code>session_result</code> zijn al deels gebruikt (voor standaard coureurselectie); kunnen ook een "posities gewonnen/verloren"-kaart voeden.</li>
+        <li><strong>Teamradio</strong> — <code>team_radio</code> geeft audiofragmenten (mp3-links); sinds 2026 is de hoeveelheid data sterk afgenomen, dus minder betrouwbaar als feature.</li>
+        <li><strong>WK-stand</strong> — <code>championship_drivers</code> / <code>championship_teams</code> (alleen races) kunnen een live WK-standenoverzicht voeden naast de racedata.</li>
+        <li><strong>Live/real-time data</strong> — <code>intervals</code> (gat tot leider, elke ~4s) en live <code>car_data</code>/<code>position</code> tijdens een lopende sessie vereisen een <strong>betaald abonnement</strong> (via Stripe); dit dashboard gebruikt alleen de gratis historische data.</li>
+        <li><strong>Rate limit</strong> — de API staat max. 3 requests/seconde toe; dit dashboard haalt data daarom gedoseerd op (met kleine pauzes en automatische retry bij 429-fouten) in plaats van alles tegelijk.</li>
+        <li><strong>CSV-export</strong> — elk endpoint kan ook <code>?csv=true</code> teruggeven in plaats van JSON, handig voor analyse in Excel/Sheets.</li>
+      </ul>
+    </details>
+  </div>
+
+  </div><!-- /tabPanelLaps -->
+
+  <div class="tab-panel" id="tabPanelPosition">
+    <div class="card">
+      <h2>Positieverloop</h2>
+      <div class="chart-wrap"><canvas id="positionChart"></canvas></div>
+      <div class="chart-caption" id="positionCaption"></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tabPanelStandings">
+    <div class="card">
+      <h2>WK-stand</h2>
+      <div class="standings-note" id="standingsNote">Kies hierboven een jaar/GP/sessie en klik op "Ophalen &amp; visualiseren" om de WK-stand na afloop van die race te laden.</div>
+      <div class="standings-grid">
+        <div>
+          <h2 style="margin-top:0;">Coureurs</h2>
+          <div class="table-scroll"><table class="standings-table" id="driverStandingsTable"></table></div>
+        </div>
+        <div>
+          <h2 style="margin-top:0;">Constructeurs</h2>
+          <div class="table-scroll"><table class="standings-table" id="teamStandingsTable"></table></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">Data via de gratis <a href="https://openf1.org/docs" target="_blank" rel="noopener" style="color:inherit;">OpenF1 API</a> — onofficieel project, geen affiliatie met Formula 1®.</footer>
+
+</div>
+
+<script>
+const API = 'https://api.openf1.org/v1';
+
+/* ---------- throttled fetch queue (API limit: 3 req/s) ---------- */
+let lastCallAt = 0;
+async function apiGet(path, attempt = 0) {
+  const minGap = 360;
+  const wait = Math.max(0, minGap - (Date.now() - lastCallAt));
+  if (wait) await sleep(wait);
+  lastCallAt = Date.now();
+  let res;
+  try {
+    res = await fetch(`${API}/${path}`);
+  } catch (e) {
+    throw new Error('Netwerkfout — kon de OpenF1 API niet bereiken.');
+  }
+  if (res.status === 429 && attempt < 6) {
+    await sleep(800 * (attempt + 1));
+    return apiGet(path, attempt + 1);
+  }
+  if (!res.ok) throw new Error(`API-fout ${res.status} bij ${path}`);
+  return res.json();
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ---------- formatting ---------- */
+function fmtLap(sec) {
+  if (sec == null || isNaN(sec)) return '–';
+  const m = Math.floor(sec / 60);
+  const s = (sec % 60).toFixed(3).padStart(6, '0');
+  return `${m}:${s}`;
+}
+function setStatus(msg, isError) {
+  const el = document.getElementById('status');
+  el.textContent = msg || '';
+  el.classList.toggle('error', !!isError);
+}
+
+/* ---------- tire compound colours (official F1 convention) ---------- */
+const COMPOUND_COLORS = {
+  SOFT: '#e34948', MEDIUM: '#eda100', HARD: '#f1f1ee',
+  INTERMEDIATE: '#1baf7a', WET: '#2a78d6', UNKNOWN: '#898781'
+};
+
+/* ---------- state ---------- */
+const state = {
+  meetings: [], sessions: [], drivers: [], selectedDrivers: new Set(),
+  currentMeeting: null, currentSession: null
+};
+
+/* ---------- init ---------- */
+const yearSelect = document.getElementById('yearSelect');
+const meetingSelect = document.getElementById('meetingSelect');
+const sessionSelect = document.getElementById('sessionSelect');
+const driverPicker = document.getElementById('driverPicker');
+const loadBtn = document.getElementById('loadBtn');
+
+(function initYears() {
+  const years = [2026, 2025, 2024, 2023];
+  yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+  yearSelect.value = 2024;
+})();
+
+yearSelect.addEventListener('change', loadMeetings);
+meetingSelect.addEventListener('change', loadSessions);
+sessionSelect.addEventListener('change', loadDrivers);
+loadBtn.addEventListener('click', loadAndRender);
+document.getElementById('tabBtnLaps').addEventListener('click', () => switchTab('laps'));
+document.getElementById('tabBtnPosition').addEventListener('click', () => switchTab('position'));
+document.getElementById('tabBtnStandings').addEventListener('click', () => switchTab('standings'));
+function switchTab(name) {
+  document.getElementById('tabBtnLaps').classList.toggle('active', name === 'laps');
+  document.getElementById('tabBtnPosition').classList.toggle('active', name === 'position');
+  document.getElementById('tabBtnStandings').classList.toggle('active', name === 'standings');
+  document.getElementById('tabPanelLaps').classList.toggle('active', name === 'laps');
+  document.getElementById('tabPanelPosition').classList.toggle('active', name === 'position');
+  document.getElementById('tabPanelStandings').classList.toggle('active', name === 'standings');
+}
+
+document.getElementById('toggleTableBtn').addEventListener('click', () => {
+  const tv = document.getElementById('tableView');
+  tv.style.display = tv.style.display === 'none' ? 'block' : 'none';
+  document.getElementById('toggleTableBtn').textContent =
+    tv.style.display === 'none' ? 'Toon als tabel' : 'Verberg tabel';
+});
+
+loadMeetings();
+
+async function loadMeetings() {
+  setStatus('Grand Prix-weekenden laden…');
+  meetingSelect.innerHTML = '<option>Laden…</option>';
+  try {
+    const data = await apiGet(`meetings?year=${yearSelect.value}`);
+    data.sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+    state.meetings = data;
+    meetingSelect.innerHTML = data.map(m =>
+      `<option value="${m.meeting_key}">${m.meeting_name} — ${new Date(m.date_start).toLocaleDateString('nl-NL')}</option>`
+    ).join('');
+    setStatus('');
+    await loadSessions();
+  } catch (e) {
+    setStatus(e.message, true);
+  }
+}
+
+async function loadSessions() {
+  const meetingKey = meetingSelect.value;
+  state.currentMeeting = state.meetings.find(m => String(m.meeting_key) === String(meetingKey));
+  setStatus('Sessies laden…');
+  sessionSelect.innerHTML = '<option>Laden…</option>';
+  try {
+    const data = await apiGet(`sessions?meeting_key=${meetingKey}`);
+    data.sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+    state.sessions = data;
+    sessionSelect.innerHTML = data.map(s =>
+      `<option value="${s.session_key}" data-name="${s.session_name}">${s.session_name}</option>`
+    ).join('');
+    const raceOpt = Array.from(sessionSelect.options).find(o => o.dataset.name === 'Race');
+    if (raceOpt) sessionSelect.value = raceOpt.value;
+    setStatus('');
+    await loadDrivers();
+  } catch (e) {
+    setStatus(e.message, true);
+  }
+}
+
+async function loadDrivers() {
+  const sessionKey = sessionSelect.value;
+  state.currentSession = state.sessions.find(s => String(s.session_key) === String(sessionKey));
+  setStatus('Coureurs laden…');
+  driverPicker.innerHTML = '<span style="font-size:12px;color:var(--ink-muted)">Laden…</span>';
+  try {
+    const data = await apiGet(`drivers?session_key=${sessionKey}`);
+    data.sort((a, b) => a.driver_number - b.driver_number);
+    state.drivers = data;
+    state.selectedDrivers = new Set(data.slice(0, 5).map(d => d.driver_number));
+    renderDriverPicker();
+    setStatus('');
+  } catch (e) {
+    setStatus(e.message, true);
+  }
+}
+
+function renderDriverPicker() {
+  driverPicker.innerHTML = state.drivers.map(d => {
+    const checked = state.selectedDrivers.has(d.driver_number);
+    const color = '#' + (d.team_colour || '898781');
+    return `<label class="driver-chip ${checked ? 'checked' : ''}" style="--swatch:${color}">
+      <input type="checkbox" value="${d.driver_number}" ${checked ? 'checked' : ''}>
+      <span class="swatch"></span>${d.name_acronym} <span style="color:var(--ink-muted)">#${d.driver_number}</span>
+    </label>`;
+  }).join('');
+  driverPicker.querySelectorAll('input').forEach(input => {
+    input.addEventListener('change', () => {
+      const num = Number(input.value);
+      if (input.checked) {
+        if (state.selectedDrivers.size >= 8) { input.checked = false; setStatus('Maximaal 8 coureurs voor leesbaarheid.', true); return; }
+        state.selectedDrivers.add(num);
+      } else {
+        state.selectedDrivers.delete(num);
+      }
+      input.closest('.driver-chip').classList.toggle('checked', input.checked);
+    });
+  });
+}
+
+/* ---------- main load & render ---------- */
+let chart = null;
+
+async function loadAndRender() {
+  const drivers = state.drivers.filter(d => state.selectedDrivers.has(d.driver_number));
+  if (drivers.length === 0) { setStatus('Kies minstens één coureur.', true); return; }
+  loadBtn.disabled = true;
+  document.getElementById('stintCard').style.display = 'none';
+  document.getElementById('weatherCard').style.display = 'none';
+  document.getElementById('rcCard').style.display = 'none';
+
+  try {
+    const sessionKey = state.currentSession.session_key;
+    const perDriver = {};
+
+    for (const [i, d] of drivers.entries()) {
+      setStatus(`Rondetijden ophalen voor ${d.name_acronym}… (${i + 1}/${drivers.length})`);
+      const [laps, pit, stints, position] = await Promise.all([
+        apiGet(`laps?session_key=${sessionKey}&driver_number=${d.driver_number}`),
+        apiGet(`pit?session_key=${sessionKey}&driver_number=${d.driver_number}`),
+        apiGet(`stints?session_key=${sessionKey}&driver_number=${d.driver_number}`),
+        apiGet(`position?session_key=${sessionKey}&driver_number=${d.driver_number}`).catch(() => [])
+      ]);
+      perDriver[d.driver_number] = { driver: d, laps, pit, stints, position, prevLaps: null, prevYear: null };
+    }
+
+    let compareYear = null;
+    if (document.getElementById('compareYoY').checked) {
+      setStatus('Vorig jaar: vergelijkbare race zoeken…');
+      compareYear = await findPreviousYearSession(state.currentMeeting, state.currentSession);
+      if (compareYear) {
+        for (const [i, d] of drivers.entries()) {
+          setStatus(`Vorig jaar ophalen voor ${d.name_acronym}… (${i + 1}/${drivers.length})`);
+          try {
+            const prevLaps = await apiGet(`laps?session_key=${compareYear.session.session_key}&driver_number=${d.driver_number}`);
+            perDriver[d.driver_number].prevLaps = prevLaps;
+            perDriver[d.driver_number].prevYear = compareYear.meeting.year;
+          } catch (e) { /* driver may not have raced that year under this number */ }
+        }
+      } else {
+        setStatus('Geen vergelijkbare race gevonden vorig jaar (circuit niet op de kalender).', true);
+      }
+    }
+
+    setStatus('Weer, race control en WK-stand ophalen…');
+    const [weather, raceControl, champDrivers, champTeams] = await Promise.all([
+      apiGet(`weather?session_key=${sessionKey}`).catch(() => []),
+      apiGet(`race_control?session_key=${sessionKey}`).catch(() => []),
+      apiGet(`championship_drivers?session_key=${sessionKey}`).catch(() => []),
+      apiGet(`championship_teams?session_key=${sessionKey}`).catch(() => [])
+    ]);
+
+    renderChart(perDriver, compareYear);
+    renderPositionChart(perDriver);
+    renderTable(perDriver, compareYear);
+    renderStints(perDriver);
+    renderWeather(weather);
+    renderRaceControl(raceControl);
+    renderStandings(champDrivers, champTeams);
+
+    setStatus(`Klaar — ${drivers.length} coureur(s), ${state.currentMeeting.meeting_name} (${state.currentMeeting.year}), ${state.currentSession.session_name}${compareYear ? ` + vergelijking met ${compareYear.meeting.year}` : ''}.`);
+  } catch (e) {
+    setStatus(e.message, true);
+  } finally {
+    loadBtn.disabled = false;
+  }
+}
+
+async function findPreviousYearSession(meeting, session) {
+  const prevYear = meeting.year - 1;
+  const meetings = await apiGet(`meetings?year=${prevYear}`);
+  const match = meetings.find(m => m.circuit_key === meeting.circuit_key);
+  if (!match) return null;
+  const sessions = await apiGet(`sessions?meeting_key=${match.meeting_key}`);
+  const sessionMatch = sessions.find(s => s.session_name === session.session_name);
+  if (!sessionMatch) return null;
+  return { meeting: match, session: sessionMatch };
+}
+
+/* ---------- chart ---------- */
+function renderChart(perDriver, compareYear) {
+  const ctx = document.getElementById('lapChart');
+  const allClean = [];
+  const datasets = [];
+  const pitDatasets = [];
+
+  Object.values(perDriver).forEach(({ driver, laps, pit, prevLaps, prevYear }) => {
+    const color = '#' + (driver.team_colour || '898781');
+
+    const cleanLaps = laps.filter(l => l.lap_duration != null && !l.is_pit_out_lap);
+    cleanLaps.forEach(l => allClean.push(l.lap_duration));
+
+    const points = laps
+      .filter(l => l.lap_duration != null)
+      .map(l => ({ x: l.lap_number, y: l.is_pit_out_lap ? null : l.lap_duration }));
+
+    datasets.push({
+      label: driver.name_acronym,
+      data: points,
+      borderColor: color,
+      backgroundColor: color,
+      borderWidth: 2,
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      tension: 0,
+      spanGaps: false,
+      _acronym: driver.name_acronym,
+      _driverNumber: driver.driver_number
+    });
+
+    const pitLapNums = new Set(pit.map(p => p.lap_number));
+    const pitPoints = laps
+      .filter(l => pitLapNums.has(l.lap_number) && l.lap_duration != null)
+      .map(l => ({ x: l.lap_number, y: l.lap_duration }));
+    if (pitPoints.length) {
+      pitDatasets.push({
+        label: `${driver.name_acronym} pitstop`,
+        data: pitPoints,
+        borderColor: color,
+        backgroundColor: color,
+        showLine: false,
+        pointStyle: 'triangle',
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        _isPit: true
+      });
+    }
+
+    if (prevLaps) {
+      const prevPoints = prevLaps
+        .filter(l => l.lap_duration != null)
+        .map(l => ({ x: l.lap_number, y: l.is_pit_out_lap ? null : l.lap_duration }));
+      datasets.push({
+        label: `${driver.name_acronym} ${prevYear}`,
+        data: prevPoints,
+        borderColor: color,
+        backgroundColor: color,
+        borderWidth: 2,
+        borderDash: [5, 4],
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        tension: 0,
+        spanGaps: false,
+        opacity: 0.6,
+        segment: {},
+        _acronym: driver.name_acronym + ' ' + prevYear,
+        _driverNumber: driver.driver_number
+      });
+    }
+  });
+
+  allClean.sort((a, b) => a - b);
+  const median = allClean.length ? allClean[Math.floor(allClean.length / 2)] : 90;
+  const yMin = Math.floor(median * 0.90);
+  const yMax = Math.ceil(median * 1.22);
+
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: { datasets: [...datasets, ...pitDatasets] },
+    options: {
+      animation: false,
+      maintainAspectRatio: false,
+      interaction: { mode: 'nearest', intersect: false },
+      scales: {
+        x: {
+          type: 'linear',
+          title: { display: true, text: 'Ronde', color: getVar('--ink-secondary') },
+          grid: { color: getVar('--grid') },
+          ticks: { color: getVar('--ink-muted'), precision: 0 }
+        },
+        y: {
+          min: yMin, max: yMax,
+          title: { display: true, text: 'Rondetijd', color: getVar('--ink-secondary') },
+          grid: { color: getVar('--grid') },
+          ticks: { color: getVar('--ink-muted'), callback: v => fmtLap(v) }
+        }
+      },
+      plugins: {
+        legend: {
+          labels: {
+            color: getVar('--ink-secondary'),
+            filter: (item) => !item.text.includes('pitstop')
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (c) => {
+              if (c.dataset._isPit) return `${c.dataset.label}: ${fmtLap(c.parsed.y)}`;
+              return `${c.dataset.label}: ronde ${c.parsed.x} — ${fmtLap(c.parsed.y)}`;
+            }
+          }
+        }
+      }
+    },
+    plugins: [endLabelPlugin]
+  });
+
+  document.getElementById('chartCaption').textContent =
+    `Y-as begrensd rond de mediaan-rondetijd (${fmtLap(median)}); extreem trage ronden (pitstops, safety car) lopen boven de grafiekrand door. ▲ markeert de ronde met pitstop.`;
+}
+
+const endLabelPlugin = {
+  id: 'endLabel',
+  afterDatasetsDraw(c) {
+    const { ctx } = c;
+    c.data.datasets.forEach((ds, i) => {
+      if (ds._isPit || !ds._acronym) return;
+      const meta = c.getDatasetMeta(i);
+      if (meta.hidden) return;
+      const points = meta.data.filter(p => p && !isNaN(p.y));
+      if (!points.length) return;
+      const last = points[points.length - 1];
+      ctx.save();
+      ctx.font = '600 11px system-ui, sans-serif';
+      ctx.fillStyle = getVar('--ink-secondary');
+      ctx.textBaseline = 'middle';
+      ctx.fillText(ds._acronym, last.x + 6, last.y);
+      ctx.restore();
+    });
+  }
+};
+
+function getVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888';
+}
+
+/* ---------- position chart (race story) ---------- */
+let positionChart = null;
+function renderPositionChart(perDriver) {
+  const ctx = document.getElementById('positionChart');
+  let maxPos = 0;
+  let anyData = false;
+
+  const datasets = Object.values(perDriver).map(({ driver, laps, position }) => {
+    const color = '#' + (driver.team_colour || '898781');
+    const sortedPos = position.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+    const points = laps
+      .filter(l => l.date_start)
+      .slice()
+      .sort((a, b) => a.lap_number - b.lap_number)
+      .map(l => {
+        const t = new Date(l.date_start);
+        let current = null;
+        for (const p of sortedPos) {
+          if (new Date(p.date) <= t) current = p.position; else break;
+        }
+        if (current == null && sortedPos.length) current = sortedPos[0].position;
+        if (current != null) maxPos = Math.max(maxPos, current);
+        return { x: l.lap_number, y: current };
+      })
+      .filter(p => p.y != null);
+    if (points.length) anyData = true;
+    return {
+      label: driver.name_acronym, data: points,
+      borderColor: color, backgroundColor: color, borderWidth: 2,
+      pointRadius: 0, pointHoverRadius: 4, stepped: 'before', tension: 0,
+      _acronym: driver.name_acronym
+    };
+  });
+
+  if (positionChart) positionChart.destroy();
+  positionChart = new Chart(ctx, {
+    type: 'line',
+    data: { datasets },
+    options: {
+      animation: false,
+      maintainAspectRatio: false,
+      interaction: { mode: 'nearest', intersect: false },
+      scales: {
+        x: {
+          type: 'linear',
+          title: { display: true, text: 'Ronde', color: getVar('--ink-secondary') },
+          grid: { color: getVar('--grid') },
+          ticks: { color: getVar('--ink-muted'), precision: 0 }
+        },
+        y: {
+          reverse: true, min: 1, max: Math.max(maxPos, 1),
+          title: { display: true, text: 'Positie', color: getVar('--ink-secondary') },
+          grid: { color: getVar('--grid') },
+          ticks: { color: getVar('--ink-muted'), stepSize: 1, precision: 0 }
+        }
+      },
+      plugins: {
+        legend: { labels: { color: getVar('--ink-secondary') } },
+        tooltip: { callbacks: { label: c => `${c.dataset.label}: ronde ${c.parsed.x} — P${c.parsed.y}` } }
+      }
+    },
+    plugins: [endLabelPlugin]
+  });
+
+  document.getElementById('positionCaption').textContent = anyData
+    ? 'Positie per ronde, gereconstrueerd uit de positiewijzigingen tijdens de sessie. Alleen beschikbaar voor races met voldoende registraties.'
+    : 'Geen positiedata beschikbaar voor deze sessie.';
+}
+
+/* ---------- table view (accessibility) ---------- */
+function renderTable(perDriver, compareYear) {
+  const drivers = Object.values(perDriver);
+  const maxLap = Math.max(...drivers.flatMap(d => d.laps.map(l => l.lap_number)), 0);
+  let head = '<tr><th>Ronde</th>' + drivers.map(d => `<th>${d.driver.name_acronym}</th>`).join('') + '</tr>';
+  let rows = '';
+  for (let lap = 1; lap <= maxLap; lap++) {
+    rows += `<tr><td>${lap}</td>` + drivers.map(d => {
+      const l = d.laps.find(x => x.lap_number === lap);
+      return `<td>${l ? fmtLap(l.lap_duration) : '–'}</td>`;
+    }).join('') + '</tr>';
+  }
+  document.getElementById('tableView').innerHTML = `
+    <div class="table-scroll">
+      <table>
+        <caption>Rondetijden per coureur en ronde (mm:ss.sss)</caption>
+        <thead>${head}</thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+/* ---------- tire stints ---------- */
+function renderStints(perDriver) {
+  const card = document.getElementById('stintCard');
+  const container = document.getElementById('stintView');
+  const drivers = Object.values(perDriver);
+  const maxLap = Math.max(...drivers.flatMap(d => d.stints.map(s => s.lap_end || 0)), 1);
+
+  container.innerHTML = drivers.map(({ driver, stints }) => {
+    if (!stints.length) return '';
+    const segs = stints.map(s => {
+      const span = (s.lap_end - s.lap_start + 1) / maxLap * 100;
+      const color = COMPOUND_COLORS[s.compound] || COMPOUND_COLORS.UNKNOWN;
+      const textColor = (s.compound === 'HARD') ? '#333' : 'rgba(0,0,0,0.65)';
+      return `<div class="stint-seg" style="width:${span}%; background:${color}; color:${textColor}" title="${s.compound}, ronde ${s.lap_start}-${s.lap_end}">${s.compound[0]}</div>`;
+    }).join('');
+    return `<div class="stint-row">
+      <div class="name">${driver.name_acronym}</div>
+      <div class="stint-track">${segs}</div>
+    </div>`;
+  }).join('');
+
+  container.innerHTML += `<div class="legend-row" style="margin-top:10px;">
+    ${Object.entries(COMPOUND_COLORS).filter(([k]) => k !== 'UNKNOWN').map(([name, color]) =>
+      `<div class="item"><span class="dot" style="background:${color}"></span>${name}</div>`).join('')}
+  </div>`;
+
+  card.style.display = 'block';
+}
+
+/* ---------- weather ---------- */
+function renderWeather(weather) {
+  const card = document.getElementById('weatherCard');
+  if (!weather.length) { card.style.display = 'none'; return; }
+  const avg = (key) => weather.reduce((s, w) => s + (w[key] ?? 0), 0) / weather.length;
+  const rained = weather.some(w => w.rainfall > 0);
+  const tiles = [
+    { label: 'Luchttemperatuur', value: `${avg('air_temperature').toFixed(1)}°C` },
+    { label: 'Baantemperatuur', value: `${avg('track_temperature').toFixed(1)}°C` },
+    { label: 'Luchtvochtigheid', value: `${avg('humidity').toFixed(0)}%` },
+    { label: 'Windsnelheid', value: `${avg('wind_speed').toFixed(1)} m/s` },
+    { label: 'Neerslag', value: rained ? 'Ja 🌧️' : 'Nee' }
+  ];
+  document.getElementById('weatherView').innerHTML = tiles.map(t =>
+    `<div class="stat-tile"><div class="label">${t.label}</div><div class="value">${t.value}</div></div>`
+  ).join('');
+  card.style.display = 'block';
+}
+
+/* ---------- race control ---------- */
+function renderRaceControl(events) {
+  const card = document.getElementById('rcCard');
+  if (!events.length) { card.style.display = 'none'; return; }
+  events.sort((a, b) => new Date(a.date) - new Date(b.date));
+  document.getElementById('raceControlList').innerHTML = events.map(e => {
+    const flagClass = e.flag ? `flag-${e.flag}` : '';
+    const lap = e.lap_number != null ? `Ronde ${e.lap_number}` : '';
+    return `<div><span class="lap">${lap}</span><span class="${flagClass}">${e.message || e.category || ''}</span></div>`;
+  }).join('');
+  card.style.display = 'block';
+}
+
+/* ---------- WK-stand ---------- */
+function posDelta(startPos, currentPos) {
+  if (startPos === currentPos) return '<span class="pos-same">–</span>';
+  if (currentPos < startPos) return `<span class="pos-up">▲ ${startPos - currentPos}</span>`;
+  return `<span class="pos-down">▼ ${currentPos - startPos}</span>`;
+}
+
+function renderStandings(champDrivers, champTeams) {
+  const note = document.getElementById('standingsNote');
+  const driverTable = document.getElementById('driverStandingsTable');
+  const teamTable = document.getElementById('teamStandingsTable');
+
+  if (!champDrivers.length && !champTeams.length) {
+    note.textContent = `Geen WK-standdata beschikbaar voor deze sessie (werkt alleen voor Race-sessies — "${state.currentSession ? state.currentSession.session_name : ''}" levert geen cumulatieve stand).`;
+    driverTable.innerHTML = '';
+    teamTable.innerHTML = '';
+    return;
+  }
+
+  note.textContent = `Stand na afloop van: ${state.currentMeeting.meeting_name} (${state.currentMeeting.year}).`;
+
+  const driverRows = champDrivers.slice().sort((a, b) => a.position_current - b.position_current).map(row => {
+    const d = state.drivers.find(x => x.driver_number === row.driver_number);
+    const name = d ? d.name_acronym : `#${row.driver_number}`;
+    const color = d ? '#' + (d.team_colour || '898781') : '#898781';
+    const gained = (row.points_current - row.points_start).toFixed(0);
+    return `<tr>
+      <td>${row.position_current}</td>
+      <td><span class="dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin-right:6px;"></span>${name}</td>
+      <td>${row.points_current.toFixed(0)}<div class="delta-pts">${gained > 0 ? '+' + gained : gained} deze race</div></td>
+      <td>${posDelta(row.position_start, row.position_current)}</td>
+    </tr>`;
+  }).join('');
+  driverTable.innerHTML = `<thead><tr><th>#</th><th>Coureur</th><th>Punten</th><th>Δ positie</th></tr></thead><tbody>${driverRows}</tbody>`;
+
+  const teamRows = champTeams.slice().sort((a, b) => a.position_current - b.position_current).map(row => {
+    const gained = (row.points_current - row.points_start).toFixed(0);
+    return `<tr>
+      <td>${row.position_current}</td>
+      <td>${row.team_name}</td>
+      <td>${row.points_current.toFixed(0)}<div class="delta-pts">${gained > 0 ? '+' + gained : gained} deze race</div></td>
+      <td>${posDelta(row.position_start, row.position_current)}</td>
+    </tr>`;
+  }).join('');
+  teamTable.innerHTML = `<thead><tr><th>#</th><th>Team</th><th>Punten</th><th>Δ positie</th></tr></thead><tbody>${teamRows}</tbody>`;
+}
+</script>
+</body>
+</html>

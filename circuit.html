@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circuit — F1 Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --surface-1: #15151e;
+    --page: #0a0a0c;
+    --ink-primary: #ffffff;
+    --ink-secondary: #9a9aa2;
+    --ink-muted: #6b6b72;
+    --grid: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.12);
+    --accent: #e10600;
+    --critical: #e10600;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Titillium Web', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(ellipse 900px 300px at 50% -80px, rgba(225,6,0,0.10), transparent 70%),
+      var(--page);
+    color: var(--ink-primary);
+    padding: 0 0 32px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  .topnav { background: #000; border-bottom: 1px solid var(--border); }
+  .topnav-inner {
+    max-width: 1180px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between; height: 56px;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+  .brand-mark {
+    background: var(--accent); color: #fff; font-weight: 900; font-size: 13px;
+    padding: 3px 7px; border-radius: 3px; letter-spacing: 0.01em; font-style: italic;
+  }
+  .brand-text { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-secondary); }
+  .nav-links { display: flex; gap: 16px; height: 100%; }
+  .nav-link {
+    display: flex; align-items: center; height: 100%;
+    color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent;
+    transition: color 0.15s; white-space: nowrap;
+  }
+  .nav-link:hover { color: var(--ink-primary); }
+  .nav-link.active { color: var(--ink-primary); border-bottom-color: var(--accent); }
+  @media (max-width: 880px) { .nav-links { gap: 9px; } .brand-text { display: none; } }
+
+  .hero {
+    position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #000 0%, #0f0f12 60%, #1a1a1e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 16px;
+    margin-bottom: 20px;
+  }
+  .hero::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 40px);
+    pointer-events: none;
+  }
+  .hero-inner { max-width: 1180px; margin: 0 auto; position: relative; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 8px;
+  }
+  .eyebrow::before { content: ""; width: 16px; height: 2px; background: var(--accent); display: inline-block; }
+  h1 { font-size: 21px; font-weight: 900; text-transform: uppercase; margin: 0 0 4px; letter-spacing: -0.01em; line-height: 1.05; }
+  .subtitle { color: var(--ink-secondary); font-size: 13px; margin-bottom: 0; }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-secondary); margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+
+  .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; }
+  label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-secondary); margin-bottom: 6px; }
+  select, button {
+    width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 4px;
+    border: 1px solid var(--border); background: var(--page); color: var(--ink-primary); font-family: inherit;
+  }
+  button {
+    background: var(--accent); color: #fff; border: 1px solid var(--accent); cursor: pointer;
+    font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.88; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  #status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; margin-top: 10px; }
+  #status.error { color: var(--critical); }
+
+  .track-wrap { position: relative; background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+  .track-wrap svg { width: 100%; height: auto; display: block; }
+  .speed-legend { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 11px; color: var(--ink-muted); }
+  .speed-bar { flex: 1; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #3a6df0, #19a974, #ffcf40, #e10600); }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 10px; margin-top: 16px; }
+  .stat-tile { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .stat-tile .label { font-size: 11px; color: var(--ink-muted); }
+  .stat-tile .value { font-size: 18px; font-weight: 700; margin-top: 2px; }
+
+  footer.site-footer {
+    max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0;
+    border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px;
+  }
+
+  .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
+  .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
+  @media (max-width: 860px) {
+    .nav-toggle { display: flex; }
+    .topnav { position: relative; }
+    .nav-links {
+      display: none; position: absolute; top: 56px; left: 0; right: 0;
+      background: #000; border-bottom: 1px solid var(--border);
+      flex-direction: column; gap: 0; height: auto; padding: 8px 0; z-index: 50;
+    }
+    .nav-links.open { display: flex; }
+    .nav-link { height: auto; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-link.active { border-left-color: var(--accent); }
+    .brand-text { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="topnav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">F1</span>
+      <span class="brand-text">Dashboard</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="results.html">Resultaten</a>
+      <a class="nav-link" href="drivers.html">Coureurs</a>
+      <a class="nav-link" href="history.html">Historie</a>
+      <a class="nav-link" href="head2head.html">Head-to-head</a>
+      <a class="nav-link" href="records.html">Hall of Fame</a>
+      <a class="nav-link active" href="circuit.html">Circuit</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('navToggle').addEventListener('click', function() {
+    var nl = document.getElementById('navLinks');
+    var open = nl.classList.toggle('open');
+    this.setAttribute('aria-expanded', open);
+  });
+</script>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">OpenF1 · Onofficieel</div>
+    <h1>Circuit &amp; baanlayout</h1>
+    <div class="subtitle">De baan getekend uit echte GPS-telemetrie van de snelste ronde, gekleurd op snelheid — rood = topsnelheid, blauw = laagste snelheid (zware bochten).</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>Sessie &amp; coureur</h2>
+    <div class="controls-grid">
+      <div>
+        <label for="yearSelect">Jaar</label>
+        <select id="yearSelect"></select>
+      </div>
+      <div>
+        <label for="meetingSelect">Grand Prix</label>
+        <select id="meetingSelect"><option>Laden…</option></select>
+      </div>
+      <div>
+        <label for="sessionSelect">Sessie</label>
+        <select id="sessionSelect"><option>Laden…</option></select>
+      </div>
+      <div>
+        <label for="driverSelect">Coureur</label>
+        <select id="driverSelect"><option>Kies sessie…</option></select>
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button id="showBtn">Toon baanlayout</button>
+      </div>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div class="card" id="trackCard" style="display:none;">
+    <h2 id="trackHeading">Baanlayout</h2>
+    <div class="track-wrap"><svg id="trackSvg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet"></svg></div>
+    <div class="speed-legend">
+      <span id="speedMinLabel">0 km/h</span>
+      <div class="speed-bar"></div>
+      <span id="speedMaxLabel">0 km/h</span>
+    </div>
+    <div class="stat-grid" id="statGrid"></div>
+  </div>
+
+  <footer class="site-footer">Baanvorm en snelheid berekend uit de gratis <a href="https://openf1.org/docs" target="_blank" rel="noopener" style="color:inherit;">OpenF1 API</a> (location- en car_data-telemetrie, ~3.7 Hz) — onofficieel project, geen affiliatie met Formula 1®.</footer>
+
+</div>
+
+<script>
+const API = 'https://api.openf1.org/v1';
+
+let lastCallAt = 0;
+async function apiGet(path, attempt = 0) {
+  const minGap = 360;
+  const wait = Math.max(0, minGap - (Date.now() - lastCallAt));
+  if (wait) await sleep(wait);
+  lastCallAt = Date.now();
+  let res;
+  try {
+    res = await fetch(`${API}/${path}`);
+  } catch (e) {
+    throw new Error('Netwerkfout — kon de OpenF1 API niet bereiken.');
+  }
+  if (res.status === 429 && attempt < 6) {
+    await sleep(800 * (attempt + 1));
+    return apiGet(path, attempt + 1);
+  }
+  if (!res.ok) throw new Error(`API-fout ${res.status} bij ${path}`);
+  return res.json();
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function fmtLap(sec) {
+  if (sec == null || isNaN(sec)) return '–';
+  const m = Math.floor(sec / 60);
+  const s = (sec % 60).toFixed(3).padStart(6, '0');
+  return `${m}:${s}`;
+}
+function setStatus(msg, isError) {
+  const el = document.getElementById('status');
+  el.textContent = msg || '';
+  el.classList.toggle('error', !!isError);
+}
+
+const yearSelect = document.getElementById('yearSelect');
+const meetingSelect = document.getElementById('meetingSelect');
+const sessionSelect = document.getElementById('sessionSelect');
+const driverSelect = document.getElementById('driverSelect');
+const showBtn = document.getElementById('showBtn');
+const state = { meetings: [], sessions: [], drivers: [] };
+
+(function initYears() {
+  const years = [2026, 2025, 2024, 2023];
+  yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+  yearSelect.value = 2024;
+})();
+
+yearSelect.addEventListener('change', loadMeetings);
+meetingSelect.addEventListener('change', loadSessions);
+sessionSelect.addEventListener('change', loadDrivers);
+showBtn.addEventListener('click', showTrack);
+
+loadMeetings();
+
+async function loadMeetings() {
+  setStatus('Grand Prix-weekenden laden…');
+  meetingSelect.innerHTML = '<option>Laden…</option>';
+  try {
+    const data = await apiGet(`meetings?year=${yearSelect.value}`);
+    data.sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+    state.meetings = data;
+    meetingSelect.innerHTML = data.map(m =>
+      `<option value="${m.meeting_key}">${m.meeting_name} — ${new Date(m.date_start).toLocaleDateString('nl-NL')}</option>`
+    ).join('');
+    setStatus('');
+    await loadSessions();
+  } catch (e) {
+    setStatus(e.message, true);
+  }
+}
+
+async function loadSessions() {
+  setStatus('Sessies laden…');
+  sessionSelect.innerHTML = '<option>Laden…</option>';
+  try {
+    const data = await apiGet(`sessions?meeting_key=${meetingSelect.value}`);
+    data.sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+    state.sessions = data;
+    sessionSelect.innerHTML = data.map(s =>
+      `<option value="${s.session_key}" data-name="${s.session_name}">${s.session_name}</option>`
+    ).join('');
+    const raceOpt = Array.from(sessionSelect.options).find(o => o.dataset.name === 'Race');
+    if (raceOpt) sessionSelect.value = raceOpt.value;
+    setStatus('');
+    await loadDrivers();
+  } catch (e) {
+    setStatus(e.message, true);
+  }
+}
+
+async function loadDrivers() {
+  setStatus('Coureurs laden…');
+  driverSelect.innerHTML = '<option>Laden…</option>';
+  try {
+    const data = await apiGet(`drivers?session_key=${sessionSelect.value}`);
+    data.sort((a, b) => a.driver_number - b.driver_number);
+    state.drivers = data;
+    driverSelect.innerHTML = data.map(d => `<option value="${d.driver_number}">${d.name_acronym} — #${d.driver_number}</option>`).join('');
+    setStatus('');
+  } catch (e) {
+    setStatus(e.message, true);
+  }
+}
+
+async function showTrack() {
+  const sessionKey = sessionSelect.value;
+  const driverNum = Number(driverSelect.value);
+  const meeting = state.meetings.find(m => String(m.meeting_key) === String(meetingSelect.value));
+  const session = state.sessions.find(s => String(s.session_key) === String(sessionKey));
+  const driver = state.drivers.find(d => d.driver_number === driverNum);
+  if (!sessionKey || !driverNum) { setStatus('Kies jaar, GP, sessie en coureur.', true); return; }
+
+  showBtn.disabled = true;
+  try {
+    setStatus(`Snelste ronde van ${driver.name_acronym} zoeken…`);
+    const laps = await apiGet(`laps?session_key=${sessionKey}&driver_number=${driverNum}`);
+    const clean = laps.filter(l => l.lap_duration != null && !l.is_pit_out_lap);
+    if (!clean.length) { setStatus('Geen geldige ronden gevonden voor deze coureur/sessie.', true); showBtn.disabled = false; return; }
+    const fastest = clean.reduce((a, b) => a.lap_duration < b.lap_duration ? a : b);
+
+    const start = new Date(fastest.date_start);
+    const next = laps.find(l => l.lap_number === fastest.lap_number + 1);
+    const end = next ? new Date(next.date_start) : new Date(start.getTime() + fastest.lap_duration * 1000 + 500);
+
+    setStatus('Telemetrie ophalen (positie + snelheid)…');
+    const isoStart = start.toISOString().replace('Z', '');
+    const isoEnd = end.toISOString().replace('Z', '');
+    const [location, carData] = await Promise.all([
+      apiGet(`location?session_key=${sessionKey}&driver_number=${driverNum}&date>=${isoStart}&date<=${isoEnd}`),
+      apiGet(`car_data?session_key=${sessionKey}&driver_number=${driverNum}&date>=${isoStart}&date<=${isoEnd}`)
+    ]);
+
+    if (location.length < 5 || carData.length < 5) {
+      setStatus('Onvoldoende telemetriepunten beschikbaar voor deze ronde/sessie.', true);
+      showBtn.disabled = false;
+      return;
+    }
+
+    renderTrack(location, carData, driver, meeting, session, fastest);
+    setStatus(`Snelste ronde: #${fastest.lap_number}, ${fmtLap(fastest.lap_duration)} — ${meeting.meeting_name} (${meeting.year}), ${session.session_name}.`);
+  } catch (e) {
+    setStatus(e.message, true);
+  } finally {
+    showBtn.disabled = false;
+  }
+}
+
+function speedColor(t) {
+  // t in [0,1]: 0 = slow (blue) -> green -> yellow -> 1 = fast (red)
+  const stops = [
+    [58, 109, 240],   // blue
+    [25, 169, 116],   // green
+    [255, 207, 64],   // yellow
+    [225, 6, 0]        // red
+  ];
+  const scaled = Math.min(0.999, Math.max(0, t)) * (stops.length - 1);
+  const i = Math.floor(scaled);
+  const f = scaled - i;
+  const [r1, g1, b1] = stops[i];
+  const [r2, g2, b2] = stops[i + 1];
+  const r = Math.round(r1 + (r2 - r1) * f);
+  const g = Math.round(g1 + (g2 - g1) * f);
+  const b = Math.round(b1 + (b2 - b1) * f);
+  return `rgb(${r},${g},${b})`;
+}
+
+function renderTrack(location, carData, driver, meeting, session, fastest) {
+  const loc = location.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+  const speeds = carData.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  // merge: for each location point, find the nearest car_data speed by timestamp
+  let j = 0;
+  const points = loc.map(p => {
+    const t = new Date(p.date).getTime();
+    while (j < speeds.length - 1 && Math.abs(new Date(speeds[j + 1].date) - t) <= Math.abs(new Date(speeds[j].date) - t)) j++;
+    return { x: p.x, y: p.y, speed: speeds[j] ? speeds[j].speed : null };
+  }).filter(p => p.speed != null);
+
+  const xs = points.map(p => p.x), ys = points.map(p => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const padding = 40;
+  const vbW = 800, vbH = 600;
+  const scale = Math.min((vbW - padding * 2) / (maxX - minX || 1), (vbH - padding * 2) / (maxY - minY || 1));
+  const offX = (vbW - (maxX - minX) * scale) / 2;
+  const offY = (vbH - (maxY - minY) * scale) / 2;
+  const toSvg = (x, y) => [
+    offX + (x - minX) * scale,
+    vbH - (offY + (y - minY) * scale) // flip Y so track reads naturally
+  ];
+
+  const speedsOnly = points.map(p => p.speed);
+  const minSpeed = Math.min(...speedsOnly), maxSpeed = Math.max(...speedsOnly);
+
+  let segments = '';
+  for (let i = 0; i < points.length - 1; i++) {
+    const [x1, y1] = toSvg(points[i].x, points[i].y);
+    const [x2, y2] = toSvg(points[i + 1].x, points[i + 1].y);
+    const avgSpeed = (points[i].speed + points[i + 1].speed) / 2;
+    const t = (avgSpeed - minSpeed) / ((maxSpeed - minSpeed) || 1);
+    segments += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${speedColor(t)}" stroke-width="6" stroke-linecap="round" />`;
+  }
+
+  // mark start/finish (first point) and top-speed point
+  const [startX, startY] = toSvg(points[0].x, points[0].y);
+  const topSpeedPoint = points.reduce((a, b) => (a.speed > b.speed ? a : b));
+  const [topX, topY] = toSvg(topSpeedPoint.x, topSpeedPoint.y);
+
+  const svg = document.getElementById('trackSvg');
+  svg.innerHTML = `
+    ${segments}
+    <circle cx="${startX.toFixed(1)}" cy="${startY.toFixed(1)}" r="9" fill="#0a0a0c" stroke="#fff" stroke-width="2" />
+    <text x="${startX.toFixed(1)}" y="${(startY - 14).toFixed(1)}" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">START/FINISH</text>
+    <circle cx="${topX.toFixed(1)}" cy="${topY.toFixed(1)}" r="7" fill="#fff" stroke="#e10600" stroke-width="3" />
+    <text x="${topX.toFixed(1)}" y="${(topY - 14).toFixed(1)}" fill="#fff" font-size="13" font-weight="900" text-anchor="middle">${Math.round(topSpeedPoint.speed)} km/h</text>
+  `;
+
+  document.getElementById('speedMinLabel').textContent = `${Math.round(minSpeed)} km/h`;
+  document.getElementById('speedMaxLabel').textContent = `${Math.round(maxSpeed)} km/h`;
+  document.getElementById('trackHeading').textContent = `Baanlayout — ${meeting.circuit_short_name || meeting.meeting_name}`;
+
+  const avgSpeedAll = speedsOnly.reduce((a, b) => a + b, 0) / speedsOnly.length;
+  const tiles = [
+    { label: 'Topsnelheid', value: `${Math.round(maxSpeed)} km/h` },
+    { label: 'Laagste snelheid', value: `${Math.round(minSpeed)} km/h` },
+    { label: 'Gem. snelheid', value: `${Math.round(avgSpeedAll)} km/h` },
+    { label: 'Rondetijd', value: fmtLap(fastest.lap_duration) },
+    { label: 'Circuit', value: meeting.circuit_short_name || '–' },
+    { label: 'Land', value: meeting.country_name || '–' }
+  ];
+  document.getElementById('statGrid').innerHTML = tiles.map(t =>
+    `<div class="stat-tile"><div class="label">${t.label}</div><div class="value">${t.value}</div></div>`).join('');
+
+  document.getElementById('trackCard').style.display = 'block';
+}
+</script>
+</body>
+</html>

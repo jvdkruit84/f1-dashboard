@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coureur — F1 Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --surface-1: #15151e;
+    --page: #0a0a0c;
+    --ink-primary: #ffffff;
+    --ink-secondary: #9a9aa2;
+    --ink-muted: #6b6b72;
+    --grid: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.12);
+    --accent: #e10600;
+    --good: #19a974;
+    --warn: #ffb800;
+    --critical: #e10600;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Titillium Web', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(ellipse 900px 300px at 50% -80px, rgba(225,6,0,0.10), transparent 70%),
+      var(--page);
+    color: var(--ink-primary);
+    padding: 0 0 32px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- top navigation ---------- */
+  .topnav { background: #000; border-bottom: 1px solid var(--border); }
+  .topnav-inner {
+    max-width: 1180px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between; height: 56px;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+  .brand-mark {
+    background: var(--accent); color: #fff; font-weight: 900; font-size: 13px;
+    padding: 3px 7px; border-radius: 3px; letter-spacing: 0.01em; font-style: italic;
+  }
+  .brand-text { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-secondary); }
+  .nav-links { display: flex; gap: 28px; height: 100%; }
+  .nav-link {
+    display: flex; align-items: center; height: 100%;
+    color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent;
+    transition: color 0.15s;
+  }
+  .nav-link:hover { color: var(--ink-primary); }
+  .nav-link.active { color: var(--ink-primary); border-bottom-color: var(--accent); }
+  @media (max-width: 640px) { .nav-links { gap: 14px; } .brand-text { display: none; } }
+
+  /* ---------- breadcrumb ---------- */
+  .breadcrumb {
+    max-width: 1180px; margin: 0 auto; padding: 14px 24px 0;
+    font-size: 12px; color: var(--ink-muted);
+  }
+  .breadcrumb a { color: var(--ink-secondary); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--ink-primary); }
+
+  /* ---------- driver hero ---------- */
+  .driver-hero {
+    position: relative; overflow: hidden;
+    background: linear-gradient(120deg, var(--card-color, #1a1a1e) 0%, #0a0a0c 65%);
+    border-bottom: 1px solid var(--border);
+    margin-top: 12px;
+  }
+  .driver-hero::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 40px);
+    pointer-events: none;
+  }
+  .driver-hero-inner {
+    max-width: 1180px; margin: 0 auto; position: relative;
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;
+    padding: 26px 24px 0;
+  }
+  .driver-hero-info { padding-bottom: 24px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 8px;
+  }
+  .eyebrow::before { content: ""; width: 16px; height: 2px; background: var(--accent); display: inline-block; }
+  h1 { font-size: 32px; font-weight: 900; text-transform: uppercase; margin: 0 0 2px; letter-spacing: -0.01em; line-height: 1.02; }
+  .driver-team { color: var(--ink-secondary); font-size: 14px; }
+  .driver-badges { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .badge { background: rgba(0,0,0,0.35); border: 1px solid var(--border); border-radius: 4px; padding: 7px 14px; min-width: 64px; }
+  .badge .label { font-size: 9px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+  .badge .value { font-size: 18px; font-weight: 900; margin-top: 1px; }
+  .driver-hero-photo { position: relative; width: 200px; height: 190px; flex: none; display: flex; align-items: flex-end; justify-content: center; }
+  .driver-hero-photo img { height: 215px; width: auto; object-fit: cover; position: relative; z-index: 1; }
+  .num-giant {
+    position: absolute; right: -6px; bottom: -14px; font-size: 130px; font-weight: 900; font-style: italic;
+    color: rgba(255,255,255,0.10); line-height: 1; z-index: 0; white-space: nowrap;
+  }
+  @media (max-width: 640px) { .driver-hero-inner { flex-direction: column; align-items: flex-start; } .driver-hero-photo { align-self: center; } }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-secondary); margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+
+  .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; }
+  label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-secondary); margin-bottom: 6px; }
+  select, button {
+    width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 4px;
+    border: 1px solid var(--border); background: var(--page); color: var(--ink-primary); font-family: inherit;
+  }
+  button {
+    background: var(--accent); color: #fff; border: 1px solid var(--accent); cursor: pointer;
+    font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.88; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  #status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; margin-top: 10px; }
+  #status.error { color: var(--critical); }
+
+  .chart-wrap { position: relative; height: 360px; }
+  .chart-caption { font-size: 11px; color: var(--ink-muted); margin-top: 8px; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 10px; }
+  .stat-tile { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .stat-tile .label { font-size: 11px; color: var(--ink-muted); }
+  .stat-tile .value { font-size: 18px; font-weight: 700; margin-top: 2px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  thead th {
+    color: var(--ink-secondary); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    position: sticky; top: 0; background: var(--surface-1); border-bottom: 1px solid var(--border);
+  }
+  tbody tr { transition: background 0.1s; }
+  tbody tr:hover { background: rgba(255,255,255,0.04); }
+  tbody tr.pit-row { color: var(--accent); }
+  .table-scroll { max-height: 360px; overflow-y: auto; overflow-x: auto; }
+
+  .stint-track { display: flex; height: 22px; border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
+  .stint-seg { display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: rgba(0,0,0,0.65); }
+  .legend-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 12px; }
+  .legend-row .item { display: flex; align-items: center; gap: 6px; }
+  .legend-row .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+
+  footer.site-footer {
+    max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0;
+    border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px;
+  }
+
+  .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
+  .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
+  @media (max-width: 860px) {
+    .nav-toggle { display: flex; }
+    .topnav { position: relative; }
+    .nav-links {
+      display: none; position: absolute; top: 56px; left: 0; right: 0;
+      background: #000; border-bottom: 1px solid var(--border);
+      flex-direction: column; gap: 0; height: auto; padding: 8px 0; z-index: 50;
+    }
+    .nav-links.open { display: flex; }
+    .nav-link { height: auto; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-link.active { border-left-color: var(--accent); }
+    .brand-text { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="topnav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">F1</span>
+      <span class="brand-text">Dashboard</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="results.html">Resultaten</a>
+      <a class="nav-link active" href="drivers.html">Coureurs</a>
+      <a class="nav-link" href="history.html">Historie</a>
+      <a class="nav-link" href="head2head.html">Head-to-head</a>
+      <a class="nav-link" href="records.html">Hall of Fame</a>
+      <a class="nav-link" href="circuit.html">Circuit</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('navToggle').addEventListener('click', function() {
+    var nl = document.getElementById('navLinks');
+    var open = nl.classList.toggle('open');
+    this.setAttribute('aria-expanded', open);
+  });
+</script>
+
+<div class="breadcrumb"><a href="drivers.html">← Alle coureurs</a></div>
+
+<div class="driver-hero" id="driverHero">
+  <div class="driver-hero-inner">
+    <div class="driver-hero-info">
+      <div class="eyebrow">OpenF1 · Onofficieel</div>
+      <h1 id="driverName">Coureur</h1>
+      <div class="driver-team" id="driverTeam">—</div>
+      <div class="driver-badges" id="driverBadges">
+        <div class="badge"><div class="label">Positie</div><div class="value">–</div></div>
+        <div class="badge"><div class="label">Punten</div><div class="value">–</div></div>
+      </div>
+    </div>
+    <div class="driver-hero-photo">
+      <div class="num-giant" id="driverNumGiant">–</div>
+      <img id="driverPhoto" src="" alt="" style="display:none;" onerror="this.style.display='none'">
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>Sessie</h2>
+    <div class="controls-grid">
+      <div>
+        <label for="yearSelect">Jaar</label>
+        <select id="yearSelect"></select>
+      </div>
+      <div>
+        <label for="meetingSelect">Grand Prix</label>
+        <select id="meetingSelect"><option>Laden…</option></select>
+      </div>
+      <div>
+        <label for="sessionSelect">Sessie</label>
+        <select id="sessionSelect"><option>Laden…</option></select>
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button id="loadBtn">Ophalen</button>
+      </div>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div class="card">
+    <h2>Statistieken (geselecteerde sessie)</h2>
+    <div class="stat-grid" id="statGrid"></div>
+  </div>
+
+  <div class="card">
+    <h2>Rondetijden</h2>
+    <div class="chart-wrap"><canvas id="lapChart"></canvas></div>
+    <div class="chart-caption" id="chartCaption"></div>
+    <div class="legend-row"><div class="item">▲ = pitstop</div></div>
+  </div>
+
+  <div class="card" id="stintCard" style="display:none;">
+    <h2>Bandenstrategie</h2>
+    <div class="stint-track" id="stintTrack"></div>
+    <div class="legend-row" id="stintLegend"></div>
+  </div>
+
+  <div class="card">
+    <h2>Rondetijden-tabel</h2>
+    <div class="table-scroll">
+      <table id="lapTable">
+        <thead><tr><th>Ronde</th><th>Tijd</th><th>Sector 1</th><th>Sector 2</th><th>Sector 3</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer class="site-footer">Data via de gratis <a href="https://openf1.org/docs" target="_blank" rel="noopener" style="color:inherit;">OpenF1 API</a> — onofficieel project, geen affiliatie met Formula 1®.</footer>
+
+</div>
+
+<script>
+const API = 'https://api.openf1.org/v1';
+
+let lastCallAt = 0;
+async function apiGet(path, attempt = 0) {
+  const minGap = 360;
+  const wait = Math.max(0, minGap - (Date.now() - lastCallAt));
+  if (wait) await sleep(wait);
+  lastCallAt = Date.now();
+  let res;
+  try {
+    res = await fetch(`${API}/${path}`);
+  } catch (e) {
+    throw new Error('Netwerkfout — kon de OpenF1 API niet bereiken.');
+  }
+  if (res.status === 429 && attempt < 6) {
+    await sleep(800 * (attempt + 1));
+    return apiGet(path, attempt + 1);
+  }
+  if (!res.ok) throw new Error(`API-fout ${res.status} bij ${path}`);
+  return res.json();
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function fmtLap(sec) {
+  if (sec == null || isNaN(sec)) return '–';
+  const m = Math.floor(sec / 60);
+  const s = (sec % 60).toFixed(3).padStart(6, '0');
+  return `${m}:${s}`;
+}
+function fmtSector(sec) { return sec == null || isNaN(sec) ? '–' : sec.toFixed(3); }
+function setStatus(msg, isError) {
+  const el = document.getElementById('status');
+  el.textContent = msg || '';
+  el.classList.toggle('error', !!isError);
+}
+function getVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888'; }
+
+const COMPOUND_COLORS = {
+  SOFT: '#e34948', MEDIUM: '#eda100', HARD: '#f1f1ee',
+  INTERMEDIATE: '#1baf7a', WET: '#2a78d6', UNKNOWN: '#898781'
+};
+
+/* ---------- URL params ---------- */
+const params = new URLSearchParams(location.search);
+const DRIVER_NUMBER = Number(params.get('number'));
+const INIT_YEAR = params.get('year');
+const INIT_MEETING = params.get('meeting');
+const INIT_SESSION = params.get('session');
+
+if (!DRIVER_NUMBER) {
+  document.body.innerHTML = '<div class="wrap" style="padding-top:40px;"><p>Geen coureur opgegeven. <a href="drivers.html" style="color:var(--accent);">Ga terug naar het coureursoverzicht.</a></p></div>';
+  throw new Error('missing driver number');
+}
+
+const yearSelect = document.getElementById('yearSelect');
+const meetingSelect = document.getElementById('meetingSelect');
+const sessionSelect = document.getElementById('sessionSelect');
+const loadBtn = document.getElementById('loadBtn');
+const state = { meetings: [], sessions: [] };
+let chart = null;
+
+(function initYears() {
+  const years = [2026, 2025, 2024, 2023];
+  yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+  yearSelect.value = years.includes(Number(INIT_YEAR)) ? INIT_YEAR : years[0];
+})();
+
+yearSelect.addEventListener('change', () => loadMeetings());
+meetingSelect.addEventListener('change', () => loadSessions());
+sessionSelect.addEventListener('change', () => loadAndRender());
+loadBtn.addEventListener('click', () => loadAndRender());
+
+loadMeetings(INIT_MEETING, INIT_SESSION);
+
+async function loadMeetings(preselectMeeting, preselectSession) {
+  setStatus('Grand Prix-weekenden laden…');
+  meetingSelect.innerHTML = '<option>Laden…</option>';
+  try {
+    const data = await apiGet(`meetings?year=${yearSelect.value}`);
+    data.sort((a, b) => new Date(b.date_start) - new Date(a.date_start));
+    state.meetings = data;
+    meetingSelect.innerHTML = data.map(m =>
+      `<option value="${m.meeting_key}">${m.meeting_name} — ${new Date(m.date_start).toLocaleDateString('nl-NL')}</option>`
+    ).join('');
+    if (preselectMeeting && data.some(m => String(m.meeting_key) === String(preselectMeeting))) {
+      meetingSelect.value = preselectMeeting;
+    }
+    setStatus('');
+    await loadSessions(preselectSession);
+  } catch (e) {
+    setStatus(e.message, true);
+  }
+}
+
+async function loadSessions(preselectSession) {
+  setStatus('Sessies laden…');
+  sessionSelect.innerHTML = '<option>Laden…</option>';
+  try {
+    const data = await apiGet(`sessions?meeting_key=${meetingSelect.value}`);
+    data.sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+    state.sessions = data;
+    sessionSelect.innerHTML = data.map(s =>
+      `<option value="${s.session_key}" data-name="${s.session_name}">${s.session_name}</option>`
+    ).join('');
+    if (preselectSession && data.some(s => String(s.session_key) === String(preselectSession))) {
+      sessionSelect.value = preselectSession;
+    } else {
+      const raceOpt = Array.from(sessionSelect.options).find(o => o.dataset.name === 'Race');
+      if (raceOpt) sessionSelect.value = raceOpt.value;
+    }
+    setStatus('');
+    await loadAndRender();
+  } catch (e) {
+    setStatus(e.message, true);
+  }
+}
+
+async function loadAndRender() {
+  const sessionKey = sessionSelect.value;
+  const meeting = state.meetings.find(m => String(m.meeting_key) === String(meetingSelect.value));
+  const session = state.sessions.find(s => String(s.session_key) === String(sessionKey));
+  if (!sessionKey || !meeting || !session) return;
+
+  loadBtn.disabled = true;
+  setStatus('Coureurgegevens laden…');
+  try {
+    const drivers = await apiGet(`drivers?session_key=${sessionKey}`);
+    const driver = drivers.find(d => d.driver_number === DRIVER_NUMBER);
+
+    if (!driver) {
+      setStatus(`Deze coureur reed niet mee in ${meeting.meeting_name} — ${session.session_name}.`, true);
+      clearViews();
+      loadBtn.disabled = false;
+      return;
+    }
+
+    renderHero(driver);
+
+    setStatus('Rondetijden, banden en WK-stand ophalen…');
+    const [laps, pit, stints, results, champDrivers] = await Promise.all([
+      apiGet(`laps?session_key=${sessionKey}&driver_number=${DRIVER_NUMBER}`),
+      apiGet(`pit?session_key=${sessionKey}&driver_number=${DRIVER_NUMBER}`),
+      apiGet(`stints?session_key=${sessionKey}&driver_number=${DRIVER_NUMBER}`),
+      apiGet(`session_result?session_key=${sessionKey}&driver_number=${DRIVER_NUMBER}`).catch(() => []),
+      apiGet(`championship_drivers?session_key=${sessionKey}`).catch(() => [])
+    ]);
+
+    renderBadges(champDrivers.find(c => c.driver_number === DRIVER_NUMBER));
+    renderChart(driver, laps, pit);
+    renderTable(laps, pit);
+    renderStints(stints);
+    renderStats(laps, results[0]);
+
+    setStatus(`${meeting.meeting_name} (${meeting.year}) — ${session.session_name}.`);
+  } catch (e) {
+    setStatus(e.message, true);
+  } finally {
+    loadBtn.disabled = false;
+  }
+}
+
+function clearViews() {
+  if (chart) { chart.destroy(); chart = null; }
+  document.getElementById('lapTable').querySelector('tbody').innerHTML = '';
+  document.getElementById('statGrid').innerHTML = '';
+  document.getElementById('stintCard').style.display = 'none';
+}
+
+function renderHero(driver) {
+  const color = '#' + (driver.team_colour || '898781');
+  document.getElementById('driverHero').style.setProperty('--card-color', color);
+  document.getElementById('driverName').textContent = driver.full_name || driver.broadcast_name || driver.name_acronym;
+  document.getElementById('driverTeam').textContent = `${driver.team_name || '–'} · #${driver.driver_number}${driver.country_code ? ' · ' + driver.country_code : ''}`;
+  document.getElementById('driverNumGiant').textContent = driver.driver_number;
+  const photo = document.getElementById('driverPhoto');
+  if (driver.headshot_url) {
+    photo.src = driver.headshot_url;
+    photo.alt = driver.full_name || driver.broadcast_name;
+    photo.style.display = 'block';
+  } else {
+    photo.style.display = 'none';
+  }
+  document.title = `${driver.name_acronym} — F1 Dashboard`;
+}
+
+function renderBadges(standing) {
+  document.getElementById('driverBadges').innerHTML = standing
+    ? `<div class="badge"><div class="label">Positie</div><div class="value">${standing.position_current}</div></div>
+       <div class="badge"><div class="label">Punten</div><div class="value">${standing.points_current.toFixed(0)}</div></div>`
+    : `<div class="badge"><div class="label">Positie</div><div class="value">–</div></div>
+       <div class="badge"><div class="label">Punten</div><div class="value">–</div></div>`;
+}
+
+function renderChart(driver, laps, pit) {
+  const ctx = document.getElementById('lapChart');
+  const color = '#' + (driver.team_colour || '898781');
+  const clean = laps.filter(l => l.lap_duration != null && !l.is_pit_out_lap).map(l => l.lap_duration);
+  const points = laps.filter(l => l.lap_duration != null).map(l => ({ x: l.lap_number, y: l.is_pit_out_lap ? null : l.lap_duration }));
+
+  const pitLapNums = new Set(pit.map(p => p.lap_number));
+  const pitPoints = laps.filter(l => pitLapNums.has(l.lap_number) && l.lap_duration != null).map(l => ({ x: l.lap_number, y: l.lap_duration }));
+
+  clean.sort((a, b) => a - b);
+  const median = clean.length ? clean[Math.floor(clean.length / 2)] : 90;
+  const yMin = Math.floor(median * 0.92);
+  const yMax = Math.ceil(median * 1.25);
+
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [
+        { label: driver.name_acronym, data: points, borderColor: color, backgroundColor: color, borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0, spanGaps: false },
+        { label: 'Pitstop', data: pitPoints, borderColor: color, backgroundColor: color, showLine: false, pointStyle: 'triangle', pointRadius: 6, pointHoverRadius: 8 }
+      ]
+    },
+    options: {
+      animation: false,
+      maintainAspectRatio: false,
+      interaction: { mode: 'nearest', intersect: false },
+      scales: {
+        x: { type: 'linear', title: { display: true, text: 'Ronde', color: getVar('--ink-secondary') }, grid: { color: getVar('--grid') }, ticks: { color: getVar('--ink-muted'), precision: 0 } },
+        y: { min: yMin, max: yMax, title: { display: true, text: 'Rondetijd', color: getVar('--ink-secondary') }, grid: { color: getVar('--grid') }, ticks: { color: getVar('--ink-muted'), callback: v => fmtLap(v) } }
+      },
+      plugins: {
+        legend: { labels: { color: getVar('--ink-secondary') } },
+        tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.dataset.label === 'Pitstop' ? '' : 'ronde ' + c.parsed.x + ' — '}${fmtLap(c.parsed.y)}` } }
+      }
+    }
+  });
+
+  document.getElementById('chartCaption').textContent = laps.length
+    ? `Y-as begrensd rond de mediaan-rondetijd (${fmtLap(median)}). ▲ markeert de ronde met pitstop.`
+    : 'Geen rondetijden beschikbaar voor deze sessie.';
+}
+
+function renderTable(laps, pit) {
+  const pitLapNums = new Set(pit.map(p => p.lap_number));
+  const rows = laps.slice().sort((a, b) => a.lap_number - b.lap_number).map(l => `
+    <tr class="${pitLapNums.has(l.lap_number) ? 'pit-row' : ''}">
+      <td>${l.lap_number}${pitLapNums.has(l.lap_number) ? ' ▲' : ''}</td>
+      <td>${fmtLap(l.lap_duration)}</td>
+      <td>${fmtSector(l.duration_sector_1)}</td>
+      <td>${fmtSector(l.duration_sector_2)}</td>
+      <td>${fmtSector(l.duration_sector_3)}</td>
+    </tr>`).join('');
+  document.getElementById('lapTable').querySelector('tbody').innerHTML = rows || '<tr><td colspan="5">Geen rondetijden.</td></tr>';
+}
+
+function renderStints(stints) {
+  const card = document.getElementById('stintCard');
+  if (!stints.length) { card.style.display = 'none'; return; }
+  const maxLap = Math.max(...stints.map(s => s.lap_end || 0), 1);
+  document.getElementById('stintTrack').innerHTML = stints.map(s => {
+    const span = (s.lap_end - s.lap_start + 1) / maxLap * 100;
+    const color = COMPOUND_COLORS[s.compound] || COMPOUND_COLORS.UNKNOWN;
+    const textColor = (s.compound === 'HARD') ? '#333' : 'rgba(0,0,0,0.65)';
+    return `<div class="stint-seg" style="width:${span}%; background:${color}; color:${textColor}" title="${s.compound}, ronde ${s.lap_start}-${s.lap_end}">${s.compound[0]}</div>`;
+  }).join('');
+  document.getElementById('stintLegend').innerHTML = Object.entries(COMPOUND_COLORS).filter(([k]) => k !== 'UNKNOWN').map(([name, color]) =>
+    `<div class="item"><span class="dot" style="background:${color}"></span>${name}</div>`).join('');
+  card.style.display = 'block';
+}
+
+function renderStats(laps, result) {
+  const clean = laps.filter(l => l.lap_duration != null && !l.is_pit_out_lap).map(l => l.lap_duration);
+  const best = clean.length ? Math.min(...clean) : null;
+  const avg = clean.length ? clean.reduce((a, b) => a + b, 0) / clean.length : null;
+  const tiles = [
+    { label: 'Snelste ronde', value: fmtLap(best) },
+    { label: 'Gem. rondetijd', value: fmtLap(avg) },
+    { label: 'Totaal ronden', value: laps.length ? Math.max(...laps.map(l => l.lap_number)) : '–' },
+    { label: 'Eindpositie', value: result ? (result.dnf ? 'DNF' : result.position ?? '–') : '–' },
+    { label: 'Punten (race)', value: result && result.points != null ? result.points.toFixed(0) : '–' }
+  ];
+  document.getElementById('statGrid').innerHTML = tiles.map(t =>
+    `<div class="stat-tile"><div class="label">${t.label}</div><div class="value">${t.value}</div></div>`).join('');
+}
+</script>
+</body>
+</html>

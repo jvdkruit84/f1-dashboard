@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F1 Dashboard — OpenF1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --surface-1: #15151e;
+    --page: #0a0a0c;
+    --ink-primary: #ffffff;
+    --ink-secondary: #9a9aa2;
+    --ink-muted: #6b6b72;
+    --grid: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.12);
+    --accent: #e10600;
+    --good: #19a974;
+    --warn: #ffb800;
+    --critical: #e10600;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Titillium Web', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(ellipse 900px 300px at 50% -80px, rgba(225,6,0,0.10), transparent 70%),
+      var(--page);
+    color: var(--ink-primary);
+    padding: 0 0 32px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- top navigation ---------- */
+  .topnav { background: #000; border-bottom: 1px solid var(--border); }
+  .topnav-inner {
+    max-width: 1180px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between; height: 56px;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+  .brand-mark {
+    background: var(--accent); color: #fff; font-weight: 900; font-size: 13px;
+    padding: 3px 7px; border-radius: 3px; letter-spacing: 0.01em; font-style: italic;
+  }
+  .brand-text { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-secondary); }
+  .nav-links { display: flex; gap: 28px; height: 100%; }
+  .nav-link {
+    display: flex; align-items: center; height: 100%;
+    color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent;
+    transition: color 0.15s;
+  }
+  .nav-link:hover { color: var(--ink-primary); }
+  .nav-link.active { color: var(--ink-primary); border-bottom-color: var(--accent); }
+  @media (max-width: 640px) { .nav-links { gap: 14px; } .brand-text { display: none; } }
+
+  /* ---------- hero ---------- */
+  .hero {
+    position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #000 0%, #0f0f12 60%, #1a1a1e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 40px 24px 28px;
+  }
+  .hero::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 40px);
+    pointer-events: none;
+  }
+  .hero-inner { max-width: 1180px; margin: 0 auto; position: relative; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 10px;
+  }
+  .eyebrow::before { content: ""; width: 16px; height: 2px; background: var(--accent); display: inline-block; }
+  h1 { font-size: 40px; font-weight: 900; text-transform: uppercase; margin: 0 0 6px; letter-spacing: -0.01em; line-height: 1.02; }
+  .subtitle { color: var(--ink-secondary); font-size: 14px; margin-bottom: 0; max-width: 560px; }
+  .subtitle a { color: var(--accent); text-decoration: none; }
+  .subtitle a:hover { text-decoration: underline; }
+  .hero-cta { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+  .btn-link {
+    display: inline-block; padding: 11px 20px; border-radius: 4px; font-weight: 700; font-size: 12px;
+    text-transform: uppercase; letter-spacing: 0.04em; text-decoration: none; transition: opacity 0.15s, border-color 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-ghost { background: transparent; color: var(--ink-primary); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--ink-secondary); }
+
+  /* ---------- next session strip ---------- */
+  .next-bar {
+    background: var(--surface-1); border-bottom: 1px solid var(--border);
+  }
+  .next-bar-inner {
+    max-width: 1180px; margin: 0 auto; padding: 10px 24px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    font-size: 12px;
+  }
+  .next-bar .label { color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; font-size: 10px; }
+  .next-bar .race-name { font-weight: 700; margin-left: 8px; }
+  .next-bar .countdown { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--accent); }
+
+  .wrap { padding-top: 24px; }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-secondary); margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .card h2 a { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: none; color: var(--accent); text-decoration: none; }
+  .card h2 a:hover { text-decoration: underline; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 760px) { .two-col { grid-template-columns: 1fr; } }
+
+  #status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; }
+  #status.error { color: var(--critical); }
+
+  /* ---------- on this day ---------- */
+  .otd-item { display: flex; align-items: baseline; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--grid); }
+  .otd-item:last-child { border-bottom: none; }
+  .otd-year { font-size: 20px; font-weight: 900; font-style: italic; color: var(--accent); width: 58px; flex: none; }
+  .otd-body { flex: 1; font-size: 13px; }
+  .otd-body .race { font-weight: 700; }
+  .otd-body .meta { color: var(--ink-muted); font-size: 11px; margin-top: 2px; }
+  .otd-approx { font-size: 11px; color: var(--ink-muted); margin-bottom: 8px; }
+
+  /* ---------- podium ---------- */
+  .podium-item { display: flex; align-items: center; gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--grid); }
+  .podium-item:last-child { border-bottom: none; }
+  .podium-pos { font-size: 20px; font-weight: 900; width: 26px; color: var(--ink-muted); font-style: italic; flex: none; }
+  .podium-item:nth-child(1) .podium-pos { color: var(--accent); }
+  .podium-driver { flex: 1; }
+  .podium-driver .name { font-weight: 700; font-size: 14px; }
+  .podium-driver .team { font-size: 11px; color: var(--ink-muted); }
+  .podium-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .podium-time { font-variant-numeric: tabular-nums; font-size: 12px; color: var(--ink-secondary); text-align: right; }
+
+  /* ---------- standings mini table ---------- */
+  table.mini { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.mini th, table.mini td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--grid); }
+  table.mini th:last-child, table.mini td:last-child { text-align: right; }
+  table.mini thead th {
+    color: var(--ink-secondary); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  /* ---------- driver grid (teaser, shared markup with drivers.html) ---------- */
+  .driver-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+  .driver-card {
+    background: var(--page); border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+    position: relative; transition: border-color 0.15s, transform 0.15s;
+    display: block; text-decoration: none; color: inherit;
+  }
+  .driver-card:hover { border-color: var(--ink-secondary); transform: translateY(-2px); }
+  .driver-card .accent-bar { height: 4px; background: var(--card-color, var(--accent)); }
+  .driver-card .photo-wrap {
+    background: linear-gradient(165deg, var(--card-color, #222) 0%, #0a0a0c 85%);
+    display: flex; align-items: flex-end; justify-content: center; height: 120px; overflow: hidden; position: relative;
+  }
+  .driver-card .photo-wrap img { height: 132px; width: auto; object-fit: cover; object-position: top center; }
+  .driver-card .num-watermark {
+    position: absolute; top: 6px; right: 8px; font-size: 34px; font-weight: 900; font-style: italic;
+    color: rgba(255,255,255,0.14); line-height: 1; pointer-events: none;
+  }
+  .driver-card .info { padding: 10px 12px 12px; }
+  .driver-card .d-name { font-weight: 700; font-size: 12px; text-transform: uppercase; line-height: 1.2; }
+  .driver-card .d-team { font-size: 10px; color: var(--ink-secondary); margin-top: 2px; }
+  .driver-card .d-stats {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);
+  }
+  .driver-card .d-pos { font-size: 15px; font-weight: 900; color: var(--ink-primary); }
+  .driver-card .d-pos span, .driver-card .d-pts span { font-size: 9px; color: var(--ink-muted); font-weight: 700; display: block; text-transform: uppercase; letter-spacing: 0.03em; }
+  .driver-card .d-pts { font-size: 13px; font-weight: 700; text-align: right; }
+
+  footer.site-footer {
+    max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0;
+    border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px;
+  }
+
+  .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
+  .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
+  @media (max-width: 860px) {
+    .nav-toggle { display: flex; }
+    .topnav { position: relative; }
+    .nav-links {
+      display: none; position: absolute; top: 56px; left: 0; right: 0;
+      background: #000; border-bottom: 1px solid var(--border);
+      flex-direction: column; gap: 0; height: auto; padding: 8px 0; z-index: 50;
+    }
+    .nav-links.open { display: flex; }
+    .nav-link { height: auto; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-link.active { border-left-color: var(--accent); }
+    .brand-text { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="topnav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">F1</span>
+      <span class="brand-text">Dashboard</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a class="nav-link active" href="index.html">Home</a>
+      <a class="nav-link" href="results.html">Resultaten</a>
+      <a class="nav-link" href="drivers.html">Coureurs</a>
+      <a class="nav-link" href="history.html">Historie</a>
+      <a class="nav-link" href="head2head.html">Head-to-head</a>
+      <a class="nav-link" href="records.html">Hall of Fame</a>
+      <a class="nav-link" href="circuit.html">Circuit</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('navToggle').addEventListener('click', function() {
+    var nl = document.getElementById('navLinks');
+    var open = nl.classList.toggle('open');
+    this.setAttribute('aria-expanded', open);
+  });
+</script>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">OpenF1 · Onofficieel</div>
+    <h1>Formule 1 Dashboard</h1>
+    <div class="subtitle">Rondetijden, bandenstrategie, weer en WK-standen — live opgehaald via de gratis <a href="https://openf1.org/docs" target="_blank" rel="noopener">OpenF1 API</a>, geen API-key nodig.</div>
+    <div class="hero-cta">
+      <a class="btn-link btn-primary" href="results.html">Bekijk resultaten</a>
+      <a class="btn-link btn-ghost" href="drivers.html">Bekijk coureurs</a>
+    </div>
+  </div>
+</div>
+
+<div class="next-bar">
+  <div class="next-bar-inner" id="nextBar">
+    <div><span class="label">Volgende sessie</span> <span class="race-name">laden…</span></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div id="status"></div>
+
+  <div class="card" id="otdCard" style="display:none;">
+    <h2>Op deze dag in de F1 <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-muted);" id="otdDateLabel"></span></h2>
+    <div id="otdList">Laden…</div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <h2>Laatste race <a href="results.html">Volledige rondetijden →</a></h2>
+      <div id="podium">Laden…</div>
+    </div>
+    <div class="card">
+      <h2>WK-stand (top 5) <a href="drivers.html">Alle coureurs →</a></h2>
+      <table class="mini" id="standingsMini"></table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Coureurs <a href="drivers.html">Volledig overzicht →</a></h2>
+    <div class="driver-grid" id="driverTeaser"></div>
+  </div>
+
+  <footer class="site-footer">Data via de gratis <a href="https://openf1.org/docs" target="_blank" rel="noopener" style="color:inherit;">OpenF1 API</a> — onofficieel project, geen affiliatie met Formula 1®.</footer>
+
+</div>
+
+<script>
+const API = 'https://api.openf1.org/v1';
+const SEASON_YEARS = [2026, 2025, 2024, 2023];
+
+let lastCallAt = 0;
+async function apiGet(path, attempt = 0) {
+  const minGap = 360;
+  const wait = Math.max(0, minGap - (Date.now() - lastCallAt));
+  if (wait) await sleep(wait);
+  lastCallAt = Date.now();
+  let res;
+  try {
+    res = await fetch(`${API}/${path}`);
+  } catch (e) {
+    throw new Error('Netwerkfout — kon de OpenF1 API niet bereiken.');
+  }
+  if (res.status === 429 && attempt < 6) {
+    await sleep(800 * (attempt + 1));
+    return apiGet(path, attempt + 1);
+  }
+  if (!res.ok) throw new Error(`API-fout ${res.status} bij ${path}`);
+  return res.json();
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function setStatus(msg, isError) {
+  const el = document.getElementById('status');
+  el.textContent = msg || '';
+  el.classList.toggle('error', !!isError);
+}
+/* ---------- Jolpica-F1 (separate host/throttle, used for "op deze dag") ---------- */
+const JOLPICA_API = 'https://api.jolpi.ca/ergast/f1';
+const OTD_CACHE_KEY = 'f1dash_races_calendar_v1';
+let jolpicaLastCallAt = 0;
+async function jolpicaGet(path, attempt = 0) {
+  const minGap = 280;
+  const wait = Math.max(0, minGap - (Date.now() - jolpicaLastCallAt));
+  if (wait) await sleep(wait);
+  jolpicaLastCallAt = Date.now();
+  let res;
+  try {
+    res = await fetch(`${JOLPICA_API}/${path}`);
+  } catch (e) {
+    throw new Error('Netwerkfout — kon de Jolpica-F1 API niet bereiken.');
+  }
+  if (res.status === 429 && attempt < 6) {
+    await sleep(800 * (attempt + 1));
+    return jolpicaGet(path, attempt + 1);
+  }
+  if (!res.ok) throw new Error(`API-fout ${res.status} bij ${path}`);
+  return res.json();
+}
+
+async function fetchFullRaceCalendar() {
+  const cached = JSON.parse(localStorage.getItem(OTD_CACHE_KEY) || 'null');
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  if (cached && (Date.now() - cached.fetchedAt) < weekMs) return cached.races;
+
+  let offset = 0, total = Infinity, all = [];
+  while (offset < total) {
+    const data = await jolpicaGet(`races.json?limit=100&offset=${offset}`);
+    total = Number(data.MRData.total);
+    const races = data.MRData.RaceTable.Races.map(r => ({
+      season: r.season, round: r.round, raceName: r.raceName,
+      circuitName: r.Circuit.circuitName, country: r.Circuit.Location.country,
+      date: r.date
+    }));
+    all = all.concat(races);
+    if (!races.length) break;
+    offset += races.length;
+  }
+  localStorage.setItem(OTD_CACHE_KEY, JSON.stringify({ fetchedAt: Date.now(), races: all }));
+  return all;
+}
+
+function dayOfYear(month, day) {
+  return new Date(2001, month - 1, day).getTime() / 86400000;
+}
+
+async function loadOnThisDay() {
+  const card = document.getElementById('otdCard');
+  const list = document.getElementById('otdList');
+  try {
+    const races = await fetchFullRaceCalendar();
+    const now = new Date();
+    const todayMonth = now.getMonth() + 1, todayDate = now.getDate();
+
+    let matches = races.filter(r => {
+      const d = new Date(r.date);
+      return (d.getMonth() + 1) === todayMonth && d.getDate() === todayDate;
+    });
+
+    let approx = false;
+    if (!matches.length) {
+      approx = true;
+      const targetDoy = dayOfYear(todayMonth, todayDate);
+      let best = Infinity;
+      races.forEach(r => {
+        const d = new Date(r.date);
+        const doy = dayOfYear(d.getMonth() + 1, d.getDate());
+        let dist = Math.abs(doy - targetDoy);
+        dist = Math.min(dist, 365 - dist);
+        if (dist < best) best = dist;
+      });
+      matches = races.filter(r => {
+        const d = new Date(r.date);
+        const doy = dayOfYear(d.getMonth() + 1, d.getDate());
+        let dist = Math.abs(doy - targetDoy);
+        dist = Math.min(dist, 365 - dist);
+        return dist === best;
+      });
+    }
+
+    matches.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const top = matches.slice(0, 4);
+
+    const winners = await Promise.all(top.map(r =>
+      jolpicaGet(`${r.season}/${r.round}/results/1.json`).catch(() => null)
+    ));
+
+    document.getElementById('otdDateLabel').textContent =
+      `— ${now.toLocaleDateString('nl-NL', { day: '2-digit', month: 'long' })}`;
+
+    list.innerHTML = (approx ? `<div class="otd-approx">Geen race exact op deze datum — dichtstbijzijnde racedag in de kalender:</div>` : '') +
+      top.map((r, i) => {
+        const res = winners[i]?.MRData?.RaceTable?.Races?.[0]?.Results?.[0];
+        const winner = res ? `${res.Driver.givenName} ${res.Driver.familyName} (${res.Constructor.name})` : null;
+        return `<div class="otd-item">
+          <div class="otd-year">${r.season}</div>
+          <div class="otd-body">
+            <div class="race">${r.raceName}</div>
+            <div class="meta">${r.circuitName}, ${r.country}${winner ? ' — winnaar: ' + winner : ''}</div>
+          </div>
+        </div>`;
+      }).join('');
+
+    card.style.display = 'block';
+  } catch (e) {
+    card.style.display = 'none';
+  }
+}
+
+function fmtDuration(sec) {
+  if (sec == null || isNaN(sec)) return '–';
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = (sec % 60).toFixed(3).padStart(6, '0');
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
+}
+
+/* ---------- find the most recently completed race of a season ---------- */
+async function findLatestCompletedMeeting(year) {
+  const now = new Date();
+  const meetings = (await apiGet(`meetings?year=${year}`))
+    .filter(m => !/pre-season|testing/i.test(m.meeting_name))
+    .filter(m => new Date(m.date_start) < now)
+    .sort((a, b) => new Date(b.date_start) - new Date(a.date_start));
+  for (const m of meetings) {
+    const sessions = await apiGet(`sessions?meeting_key=${m.meeting_key}`);
+    const race = sessions.find(s => s.session_name === 'Race');
+    if (!race) continue;
+    const results = await apiGet(`session_result?session_key=${race.session_key}`).catch(() => []);
+    if (results.length) return { meeting: m, session: race, results };
+  }
+  return null;
+}
+
+async function findLatestCompletedMeetingAnyYear() {
+  for (const year of SEASON_YEARS) {
+    const found = await findLatestCompletedMeeting(year);
+    if (found) return { ...found, year };
+  }
+  return null;
+}
+
+/* ---------- next upcoming session ---------- */
+async function findNextSession(year) {
+  const now = new Date();
+  const meetings = (await apiGet(`meetings?year=${year}`))
+    .filter(m => new Date(m.date_start) > new Date(now.getTime() - 4 * 86400000))
+    .sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+  for (const m of meetings) {
+    const sessions = await apiGet(`sessions?meeting_key=${m.meeting_key}`);
+    const upcoming = sessions.filter(s => new Date(s.date_start) > now).sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+    if (upcoming.length) return { meeting: m, session: upcoming[0] };
+  }
+  return null;
+}
+
+function startCountdown(el, targetDate) {
+  function tick() {
+    const diff = new Date(targetDate) - new Date();
+    if (diff <= 0) { el.textContent = 'Bezig'; return; }
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    el.textContent = d > 0 ? `over ${d}d ${h}u ${m}m` : `over ${h}u ${m}m`;
+  }
+  tick();
+  setInterval(tick, 60000);
+}
+
+/* ---------- driver card markup (shared pattern with drivers.html) ---------- */
+function driverCardHTML(d, standing, year, meetingKey, sessionKey) {
+  const color = '#' + (d.team_colour || '898781');
+  const photo = d.headshot_url
+    ? `<img src="${d.headshot_url}" alt="${d.full_name || d.broadcast_name}" loading="lazy" onerror="this.remove()">`
+    : '';
+  const posBlock = standing
+    ? `<div class="d-pos">${standing.position_current}<span>Pos</span></div>
+       <div class="d-pts">${standing.points_current.toFixed(0)}<span>Pnt</span></div>`
+    : `<div class="d-pos">–<span>Pos</span></div><div class="d-pts">–<span>Pnt</span></div>`;
+  const href = `driver.html?number=${d.driver_number}&year=${year}&meeting=${meetingKey}&session=${sessionKey}`;
+  return `
+    <a class="driver-card" style="--card-color:${color}" href="${href}">
+      <div class="accent-bar"></div>
+      <div class="photo-wrap">
+        <div class="num-watermark">${d.driver_number}</div>
+        ${photo}
+      </div>
+      <div class="info">
+        <div class="d-name">${d.name_acronym}</div>
+        <div class="d-team">${d.team_name || '–'}</div>
+        <div class="d-stats">${posBlock}</div>
+      </div>
+    </a>`;
+}
+
+init();
+loadOnThisDay();
+
+async function init() {
+  setStatus('Laatste race en WK-stand laden…');
+  try {
+    const found = await findLatestCompletedMeetingAnyYear();
+    if (!found) { setStatus('Geen afgeronde races gevonden.', true); return; }
+
+    const [drivers, champDrivers] = await Promise.all([
+      apiGet(`drivers?session_key=${found.session.session_key}`),
+      apiGet(`championship_drivers?session_key=${found.session.session_key}`).catch(() => [])
+    ]);
+    const byNumber = new Map(drivers.map(d => [d.driver_number, d]));
+
+    renderPodium(found, byNumber);
+    renderStandingsMini(champDrivers, byNumber);
+    renderDriverTeaser(drivers, champDrivers, found);
+
+    setStatus('');
+  } catch (e) {
+    setStatus(e.message, true);
+  }
+
+  findNextSession(SEASON_YEARS[0]).then(next => {
+    const bar = document.getElementById('nextBar');
+    if (!next) { bar.innerHTML = '<div><span class="label">Volgende sessie</span> <span class="race-name">seizoen afgelopen</span></div>'; return; }
+    const dateStr = new Date(next.session.date_start).toLocaleDateString('nl-NL', { day: '2-digit', month: 'short' });
+    bar.innerHTML = `
+      <div><span class="label">Volgende</span> <span class="race-name">${next.meeting.meeting_name} — ${next.session.session_name} (${dateStr})</span></div>
+      <div class="countdown" id="countdown"></div>`;
+    startCountdown(document.getElementById('countdown'), next.session.date_start);
+  }).catch(() => {});
+}
+
+function renderPodium(found, byNumber) {
+  const top3 = found.results.filter(r => r.position != null && r.position <= 3).sort((a, b) => a.position - b.position);
+  document.getElementById('podium').innerHTML = `
+    <div style="font-size:12px;color:var(--ink-muted);margin-bottom:10px;">${found.meeting.meeting_name} (${found.year})</div>
+    ${top3.map(r => {
+      const d = byNumber.get(r.driver_number);
+      const color = d ? '#' + (d.team_colour || '898781') : '#898781';
+      const time = r.position === 1 ? fmtDuration(r.duration) : (r.gap_to_leader != null ? `+${r.gap_to_leader.toFixed(3)}s` : '–');
+      return `<div class="podium-item">
+        <div class="podium-pos">${r.position}</div>
+        <div class="podium-driver">
+          <div class="name"><span class="podium-dot" style="background:${color}"></span>${d ? (d.full_name || d.broadcast_name) : '#' + r.driver_number}</div>
+          <div class="team">${d ? d.team_name : ''}</div>
+        </div>
+        <div class="podium-time">${time}</div>
+      </div>`;
+    }).join('')}`;
+}
+
+function renderStandingsMini(champDrivers, byNumber) {
+  const rows = champDrivers.slice().sort((a, b) => a.position_current - b.position_current).slice(0, 5).map(row => {
+    const d = byNumber.get(row.driver_number);
+    const color = d ? '#' + (d.team_colour || '898781') : '#898781';
+    return `<tr>
+      <td>${row.position_current}</td>
+      <td><span class="podium-dot" style="background:${color}"></span>${d ? d.name_acronym : '#' + row.driver_number}</td>
+      <td>${row.points_current.toFixed(0)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('standingsMini').innerHTML =
+    `<thead><tr><th>#</th><th>Coureur</th><th>Punten</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Geen data</td></tr>'}</tbody>`;
+}
+
+function renderDriverTeaser(drivers, champDrivers, found) {
+  const byDriver = new Map(champDrivers.map(c => [c.driver_number, c]));
+  const unique = Array.from(new Map(drivers.map(d => [d.driver_number, d])).values());
+  unique.sort((a, b) => (byDriver.get(a.driver_number)?.position_current ?? 999) - (byDriver.get(b.driver_number)?.position_current ?? 999));
+  document.getElementById('driverTeaser').innerHTML = unique.slice(0, 6)
+    .map(d => driverCardHTML(d, byDriver.get(d.driver_number), found.year, found.meeting.meeting_key, found.session.session_key))
+    .join('');
+}
+</script>
+</body>
+</html>

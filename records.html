@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hall of Fame — F1 Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --surface-1: #15151e;
+    --page: #0a0a0c;
+    --ink-primary: #ffffff;
+    --ink-secondary: #9a9aa2;
+    --ink-muted: #6b6b72;
+    --grid: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.12);
+    --accent: #e10600;
+    --gold: #ffcf40;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Titillium Web', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(ellipse 900px 300px at 50% -80px, rgba(225,6,0,0.10), transparent 70%),
+      var(--page);
+    color: var(--ink-primary);
+    padding: 0 0 32px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  .topnav { background: #000; border-bottom: 1px solid var(--border); }
+  .topnav-inner {
+    max-width: 1180px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between; height: 56px;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+  .brand-mark {
+    background: var(--accent); color: #fff; font-weight: 900; font-size: 13px;
+    padding: 3px 7px; border-radius: 3px; letter-spacing: 0.01em; font-style: italic;
+  }
+  .brand-text { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-secondary); }
+  .nav-links { display: flex; gap: 18px; height: 100%; }
+  .nav-link {
+    display: flex; align-items: center; height: 100%;
+    color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent;
+    transition: color 0.15s; white-space: nowrap;
+  }
+  .nav-link:hover { color: var(--ink-primary); }
+  .nav-link.active { color: var(--ink-primary); border-bottom-color: var(--accent); }
+  @media (max-width: 820px) { .nav-links { gap: 10px; } .brand-text { display: none; } }
+
+  .hero {
+    position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #000 0%, #0f0f12 60%, #1a1a1e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 16px;
+    margin-bottom: 20px;
+  }
+  .hero::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 40px);
+    pointer-events: none;
+  }
+  .hero-inner { max-width: 1180px; margin: 0 auto; position: relative; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 8px;
+  }
+  .eyebrow::before { content: ""; width: 16px; height: 2px; background: var(--accent); display: inline-block; }
+  h1 { font-size: 21px; font-weight: 900; text-transform: uppercase; margin: 0 0 4px; letter-spacing: -0.01em; line-height: 1.05; }
+  .subtitle { color: var(--ink-secondary); font-size: 13px; margin-bottom: 0; }
+  .subtitle a { color: var(--accent); text-decoration: none; }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-secondary); margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+
+  #status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; }
+  #status.error { color: var(--accent); }
+  .progress-bar { height: 3px; background: var(--grid); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+  .progress-bar .fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.2s; }
+
+  .records-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 900px) { .records-grid { grid-template-columns: 1fr; } }
+
+  .rank-row {
+    display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--grid);
+  }
+  .rank-row:last-child { border-bottom: none; }
+  .rank-num { width: 22px; font-size: 14px; font-weight: 900; font-style: italic; color: var(--ink-muted); flex: none; text-align: center; }
+  .rank-row:nth-child(1) .rank-num { color: var(--gold); }
+  .rank-row:nth-child(2) .rank-num { color: #c9ccd1; }
+  .rank-row:nth-child(3) .rank-num { color: #c98a4b; }
+  .rank-name { flex: 1; font-size: 13px; font-weight: 600; }
+  .rank-value { font-size: 15px; font-weight: 900; font-variant-numeric: tabular-nums; }
+
+  footer.site-footer {
+    max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0;
+    border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px;
+  }
+
+  .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
+  .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
+  @media (max-width: 860px) {
+    .nav-toggle { display: flex; }
+    .topnav { position: relative; }
+    .nav-links {
+      display: none; position: absolute; top: 56px; left: 0; right: 0;
+      background: #000; border-bottom: 1px solid var(--border);
+      flex-direction: column; gap: 0; height: auto; padding: 8px 0; z-index: 50;
+    }
+    .nav-links.open { display: flex; }
+    .nav-link { height: auto; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-link.active { border-left-color: var(--accent); }
+    .brand-text { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="topnav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">F1</span>
+      <span class="brand-text">Dashboard</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="results.html">Resultaten</a>
+      <a class="nav-link" href="drivers.html">Coureurs</a>
+      <a class="nav-link" href="history.html">Historie</a>
+      <a class="nav-link" href="head2head.html">Head-to-head</a>
+      <a class="nav-link active" href="records.html">Hall of Fame</a>
+      <a class="nav-link" href="circuit.html">Circuit</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('navToggle').addEventListener('click', function() {
+    var nl = document.getElementById('navLinks');
+    var open = nl.classList.toggle('open');
+    this.setAttribute('aria-expanded', open);
+  });
+</script>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Jolpica-F1 (Ergast) · Onofficieel</div>
+    <h1>Hall of Fame</h1>
+    <div class="subtitle">All-time records sinds 1950, berekend uit de volledige <a href="https://github.com/jolpica/jolpica-f1" target="_blank" rel="noopener">Jolpica-F1</a>-historie — meeste zeges, poles en wereldtitels.</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="card">
+    <div id="status">Laden…</div>
+    <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+  </div>
+
+  <div class="records-grid">
+    <div class="card">
+      <h2>Meeste zeges</h2>
+      <div id="winsList">–</div>
+    </div>
+    <div class="card">
+      <h2>Meeste pole posities</h2>
+      <div id="polesList">–</div>
+    </div>
+    <div class="card">
+      <h2>Meeste wereldtitels</h2>
+      <div id="titlesList">–</div>
+    </div>
+  </div>
+
+  <footer class="site-footer">Historische data via de gratis <a href="https://github.com/jolpica/jolpica-f1" target="_blank" rel="noopener" style="color:inherit;">Jolpica-F1 API</a> (Ergast-compatibel) — onofficieel project, geen affiliatie met Formula 1®. Titels worden client-side berekend uit alle seizoenen en lokaal gecachet.</footer>
+
+</div>
+
+<script>
+const API = 'https://api.jolpi.ca/ergast/f1';
+const CACHE_KEY = 'f1dash_titles_cache_v1';
+
+let lastCallAt = 0;
+async function apiGet(path, attempt = 0) {
+  const minGap = 280;
+  const wait = Math.max(0, minGap - (Date.now() - lastCallAt));
+  if (wait) await sleep(wait);
+  lastCallAt = Date.now();
+  let res;
+  try {
+    res = await fetch(`${API}/${path}`);
+  } catch (e) {
+    throw new Error('Netwerkfout — kon de Jolpica-F1 API niet bereiken.');
+  }
+  if (res.status === 429 && attempt < 6) {
+    await sleep(800 * (attempt + 1));
+    return apiGet(path, attempt + 1);
+  }
+  if (!res.ok) throw new Error(`API-fout ${res.status} bij ${path}`);
+  return res.json();
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function setStatus(msg, isError) {
+  const el = document.getElementById('status');
+  el.textContent = msg || '';
+  el.classList.toggle('error', !!isError);
+}
+function setProgress(pct) { document.getElementById('progressFill').style.width = `${pct}%`; }
+
+/* Jolpica caps the page size at 100 regardless of the requested ?limit, so long
+   result sets (all-time wins/poles, 1000+ races) need manual offset pagination. */
+async function fetchAllPaged(basePath, onProgress) {
+  let offset = 0, total = Infinity, all = [];
+  while (offset < total) {
+    const sep = basePath.includes('?') ? '&' : '?';
+    const data = await apiGet(`${basePath}${sep}limit=100&offset=${offset}`);
+    total = Number(data.MRData.total);
+    const races = data.MRData.RaceTable.Races;
+    all = all.concat(races);
+    if (onProgress) onProgress(all.length, total);
+    if (!races.length) break;
+    offset += races.length;
+  }
+  return all;
+}
+
+function renderRankList(elId, entries, suffix) {
+  const el = document.getElementById(elId);
+  el.innerHTML = entries.slice(0, 10).map((e, i) => `
+    <div class="rank-row">
+      <div class="rank-num">${i + 1}</div>
+      <div class="rank-name">${e.name}</div>
+      <div class="rank-value">${e.count}${suffix || ''}</div>
+    </div>`).join('') || '<div style="color:var(--ink-muted);font-size:12px;">Geen data.</div>';
+}
+
+init();
+
+async function init() {
+  try {
+    const winRaces = await fetchAllPaged('results/1.json', (done, total) => {
+      setStatus(`Winnaars aller tijden ophalen… (${done}/${total})`);
+      setProgress(Math.round((done / total) * 33));
+    });
+    const winsCount = new Map();
+    winRaces.forEach(r => {
+      const res = r.Results && r.Results[0];
+      if (!res) return;
+      const id = res.Driver.driverId;
+      const name = `${res.Driver.givenName} ${res.Driver.familyName}`;
+      winsCount.set(id, { name, count: (winsCount.get(id)?.count || 0) + 1 });
+    });
+    const winsList = Array.from(winsCount.values()).sort((a, b) => b.count - a.count);
+    renderRankList('winsList', winsList, '×');
+
+    const poleRaces = await fetchAllPaged('grid/1/results.json', (done, total) => {
+      setStatus(`Pole-posities aller tijden ophalen… (${done}/${total})`);
+      setProgress(33 + Math.round((done / total) * 33));
+    });
+    const polesCount = new Map();
+    poleRaces.forEach(r => {
+      const res = r.Results && r.Results[0];
+      if (!res) return;
+      const id = res.Driver.driverId;
+      const name = `${res.Driver.givenName} ${res.Driver.familyName}`;
+      polesCount.set(id, { name, count: (polesCount.get(id)?.count || 0) + 1 });
+    });
+    const polesList = Array.from(polesCount.values()).sort((a, b) => b.count - a.count);
+    renderRankList('polesList', polesList, '×');
+
+    await loadTitles();
+
+    setStatus(`Klaar — gebaseerd op ${winRaces.length} races sinds 1950.`);
+    setProgress(100);
+  } catch (e) {
+    setStatus(e.message, true);
+  }
+}
+
+async function loadTitles() {
+  const thisYear = new Date().getFullYear();
+  const throughYear = thisYear - 1;
+
+  const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+  if (cached && cached.throughYear === throughYear) {
+    renderRankList('titlesList', cached.list, '×');
+    setProgress(100);
+    return;
+  }
+
+  const years = [];
+  for (let y = 1950; y <= throughYear; y++) years.push(y);
+  const titleCount = new Map();
+
+  for (const [i, year] of years.entries()) {
+    setStatus(`Wereldtitels berekenen… seizoen ${year} (${i + 1}/${years.length})`);
+    setProgress(66 + Math.round((i / years.length) * 34));
+    try {
+      const data = await apiGet(`${year}/driverStandings/1.json`);
+      const list = data.MRData.StandingsTable.StandingsLists;
+      if (list.length) {
+        const champ = list[0].DriverStandings[0];
+        const id = champ.Driver.driverId;
+        const name = `${champ.Driver.givenName} ${champ.Driver.familyName}`;
+        titleCount.set(id, { name, count: (titleCount.get(id)?.count || 0) + 1 });
+      }
+    } catch (e) { /* skip season on error, keep going */ }
+  }
+
+  const titlesList = Array.from(titleCount.values()).sort((a, b) => b.count - a.count);
+  renderRankList('titlesList', titlesList, '×');
+  localStorage.setItem(CACHE_KEY, JSON.stringify({ throughYear, list: titlesList }));
+}
+</script>
+</body>
+</html>

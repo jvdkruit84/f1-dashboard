@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Historie — F1 Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --surface-1: #15151e;
+    --page: #0a0a0c;
+    --ink-primary: #ffffff;
+    --ink-secondary: #9a9aa2;
+    --ink-muted: #6b6b72;
+    --grid: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.12);
+    --accent: #e10600;
+    --good: #19a974;
+    --warn: #ffb800;
+    --critical: #e10600;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Titillium Web', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(ellipse 900px 300px at 50% -80px, rgba(225,6,0,0.10), transparent 70%),
+      var(--page);
+    color: var(--ink-primary);
+    padding: 0 0 32px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- top navigation ---------- */
+  .topnav { background: #000; border-bottom: 1px solid var(--border); }
+  .topnav-inner {
+    max-width: 1180px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between; height: 56px;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+  .brand-mark {
+    background: var(--accent); color: #fff; font-weight: 900; font-size: 13px;
+    padding: 3px 7px; border-radius: 3px; letter-spacing: 0.01em; font-style: italic;
+  }
+  .brand-text { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-secondary); }
+  .nav-links { display: flex; gap: 24px; height: 100%; }
+  .nav-link {
+    display: flex; align-items: center; height: 100%;
+    color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent;
+    transition: color 0.15s;
+  }
+  .nav-link:hover { color: var(--ink-primary); }
+  .nav-link.active { color: var(--ink-primary); border-bottom-color: var(--accent); }
+  @media (max-width: 700px) { .nav-links { gap: 12px; } .brand-text { display: none; } }
+
+  /* ---------- hero / page header ---------- */
+  .hero {
+    position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #000 0%, #0f0f12 60%, #1a1a1e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 16px;
+    margin-bottom: 20px;
+  }
+  .hero::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 40px);
+    pointer-events: none;
+  }
+  .hero-inner { max-width: 1180px; margin: 0 auto; position: relative; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 8px;
+  }
+  .eyebrow::before { content: ""; width: 16px; height: 2px; background: var(--accent); display: inline-block; }
+  h1 { font-size: 21px; font-weight: 900; text-transform: uppercase; margin: 0 0 4px; letter-spacing: -0.01em; line-height: 1.05; }
+  .subtitle { color: var(--ink-secondary); font-size: 13px; margin-bottom: 0; }
+  .subtitle a { color: var(--accent); text-decoration: none; }
+  .subtitle a:hover { text-decoration: underline; }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-secondary); margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+
+  .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; }
+  label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-secondary); margin-bottom: 6px; }
+  select {
+    width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 4px;
+    border: 1px solid var(--border); background: var(--page); color: var(--ink-primary); font-family: inherit;
+  }
+
+  #status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; margin-top: 10px; }
+  #status.error { color: var(--critical); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: right; padding: 9px 10px; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  thead th {
+    color: var(--ink-secondary); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr { transition: background 0.1s; }
+  tbody tr:hover { background: rgba(255,255,255,0.04); }
+  .table-scroll { max-height: 440px; overflow-y: auto; overflow-x: auto; }
+
+  .standings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 760px) { .standings-grid { grid-template-columns: 1fr; } }
+  .standings-table td, .standings-table th { text-align: left; }
+  .standings-table td:last-child, .standings-table th:last-child,
+  .standings-table td:nth-child(3), .standings-table th:nth-child(3) { text-align: right; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; background: var(--accent); }
+
+  .champ-badge {
+    display: inline-flex; align-items: center; gap: 6px; background: rgba(225,6,0,0.12);
+    border: 1px solid var(--accent); color: #fff; font-size: 11px; font-weight: 700;
+    padding: 4px 10px; border-radius: 999px; margin-left: 8px; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+
+  footer.site-footer {
+    max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0;
+    border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px;
+  }
+
+  .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
+  .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
+  @media (max-width: 860px) {
+    .nav-toggle { display: flex; }
+    .topnav { position: relative; }
+    .nav-links {
+      display: none; position: absolute; top: 56px; left: 0; right: 0;
+      background: #000; border-bottom: 1px solid var(--border);
+      flex-direction: column; gap: 0; height: auto; padding: 8px 0; z-index: 50;
+    }
+    .nav-links.open { display: flex; }
+    .nav-link { height: auto; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-link.active { border-left-color: var(--accent); }
+    .brand-text { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="topnav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">F1</span>
+      <span class="brand-text">Dashboard</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="results.html">Resultaten</a>
+      <a class="nav-link" href="drivers.html">Coureurs</a>
+      <a class="nav-link active" href="history.html">Historie</a>
+      <a class="nav-link" href="head2head.html">Head-to-head</a>
+      <a class="nav-link" href="records.html">Hall of Fame</a>
+      <a class="nav-link" href="circuit.html">Circuit</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('navToggle').addEventListener('click', function() {
+    var nl = document.getElementById('navLinks');
+    var open = nl.classList.toggle('open');
+    this.setAttribute('aria-expanded', open);
+  });
+</script>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Jolpica-F1 (Ergast) · Onofficieel</div>
+    <h1>Historie</h1>
+    <div class="subtitle">Seizoenen, races en WK-standen vanaf 1950, via de gratis <a href="https://github.com/jolpica/jolpica-f1" target="_blank" rel="noopener">Jolpica-F1 API</a> — de opvolger van de gestopte Ergast API. Vult de jaren aan die OpenF1 (2023+) niet heeft.</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>Seizoen</h2>
+    <div class="controls-grid">
+      <div>
+        <label for="yearSelect">Jaar</label>
+        <select id="yearSelect"></select>
+      </div>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div class="card">
+    <h2>WK-stand <span id="seasonLabel"></span></h2>
+    <div class="standings-grid">
+      <div>
+        <h2 style="margin-top:0; border:none; padding:0;">Coureurs</h2>
+        <div class="table-scroll"><table class="standings-table" id="driverStandingsTable"></table></div>
+      </div>
+      <div>
+        <h2 style="margin-top:0; border:none; padding:0;">Constructeurs</h2>
+        <div class="table-scroll"><table class="standings-table" id="constructorStandingsTable"></table></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Races</h2>
+    <div class="table-scroll">
+      <table id="racesTable">
+        <thead><tr><th>Grand Prix</th><th>Datum</th><th>Winnaar</th><th>Team</th><th>Ronden</th><th>Tijd</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer class="site-footer">Historische data via de gratis <a href="https://github.com/jolpica/jolpica-f1" target="_blank" rel="noopener" style="color:inherit;">Jolpica-F1 API</a> (Ergast-compatibel) — onofficieel project, geen affiliatie met Formula 1®.</footer>
+
+</div>
+
+<script>
+const API = 'https://api.jolpi.ca/ergast/f1';
+
+/* ---------- throttled fetch queue (Jolpica limit: ~4 req/s burst, 500/hr sustained) ---------- */
+let lastCallAt = 0;
+async function apiGet(path, attempt = 0) {
+  const minGap = 280;
+  const wait = Math.max(0, minGap - (Date.now() - lastCallAt));
+  if (wait) await sleep(wait);
+  lastCallAt = Date.now();
+  let res;
+  try {
+    res = await fetch(`${API}/${path}`);
+  } catch (e) {
+    throw new Error('Netwerkfout — kon de Jolpica-F1 API niet bereiken.');
+  }
+  if (res.status === 429 && attempt < 6) {
+    await sleep(800 * (attempt + 1));
+    return apiGet(path, attempt + 1);
+  }
+  if (!res.ok) throw new Error(`API-fout ${res.status} bij ${path}`);
+  return res.json();
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function setStatus(msg, isError) {
+  const el = document.getElementById('status');
+  el.textContent = msg || '';
+  el.classList.toggle('error', !!isError);
+}
+function fmtDate(d) { return new Date(d).toLocaleDateString('nl-NL', { day: '2-digit', month: 'short', year: 'numeric' }); }
+
+const yearSelect = document.getElementById('yearSelect');
+const CURRENT_YEAR = new Date().getFullYear();
+
+(function initYears() {
+  const years = [];
+  for (let y = CURRENT_YEAR; y >= 1950; y--) years.push(y);
+  yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+  yearSelect.value = 2022;
+})();
+
+yearSelect.addEventListener('change', () => loadSeason(yearSelect.value));
+loadSeason(yearSelect.value);
+
+async function loadSeason(year) {
+  setStatus('Seizoen laden…');
+  document.getElementById('seasonLabel').textContent = '';
+  document.getElementById('racesTable').querySelector('tbody').innerHTML = '';
+  document.getElementById('driverStandingsTable').innerHTML = '';
+  document.getElementById('constructorStandingsTable').innerHTML = '';
+
+  try {
+    const racesData = await apiGet(`${year}/results/1.json?limit=100`);
+    const races = racesData.MRData.RaceTable.Races;
+
+    if (!races.length) {
+      setStatus(`Geen racedata gevonden voor ${year}.`, true);
+      return;
+    }
+
+    renderRaces(races);
+
+    const [driverStandings, constructorStandings] = await Promise.all([
+      apiGet(`${year}/driverStandings.json`).catch(() => null),
+      apiGet(`${year}/constructorStandings.json`).catch(() => null)
+    ]);
+
+    const champion = renderStandings(driverStandings, constructorStandings);
+    document.getElementById('seasonLabel').innerHTML = champion
+      ? `<span class="champ-badge">🏆 ${champion}</span>`
+      : '';
+
+    setStatus(`${races.length} races geladen voor het seizoen ${year}.`);
+  } catch (e) {
+    setStatus(e.message, true);
+  }
+}
+
+function renderRaces(races) {
+  const rows = races.map(r => {
+    const result = r.Results && r.Results[0];
+    const winner = result ? `${result.Driver.givenName} ${result.Driver.familyName}` : '–';
+    const team = result ? result.Constructor.name : '–';
+    const laps = result ? result.laps : '–';
+    const time = result && result.Time ? result.Time.time : (result ? result.status : '–');
+    return `<tr>
+      <td>${r.raceName}<div style="font-size:11px;color:var(--ink-muted);">${r.Circuit.circuitName}, ${r.Circuit.Location.country}</div></td>
+      <td>${fmtDate(r.date)}</td>
+      <td>${winner}</td>
+      <td>${team}</td>
+      <td>${laps}</td>
+      <td>${time}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('racesTable').querySelector('tbody').innerHTML = rows;
+}
+
+function renderStandings(driverStandings, constructorStandings) {
+  const driverList = driverStandings?.MRData?.StandingsTable?.StandingsLists?.[0]?.DriverStandings || [];
+  const teamList = constructorStandings?.MRData?.StandingsTable?.StandingsLists?.[0]?.ConstructorStandings || [];
+
+  const driverTable = document.getElementById('driverStandingsTable');
+  if (driverList.length) {
+    const rows = driverList.map(row => `
+      <tr>
+        <td>${row.position}</td>
+        <td><span class="dot"></span>${row.Driver.givenName} ${row.Driver.familyName}</td>
+        <td>${row.points}</td>
+        <td>${row.wins}</td>
+      </tr>`).join('');
+    driverTable.innerHTML = `<thead><tr><th>#</th><th>Coureur</th><th>Punten</th><th>Zeges</th></tr></thead><tbody>${rows}</tbody>`;
+  } else {
+    driverTable.innerHTML = '<tbody><tr><td>Geen standdata beschikbaar.</td></tr></tbody>';
+  }
+
+  const teamTable = document.getElementById('constructorStandingsTable');
+  if (teamList.length) {
+    const rows = teamList.map(row => `
+      <tr>
+        <td>${row.position}</td>
+        <td><span class="dot"></span>${row.Constructor.name}</td>
+        <td>${row.points}</td>
+        <td>${row.wins}</td>
+      </tr>`).join('');
+    teamTable.innerHTML = `<thead><tr><th>#</th><th>Team</th><th>Punten</th><th>Zeges</th></tr></thead><tbody>${rows}</tbody>`;
+  } else {
+    teamTable.innerHTML = '<tbody><tr><td>Vóór 1958 bestond er geen constructeurskampioenschap.</td></tr></tbody>';
+  }
+
+  return driverList.length ? `${driverList[0].Driver.givenName} ${driverList[0].Driver.familyName}` : null;
+}
+</script>
+</body>
+</html>
