@@ -88,6 +88,12 @@
   .card h2 {
     font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
     color: var(--ink-secondary); margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 9px;
+  }
+  .circuit-flag { height: 14px; width: auto; border-radius: 2px; box-shadow: 0 0 0 1px rgba(255,255,255,0.15); flex: none; }
+  .circuit-ref-img {
+    height: 44px; width: auto; max-width: 70px; object-fit: contain;
+    filter: brightness(0) invert(1); opacity: 0.85; margin-left: auto; flex: none;
   }
 
   .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; }
@@ -218,7 +224,11 @@
   </div>
 
   <div class="card" id="statsCard" style="display:none;">
-    <h2 id="statsHeading">Statistieken</h2>
+    <h2>
+      <img class="circuit-flag" id="statsFlag" src="" alt="" style="display:none;" onerror="this.style.display='none'">
+      <span id="statsHeading">Statistieken</span>
+      <img class="circuit-ref-img" id="statsRefImg" src="" alt="" style="display:none;" onerror="this.style.display='none'">
+    </h2>
     <table class="h2h-stats" id="statsTable"></table>
   </div>
 
@@ -374,7 +384,7 @@ async function compare() {
       apiGet(`session_result?session_key=${sessionKey}&driver_number=${numB}`).catch(() => [])
     ]);
 
-    renderStats(driverA, lapsA, pitA, resultA[0], driverB, lapsB, pitB, resultB[0]);
+    renderStats(driverA, lapsA, pitA, resultA[0], driverB, lapsB, pitB, resultB[0], meeting);
     renderChart(driverA, lapsA, pitA, driverB, lapsB, pitB);
     renderDelta(driverA, lapsA, driverB, lapsB);
 
@@ -386,8 +396,24 @@ async function compare() {
   }
 }
 
-function renderStats(driverA, lapsA, pitA, resultA, driverB, lapsB, pitB, resultB) {
+function renderStats(driverA, lapsA, pitA, resultA, driverB, lapsB, pitB, resultB, meeting) {
   document.getElementById('statsHeading').textContent = `${driverA.name_acronym} vs ${driverB.name_acronym}`;
+
+  const flagEl = document.getElementById('statsFlag');
+  if (meeting && meeting.country_flag) {
+    flagEl.src = meeting.country_flag;
+    flagEl.alt = meeting.country_name || '';
+    flagEl.style.display = 'inline-block';
+  } else {
+    flagEl.style.display = 'none';
+  }
+  const refImgEl = document.getElementById('statsRefImg');
+  if (meeting && meeting.circuit_image) {
+    refImgEl.src = meeting.circuit_image;
+    refImgEl.style.display = 'block';
+  } else {
+    refImgEl.style.display = 'none';
+  }
   const cleanA = lapsA.filter(l => l.lap_duration != null && !l.is_pit_out_lap).map(l => l.lap_duration);
   const cleanB = lapsB.filter(l => l.lap_duration != null && !l.is_pit_out_lap).map(l => l.lap_duration);
   const bestA = cleanA.length ? Math.min(...cleanA) : null;
