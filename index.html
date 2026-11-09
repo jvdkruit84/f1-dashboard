@@ -197,7 +197,7 @@
   }
   .headline-card.clickable:hover { border-color: var(--ink-secondary); transform: translateY(-2px); }
   .headline-card .thumb-wrap { width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #000; }
-  .headline-card .thumb-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .headline-card .thumb-wrap img { width: 100%; height: 100%; object-fit: cover; object-position: center 30%; display: block; }
   .headline-card .headline-body { padding: 12px 16px 16px; }
   .headline-card .tag {
     display: inline-block; color: #fff; font-size: 10px; font-weight: 700; text-transform: uppercase;
@@ -667,6 +667,7 @@ function driverCardHTML(d, standing, year, meetingKey, sessionKey) {
 
 init();
 loadOnThisDay();
+loadAndRenderHeadlines();
 
 async function init() {
   setStatus('Laatste race en WK-stand laden…');
@@ -683,7 +684,6 @@ async function init() {
     renderPodium(found, byNumber);
     renderStandingsMini(champDrivers, byNumber);
     renderDriverTeaser(drivers, champDrivers, found);
-    loadAndRenderHeadlines(found, byNumber, champDrivers);
 
     setStatus('');
   } catch (e) {
@@ -728,8 +728,7 @@ function renderPodium(found, byNumber) {
     }).join('')}`;
 }
 
-/* ---------- headlines (data-driven, not editorial news — see memory note) ---------- */
-/* ---------- custom news (own written articles, from news.json) ---------- */
+/* ---------- news (own written articles, from news.json, managed via admin.php) ---------- */
 async function loadCustomNews() {
   try {
     const res = await fetch('news.json', { cache: 'no-store' });
@@ -748,12 +747,8 @@ async function loadCustomNews() {
   }
 }
 
-async function loadAndRenderHeadlines(found, byNumber, champDrivers) {
-  const [custom, auto] = await Promise.all([
-    loadCustomNews(),
-    buildAutoHeadlines(found, byNumber, champDrivers)
-  ]);
-  const headlines = [...custom, ...auto];
+async function loadAndRenderHeadlines() {
+  const headlines = await loadCustomNews();
   const card = document.getElementById('headlinesCard');
   if (!headlines.length) { card.style.display = 'none'; return; }
   document.getElementById('headlineGrid').innerHTML = headlines.map(h => {
@@ -797,58 +792,6 @@ function initNewsCarousel() {
   grid.onscroll = updateArrows;
   window.addEventListener('resize', updateArrows);
   updateArrows();
-}
-
-/* Each auto headline has a fixed `img` path (images/news/<slot>.jpg).
-   Replace those files via FTP with your own photos (same filename + .jpg)
-   to change what's shown — no code edits needed. */
-async function buildAutoHeadlines(found, byNumber, champDrivers) {
-  const headlines = [];
-  const raceLabel = `${found.meeting.meeting_name} (${found.year})`;
-
-  const winner = found.results.find(r => r.position === 1);
-  if (winner) {
-    const d = byNumber.get(winner.driver_number);
-    const name = d ? (d.full_name || d.broadcast_name) : `#${winner.driver_number}`;
-    headlines.push({
-      tag: 'Race', color: 'var(--accent)', img: 'images/news/race.jpg',
-      headline: `${name} wint ${found.meeting.meeting_name}`,
-      sub: `${d ? d.team_name + ' · ' : ''}${raceLabel}`
-    });
-  }
-
-  try {
-    const sessions = await apiGet(`sessions?meeting_key=${found.meeting.meeting_key}`);
-    const quali = sessions.find(s => s.session_name === 'Qualifying');
-    if (quali) {
-      const qResults = await apiGet(`session_result?session_key=${quali.session_key}`);
-      const pole = qResults.find(r => r.position === 1);
-      if (pole) {
-        const d = byNumber.get(pole.driver_number);
-        const name = d ? (d.full_name || d.broadcast_name) : `#${pole.driver_number}`;
-        headlines.push({
-          tag: 'Kwalificatie', color: 'var(--good)', img: 'images/news/qualifying.jpg',
-          headline: `${name} pakt pole voor ${found.meeting.meeting_name}`,
-          sub: `${d ? d.team_name + ' · ' : ''}${raceLabel}`
-        });
-      }
-    }
-  } catch (e) { /* skip this headline if qualifying data is unavailable */ }
-
-  if (champDrivers.length >= 2) {
-    const sorted = champDrivers.slice().sort((a, b) => a.position_current - b.position_current);
-    const [leader, second] = sorted;
-    const d = byNumber.get(leader.driver_number);
-    const name = d ? (d.full_name || d.broadcast_name) : `#${leader.driver_number}`;
-    const gap = (leader.points_current - second.points_current).toFixed(0);
-    headlines.push({
-      tag: 'WK-stand', color: 'var(--warn)', img: 'images/news/standings.jpg',
-      headline: `${name} leidt het kampioenschap met ${gap} punten voorsprong`,
-      sub: `${leader.points_current.toFixed(0)} punten na ${raceLabel}`
-    });
-  }
-
-  return headlines;
 }
 
 function renderStandingsMini(champDrivers, byNumber) {

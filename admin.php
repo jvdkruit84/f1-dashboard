@@ -76,7 +76,14 @@ if ($isAuthed && $_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $imagePath = null;
-            if (!empty($_FILES['image']['tmp_name']) && is_uploaded_file($_FILES['image']['tmp_name'])) {
+            $imageWarning = null;
+            $uploadErr = $_FILES['image']['error'] ?? UPLOAD_ERR_NO_FILE;
+
+            if ($uploadErr === UPLOAD_ERR_INI_SIZE || $uploadErr === UPLOAD_ERR_FORM_SIZE) {
+                $imageWarning = 'Afbeelding was groter dan de toegestane ' . ini_get('upload_max_filesize') . ' en is niet geüpload — placeholder gebruikt. Verklein de foto en voeg hem later opnieuw toe.';
+            } elseif ($uploadErr !== UPLOAD_ERR_NO_FILE && $uploadErr !== UPLOAD_ERR_OK) {
+                $imageWarning = 'Afbeelding kon niet worden geüpload (foutcode ' . $uploadErr . ') — placeholder gebruikt.';
+            } elseif (!empty($_FILES['image']['tmp_name']) && is_uploaded_file($_FILES['image']['tmp_name'])) {
                 $allowed = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp'];
                 $origName = $_FILES['image']['name'];
                 $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
@@ -110,10 +117,81 @@ if ($isAuthed && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 ];
                 array_unshift($articles, $newArticle);
                 if (saveArticles($articles)) {
-                    $message = 'Bericht geplaatst.';
+                    $message = 'Bericht geplaatst.' . ($imageWarning ? ' ' . $imageWarning : '');
                 } else {
                     $message = 'Kon news.json niet opslaan — controleer de bestandsrechten op de server.';
                     $messageIsError = true;
+                }
+            }
+        }
+    }
+
+    if (isset($_POST['action']) && $_POST['action'] === 'edit') {
+        $originalSlug = (string)($_POST['original_slug'] ?? '');
+        $title = trim((string)($_POST['title'] ?? ''));
+        $tag = trim((string)($_POST['tag'] ?? '')) ?: 'Nieuws';
+        $color = trim((string)($_POST['color'] ?? '')) ?: '#e10600';
+        $summary = trim((string)($_POST['summary'] ?? ''));
+        $body = trim((string)($_POST['body'] ?? ''));
+        $date = trim((string)($_POST['date'] ?? '')) ?: date('Y-m-d');
+
+        if ($title === '' || $body === '') {
+            $message = 'Titel en tekst zijn verplicht.';
+            $messageIsError = true;
+        } else {
+            $articles = loadArticles();
+            $idx = null;
+            foreach ($articles as $i => $a) {
+                if (($a['slug'] ?? '') === $originalSlug) { $idx = $i; break; }
+            }
+
+            if ($idx === null) {
+                $message = 'Bericht niet gevonden — mogelijk al verwijderd.';
+                $messageIsError = true;
+            } else {
+                $imagePath = $articles[$idx]['image'] ?? (IMAGE_URL_PREFIX . '/placeholder.jpg');
+                $imageWarning = null;
+                $uploadErr = $_FILES['image']['error'] ?? UPLOAD_ERR_NO_FILE;
+
+                if ($uploadErr === UPLOAD_ERR_INI_SIZE || $uploadErr === UPLOAD_ERR_FORM_SIZE) {
+                    $imageWarning = 'Nieuwe afbeelding was groter dan de toegestane ' . ini_get('upload_max_filesize') . ' — oude afbeelding behouden.';
+                } elseif ($uploadErr !== UPLOAD_ERR_NO_FILE && $uploadErr !== UPLOAD_ERR_OK) {
+                    $imageWarning = 'Nieuwe afbeelding kon niet worden geüpload (foutcode ' . $uploadErr . ') — oude afbeelding behouden.';
+                } elseif (!empty($_FILES['image']['tmp_name']) && is_uploaded_file($_FILES['image']['tmp_name'])) {
+                    $allowed = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp'];
+                    $origName = $_FILES['image']['name'];
+                    $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                    $mime = finfo_file($finfo, $_FILES['image']['tmp_name']);
+                    finfo_close($finfo);
+
+                    if (isset($allowed[$ext]) && $allowed[$ext] === $mime) {
+                        if (!is_dir(IMAGE_DIR)) mkdir(IMAGE_DIR, 0755, true);
+                        $destFilename = $originalSlug . '.' . $ext;
+                        $destPath = IMAGE_DIR . '/' . $destFilename;
+                        if (move_uploaded_file($_FILES['image']['tmp_name'], $destPath)) {
+                            $imagePath = IMAGE_URL_PREFIX . '/' . $destFilename;
+                        }
+                    } else {
+                        $message = 'Afbeelding moet een jpg, png of webp zijn.';
+                        $messageIsError = true;
+                    }
+                }
+
+                if (!$messageIsError) {
+                    $articles[$idx]['title'] = $title;
+                    $articles[$idx]['tag'] = $tag;
+                    $articles[$idx]['color'] = $color;
+                    $articles[$idx]['summary'] = $summary;
+                    $articles[$idx]['body'] = $body;
+                    $articles[$idx]['date'] = $date;
+                    $articles[$idx]['image'] = $imagePath;
+                    if (saveArticles($articles)) {
+                        $message = 'Bericht bijgewerkt.' . ($imageWarning ? ' ' . $imageWarning : '');
+                    } else {
+                        $message = 'Kon news.json niet opslaan — controleer de bestandsrechten op de server.';
+                        $messageIsError = true;
+                    }
                 }
             }
         }
@@ -148,6 +226,12 @@ if ($isAuthed && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $articles = $isAuthed ? loadArticles() : [];
+$editArticle = null;
+if ($isAuthed && isset($_GET['edit'])) {
+    foreach ($articles as $a) {
+        if (($a['slug'] ?? '') === $_GET['edit']) { $editArticle = $a; break; }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="nl">
@@ -219,32 +303,40 @@ $articles = $isAuthed ? loadArticles() : [];
   <?php endif; ?>
 
   <div class="card">
-    <h2>Nieuw bericht</h2>
-    <form method="post" enctype="multipart/form-data">
-      <input type="hidden" name="action" value="add">
+    <h2><?= $editArticle ? 'Bericht bewerken' : 'Nieuw bericht' ?></h2>
+    <form method="post" action="admin.php" enctype="multipart/form-data">
+      <input type="hidden" name="action" value="<?= $editArticle ? 'edit' : 'add' ?>">
+      <?php if ($editArticle): ?>
+        <input type="hidden" name="original_slug" value="<?= htmlspecialchars($editArticle['slug']) ?>">
+      <?php endif; ?>
+
       <label for="title">Titel</label>
-      <input type="text" id="title" name="title" required>
+      <input type="text" id="title" name="title" value="<?= htmlspecialchars($editArticle['title'] ?? '') ?>" required>
 
       <label for="summary">Korte samenvatting (op de homepage-kaart)</label>
-      <input type="text" id="summary" name="summary">
+      <input type="text" id="summary" name="summary" value="<?= htmlspecialchars($editArticle['summary'] ?? '') ?>">
 
       <label for="body">Volledige tekst (lege regel = nieuwe alinea)</label>
-      <textarea id="body" name="body" required></textarea>
+      <textarea id="body" name="body" required><?= htmlspecialchars($editArticle['body'] ?? '') ?></textarea>
 
       <label for="image">Afbeelding (jpg, png of webp)</label>
       <input type="file" id="image" name="image" accept="image/jpeg,image/png,image/webp">
+      <div class="hint">Max. <?= htmlspecialchars(ini_get('upload_max_filesize')) ?>. Is je foto groter? Verklein hem eerst (bijv. via de foto's-app van je telefoon of een gratis online tool).<?php if ($editArticle): ?> Laat leeg om de huidige afbeelding te behouden.<?php endif; ?></div>
 
       <label for="tag">Label</label>
-      <input type="text" id="tag" name="tag" value="Nieuws">
+      <input type="text" id="tag" name="tag" value="<?= htmlspecialchars($editArticle['tag'] ?? 'Nieuws') ?>">
 
       <label for="color">Kleur van het label</label>
-      <input type="text" id="color" name="color" value="#e10600">
+      <input type="text" id="color" name="color" value="<?= htmlspecialchars($editArticle['color'] ?? '#e10600') ?>">
       <div class="hint">Bijvoorbeeld #e10600 (rood), #19a974 (groen), #ffb800 (geel).</div>
 
       <label for="date">Datum</label>
-      <input type="date" id="date" name="date" value="<?= date('Y-m-d') ?>">
+      <input type="date" id="date" name="date" value="<?= htmlspecialchars($editArticle['date'] ?? date('Y-m-d')) ?>">
 
-      <button type="submit">Plaatsen</button>
+      <button type="submit"><?= $editArticle ? 'Opslaan' : 'Plaatsen' ?></button>
+      <?php if ($editArticle): ?>
+        <a href="admin.php" class="secondary" style="display:inline-block;margin-left:8px;margin-top:16px;padding:11px 20px;border:1px solid var(--border);border-radius:4px;color:var(--ink-secondary);text-decoration:none;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;font-size:13px;">Annuleren</a>
+      <?php endif; ?>
     </form>
   </div>
 
@@ -258,11 +350,14 @@ $articles = $isAuthed ? loadArticles() : [];
           <div class="title"><?= htmlspecialchars($a['title'] ?? '') ?></div>
           <div class="meta"><?= htmlspecialchars($a['date'] ?? '') ?> · <?= htmlspecialchars($a['slug'] ?? '') ?></div>
         </div>
-        <form method="post" onsubmit="return confirm('Dit bericht definitief verwijderen?');">
-          <input type="hidden" name="action" value="delete">
-          <input type="hidden" name="slug" value="<?= htmlspecialchars($a['slug'] ?? '') ?>">
-          <button type="submit">Verwijderen</button>
-        </form>
+        <div style="display:flex; gap:8px; flex:none;">
+          <a href="admin.php?edit=<?= urlencode($a['slug'] ?? '') ?>" style="padding:6px 12px; font-size:11px; border:1px solid var(--border); color:var(--ink-secondary); border-radius:4px; text-decoration:none; text-transform:uppercase; letter-spacing:0.04em; font-weight:700;">Bewerken</a>
+          <form method="post" onsubmit="return confirm('Dit bericht definitief verwijderen?');">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="slug" value="<?= htmlspecialchars($a['slug'] ?? '') ?>">
+            <button type="submit">Verwijderen</button>
+          </form>
+        </div>
       </div>
     <?php endforeach; endif; ?>
   </div>
