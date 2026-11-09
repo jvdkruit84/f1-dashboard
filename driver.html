@@ -57,6 +57,33 @@
   .nav-link:hover { color: var(--ink-primary); }
   .nav-link.active { color: var(--ink-primary); border-bottom-color: var(--accent); }
 
+  .nav-group { position: relative; height: 100%; }
+  .nav-group-trigger {
+    background: none; border: none; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; gap: 4px; height: 100%;
+    color: var(--ink-secondary); font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent;
+    transition: color 0.15s; white-space: nowrap; padding: 0;
+  }
+  .nav-group-trigger:hover { color: var(--ink-primary); }
+  .nav-group-trigger .caret { font-size: 9px; transition: transform 0.15s; }
+  .nav-group.open .nav-group-trigger .caret { transform: rotate(180deg); }
+  .nav-group.active .nav-group-trigger { color: var(--ink-primary); border-bottom-color: var(--accent); }
+  .nav-dropdown {
+    display: none; position: absolute; top: 56px; left: 0; min-width: 190px;
+    background: #000; border: 1px solid var(--border); border-top: none;
+    border-radius: 0 0 6px 6px; flex-direction: column; padding: 6px 0; z-index: 60;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.4);
+  }
+  .nav-group:hover .nav-dropdown, .nav-group.open .nav-dropdown { display: flex; }
+  .nav-dropdown a {
+    padding: 10px 16px; color: var(--ink-secondary); text-decoration: none;
+    font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
+    border-left: 2px solid transparent;
+  }
+  .nav-dropdown a:hover { color: var(--ink-primary); background: rgba(255,255,255,0.05); }
+  .nav-dropdown a.active { color: var(--ink-primary); border-left-color: var(--accent); background: rgba(225,6,0,0.08); }
+
   /* ---------- breadcrumb ---------- */
   .breadcrumb {
     max-width: 1180px; margin: 0 auto; padding: 14px 24px 0;
@@ -175,6 +202,20 @@
     .nav-links.open { display: flex; }
     .nav-link { height: auto; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
     .nav-link.active { border-left-color: var(--accent); }
+
+    .nav-group { height: auto; }
+    .nav-group-trigger {
+      width: 100%; justify-content: space-between; padding: 14px 24px;
+      border-bottom: 1px solid var(--grid); border-left: 3px solid transparent;
+    }
+    .nav-group.active .nav-group-trigger { border-left-color: var(--accent); }
+    .nav-dropdown {
+      position: static; display: none; background: rgba(255,255,255,0.03); border: none;
+      box-shadow: none; padding: 0;
+    }
+    .nav-group.open .nav-dropdown { display: flex; }
+    .nav-dropdown a { padding: 12px 24px 12px 36px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-dropdown a.active { border-left-color: var(--accent); }
     .brand-text { display: none; }
   }
 </style>
@@ -190,15 +231,30 @@
     <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="nav-links" id="navLinks">
       <a class="nav-link" href="index.html">Home</a>
-      <a class="nav-link" href="schedule.html">Kalender</a>
-      <a class="nav-link" href="results.html">Resultaten</a>
-      <a class="nav-link active" href="drivers.html">Coureurs</a>
-      <a class="nav-link" href="teams.html">Teams</a>
-      <a class="nav-link" href="history.html">Historie</a>
-      <a class="nav-link" href="head2head.html">Head-to-head</a>
-      <a class="nav-link" href="records.html">Hall of Fame</a>
-      <a class="nav-link" href="circuit.html">Circuit</a>
-      <a class="nav-link" href="legends.html">Legends</a>
+      <div class="nav-group active">
+        <button class="nav-group-trigger" type="button">Actueel <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="schedule.html">Kalender</a>
+          <a href="results.html">Resultaten</a>
+          <a href="drivers.html" class="active">Coureurs</a>
+          <a href="teams.html">Teams</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="nav-group-trigger" type="button">Analyse <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="head2head.html">Head-to-head</a>
+          <a href="circuit.html">Circuit</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="nav-group-trigger" type="button">Historie <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="history.html">Historie</a>
+          <a href="records.html">Hall of Fame</a>
+          <a href="legends.html">Legends</a>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -208,6 +264,20 @@
     var nl = document.getElementById('navLinks');
     var open = nl.classList.toggle('open');
     this.setAttribute('aria-expanded', open);
+  });
+  document.querySelectorAll('.nav-group-trigger').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var group = btn.closest('.nav-group');
+      var wasOpen = group.classList.contains('open');
+      document.querySelectorAll('.nav-group.open').forEach(function(g) { g.classList.remove('open'); });
+      if (!wasOpen) group.classList.add('open');
+    });
+  });
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.nav-group')) {
+      document.querySelectorAll('.nav-group.open').forEach(function(g) { g.classList.remove('open'); });
+    }
   });
 </script>
 
