@@ -2,8 +2,14 @@
 session_start();
 
 /* ---------- config ---------- */
-// Change this password whenever you like — it's only compared server-side.
-define('ADMIN_PASSWORD', 'Q7GG6aDUYQoLhbRxCaA3');
+// The password lives in admin-config.php, which is gitignored and never
+// committed. If that file is missing, fail safe (no default password).
+$configFile = __DIR__ . '/admin-config.php';
+if (!file_exists($configFile)) {
+    http_response_code(500);
+    die('admin-config.php ontbreekt. Upload dit bestand apart via FTP (zie instructies).');
+}
+require $configFile;
 define('NEWS_JSON', __DIR__ . '/news.json');
 define('IMAGE_DIR', __DIR__ . '/images/news/custom');
 define('IMAGE_URL_PREFIX', 'images/news/custom');
