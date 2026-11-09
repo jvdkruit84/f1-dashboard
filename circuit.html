@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Circuit — F1 Dashboard</title>
+<title>Circuit — Formule1Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -142,7 +142,7 @@
   <div class="topnav-inner">
     <a class="brand" href="index.html">
       <span class="brand-mark">F1</span>
-      <span class="brand-text">Dashboard</span>
+      <span class="brand-text">HUB</span>
     </a>
     <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="nav-links" id="navLinks">
@@ -169,7 +169,7 @@
 
 <div class="hero">
   <div class="hero-inner">
-    <div class="eyebrow">OpenF1 · Onofficieel</div>
+    <div class="eyebrow">Formule1Hub · Onofficieel</div>
     <h1>Circuit &amp; baanlayout</h1>
     <div class="subtitle">De baan getekend uit echte GPS-telemetrie van de snelste ronde, gekleurd op snelheid — rood = topsnelheid, blauw = laagste snelheid (zware bochten).</div>
   </div>
@@ -215,7 +215,7 @@
     <div class="stat-grid" id="statGrid"></div>
   </div>
 
-  <footer class="site-footer">Baanvorm en snelheid berekend uit de gratis <a href="https://openf1.org/docs" target="_blank" rel="noopener" style="color:inherit;">OpenF1 API</a> (location- en car_data-telemetrie, ~3.7 Hz) — onofficieel project, geen affiliatie met Formula 1®.</footer>
+  <footer class="site-footer">Baanvorm en snelheid zijn berekend uit ruwe positie- en snelheidsdata van de snelste ronde. Formule1Hub is een onofficieel project, zonder affiliatie met Formula 1®.</footer>
 
 </div>
 
@@ -232,7 +232,7 @@ async function apiGet(path, attempt = 0) {
   try {
     res = await fetch(`${API}/${path}`);
   } catch (e) {
-    throw new Error('Netwerkfout — kon de OpenF1 API niet bereiken.');
+    throw new Error('Netwerkfout — kon de data niet ophalen.');
   }
   if (res.status === 429 && attempt < 6) {
     await sleep(800 * (attempt + 1));

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Historie — F1 Dashboard</title>
+<title>Historie — Formule1Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -156,7 +156,7 @@
   <div class="topnav-inner">
     <a class="brand" href="index.html">
       <span class="brand-mark">F1</span>
-      <span class="brand-text">Dashboard</span>
+      <span class="brand-text">HUB</span>
     </a>
     <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="nav-links" id="navLinks">
@@ -183,9 +183,9 @@
 
 <div class="hero">
   <div class="hero-inner">
-    <div class="eyebrow">Jolpica-F1 (Ergast) · Onofficieel</div>
+    <div class="eyebrow">Formule1Hub · Onofficieel</div>
     <h1>Historie</h1>
-    <div class="subtitle">Seizoenen, races en WK-standen vanaf 1950, via de gratis <a href="https://github.com/jolpica/jolpica-f1" target="_blank" rel="noopener">Jolpica-F1 API</a> — de opvolger van de gestopte Ergast API. Vult de jaren aan die OpenF1 (2023+) niet heeft.</div>
+    <div class="subtitle">Seizoenen, races en WK-standen vanaf 1950 — ook de jaren die buiten het live gedeelte van deze site vallen.</div>
   </div>
 </div>
 
@@ -226,7 +226,7 @@
     </div>
   </div>
 
-  <footer class="site-footer">Historische data via de gratis <a href="https://github.com/jolpica/jolpica-f1" target="_blank" rel="noopener" style="color:inherit;">Jolpica-F1 API</a> (Ergast-compatibel) — onofficieel project, geen affiliatie met Formula 1®.</footer>
+  <footer class="site-footer">Formule1Hub is een onofficieel project, zonder affiliatie met Formula 1®.</footer>
 
 </div>
 
@@ -244,7 +244,7 @@ async function apiGet(path, attempt = 0) {
   try {
     res = await fetch(`${API}/${path}`);
   } catch (e) {
-    throw new Error('Netwerkfout — kon de Jolpica-F1 API niet bereiken.');
+    throw new Error('Netwerkfout — kon de data niet ophalen.');
   }
   if (res.status === 429 && attempt < 6) {
     await sleep(800 * (attempt + 1));

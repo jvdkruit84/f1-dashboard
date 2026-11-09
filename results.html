@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Resultaten — F1 Dashboard</title>
+<title>Resultaten — Formule1Hub</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -311,7 +311,7 @@
   <div class="topnav-inner">
     <a class="brand" href="index.html">
       <span class="brand-mark">F1</span>
-      <span class="brand-text">Dashboard</span>
+      <span class="brand-text">HUB</span>
     </a>
     <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="nav-links" id="navLinks">
@@ -338,9 +338,9 @@
 
 <div class="hero compact">
   <div class="hero-inner">
-    <div class="eyebrow">OpenF1 · Onofficieel</div>
+    <div class="eyebrow">Formule1Hub · Onofficieel</div>
     <h1>Rondetijden &amp; Resultaten</h1>
-    <div class="subtitle">Live data via de <a href="https://openf1.org/docs" target="_blank" rel="noopener">OpenF1 API</a> — historische sessies vanaf 2023, geen API-key nodig.</div>
+    <div class="subtitle">Live rondetijden en sessiedata, beschikbaar vanaf het seizoen 2023.</div>
   </div>
 </div>
 <div class="wrap">
@@ -416,23 +416,6 @@
     <div id="raceControlList"></div>
   </div>
 
-  <div class="card">
-    <details>
-      <summary>Wat is er nog meer mogelijk met OpenF1? (onderzoeksnotities)</summary>
-      <ul class="more-list">
-        <li><strong>Telemetrie &amp; trackpositie</strong> — <code>car_data</code> (~3.7 Hz: snelheid, RPM, gas/rem, versnelling, DRS) en <code>location</code> (3D-coördinaten) zouden een rondje-replay-animatie of snelheidsprofiel per ronde mogelijk maken. Hoogfrequent, dus zwaar qua requests.</li>
-        <li><strong>Inhaalacties</strong> — <code>overtakes</code> geeft per inhaalactie welke coureur wie passeerde en op welke ronde; leuk voor een "meeste inhaalacties"-ranglijst.</li>
-        <li><strong>Positieverloop</strong> — <code>position</code> geeft positiewijzigingen door de race heen; goed voor een classificatie-lijngrafiek (positie per ronde, zoals de bekende F1 "race story" grafiek).</li>
-        <li><strong>Startopstelling &amp; eindklassement</strong> — <code>starting_grid</code> en <code>session_result</code> zijn al deels gebruikt (voor standaard coureurselectie); kunnen ook een "posities gewonnen/verloren"-kaart voeden.</li>
-        <li><strong>Teamradio</strong> — <code>team_radio</code> geeft audiofragmenten (mp3-links); sinds 2026 is de hoeveelheid data sterk afgenomen, dus minder betrouwbaar als feature.</li>
-        <li><strong>WK-stand</strong> — <code>championship_drivers</code> / <code>championship_teams</code> (alleen races) kunnen een live WK-standenoverzicht voeden naast de racedata.</li>
-        <li><strong>Live/real-time data</strong> — <code>intervals</code> (gat tot leider, elke ~4s) en live <code>car_data</code>/<code>position</code> tijdens een lopende sessie vereisen een <strong>betaald abonnement</strong> (via Stripe); dit dashboard gebruikt alleen de gratis historische data.</li>
-        <li><strong>Rate limit</strong> — de API staat max. 3 requests/seconde toe; dit dashboard haalt data daarom gedoseerd op (met kleine pauzes en automatische retry bij 429-fouten) in plaats van alles tegelijk.</li>
-        <li><strong>CSV-export</strong> — elk endpoint kan ook <code>?csv=true</code> teruggeven in plaats van JSON, handig voor analyse in Excel/Sheets.</li>
-      </ul>
-    </details>
-  </div>
-
   </div><!-- /tabPanelLaps -->
 
   <div class="tab-panel" id="tabPanelPosition">
@@ -460,7 +443,7 @@
     </div>
   </div>
 
-  <footer class="site-footer">Data via de gratis <a href="https://openf1.org/docs" target="_blank" rel="noopener" style="color:inherit;">OpenF1 API</a> — onofficieel project, geen affiliatie met Formula 1®.</footer>
+  <footer class="site-footer">Formule1Hub is een onofficieel project, zonder affiliatie met Formula 1®.</footer>
 
 </div>
 
@@ -478,7 +461,7 @@ async function apiGet(path, attempt = 0) {
   try {
     res = await fetch(`${API}/${path}`);
   } catch (e) {
-    throw new Error('Netwerkfout — kon de OpenF1 API niet bereiken.');
+    throw new Error('Netwerkfout — kon de data niet ophalen.');
   }
   if (res.status === 429 && attempt < 6) {
     await sleep(800 * (attempt + 1));

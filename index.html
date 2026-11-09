@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>F1 Dashboard — OpenF1</title>
+<title>Formule1Hub — Rondetijden, coureurs &amp; historie</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -211,7 +211,7 @@
   <div class="topnav-inner">
     <a class="brand" href="index.html">
       <span class="brand-mark">F1</span>
-      <span class="brand-text">Dashboard</span>
+      <span class="brand-text">HUB</span>
     </a>
     <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
     <div class="nav-links" id="navLinks">
@@ -238,9 +238,9 @@
 
 <div class="hero">
   <div class="hero-inner">
-    <div class="eyebrow">OpenF1 · Onofficieel</div>
+    <div class="eyebrow">Formule1Hub · Onofficieel</div>
     <h1>Formule 1 Dashboard</h1>
-    <div class="subtitle">Rondetijden, bandenstrategie, weer en WK-standen — live opgehaald via de gratis <a href="https://openf1.org/docs" target="_blank" rel="noopener">OpenF1 API</a>, geen API-key nodig.</div>
+    <div class="subtitle">Rondetijden, bandenstrategie, weer en WK-standen, bijgehouden door het hele seizoen heen.</div>
     <div class="hero-cta">
       <a class="btn-link btn-primary" href="results.html">Bekijk resultaten</a>
       <a class="btn-link btn-ghost" href="drivers.html">Bekijk coureurs</a>
@@ -279,7 +279,7 @@
     <div class="driver-grid" id="driverTeaser"></div>
   </div>
 
-  <footer class="site-footer">Data via de gratis <a href="https://openf1.org/docs" target="_blank" rel="noopener" style="color:inherit;">OpenF1 API</a> — onofficieel project, geen affiliatie met Formula 1®.</footer>
+  <footer class="site-footer">Formule1Hub is een onofficieel project, zonder affiliatie met Formula 1®.</footer>
 
 </div>
 
@@ -297,7 +297,7 @@ async function apiGet(path, attempt = 0) {
   try {
     res = await fetch(`${API}/${path}`);
   } catch (e) {
-    throw new Error('Netwerkfout — kon de OpenF1 API niet bereiken.');
+    throw new Error('Netwerkfout — kon de data niet ophalen.');
   }
   if (res.status === 429 && attempt < 6) {
     await sleep(800 * (attempt + 1));
@@ -325,7 +325,7 @@ async function jolpicaGet(path, attempt = 0) {
   try {
     res = await fetch(`${JOLPICA_API}/${path}`);
   } catch (e) {
-    throw new Error('Netwerkfout — kon de Jolpica-F1 API niet bereiken.');
+    throw new Error('Netwerkfout — kon de data niet ophalen.');
   }
   if (res.status === 429 && attempt < 6) {
     await sleep(800 * (attempt + 1));
