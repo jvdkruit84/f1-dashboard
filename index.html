@@ -108,10 +108,16 @@
     background: var(--accent); color: #fff; font-size: 9px; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.04em; padding: 2px 8px; border-radius: 999px;
   }
-  .rc-race-name { font-size: 15px; font-weight: 700; color: var(--ink-primary); }
+  .rc-race-name { font-size: 15px; font-weight: 700; color: var(--ink-primary); display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
   .rc-session { font-size: 12px; color: var(--ink-secondary); margin-top: 3px; }
   .rc-countdown { font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; color: var(--accent); margin-top: 10px; }
   .rc-next .podium-item:first-child { padding-top: 0; }
+  .rc-next { position: relative; overflow: hidden; }
+  .rc-circuit-bg {
+    position: absolute; top: -6px; right: -6px; width: 150px; height: auto; max-height: 100px;
+    object-fit: contain; opacity: 0.14; filter: brightness(0) invert(1); pointer-events: none;
+  }
+  .rc-flag { height: 15px; width: auto; border-radius: 2px; box-shadow: 0 0 0 1px rgba(255,255,255,0.15); flex: none; }
 
   .wrap { padding-top: 24px; }
 
@@ -567,7 +573,13 @@ async function init() {
     const col = document.getElementById('nextBar');
     if (!next) { nameEl.textContent = 'Seizoen afgelopen'; return; }
     const dateStr = new Date(next.session.date_start).toLocaleDateString('nl-NL', { day: '2-digit', month: 'short' });
-    nameEl.innerHTML = `${next.meeting.meeting_name} <span class="rc-badge" style="margin-left:6px;">Eerstvolgende</span>`;
+    const flag = next.meeting.country_flag
+      ? `<img class="rc-flag" src="${next.meeting.country_flag}" alt="${next.meeting.country_name || ''}" onerror="this.remove()">`
+      : '';
+    if (next.meeting.circuit_image) {
+      col.insertAdjacentHTML('afterbegin', `<img class="rc-circuit-bg" src="${next.meeting.circuit_image}" alt="" onerror="this.remove()">`);
+    }
+    nameEl.innerHTML = `${flag}${next.meeting.meeting_name} <span class="rc-badge">Eerstvolgende</span>`;
     col.insertAdjacentHTML('beforeend', `
       <div class="rc-session">${next.session.session_name} — ${dateStr}</div>
       <div class="rc-countdown" id="countdown"></div>`);
