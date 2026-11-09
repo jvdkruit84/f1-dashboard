@@ -732,7 +732,7 @@ function renderPodium(found, byNumber) {
 /* ---------- custom news (own written articles, from news.json) ---------- */
 async function loadCustomNews() {
   try {
-    const res = await fetch('news.json');
+    const res = await fetch('news.json', { cache: 'no-store' });
     if (!res.ok) return [];
     const articles = await res.json();
     return articles.map(a => ({

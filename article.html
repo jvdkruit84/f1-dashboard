@@ -222,7 +222,7 @@ async function init() {
     return;
   }
   try {
-    const res = await fetch('news.json');
+    const res = await fetch('news.json', { cache: 'no-store' });
     if (!res.ok) throw new Error('news.json niet gevonden');
     const articles = await res.json();
     const article = articles.find(a => a.slug === SLUG);
