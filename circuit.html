@@ -85,6 +85,12 @@
   .card h2 {
     font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
     color: var(--ink-secondary); margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 9px;
+  }
+  .circuit-flag { height: 14px; width: auto; border-radius: 2px; box-shadow: 0 0 0 1px rgba(255,255,255,0.15); flex: none; }
+  .circuit-ref-img {
+    height: 44px; width: auto; max-width: 70px; object-fit: contain;
+    filter: brightness(0) invert(1); opacity: 0.85; margin-left: auto; flex: none;
   }
 
   .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; }
@@ -204,7 +210,11 @@
   </div>
 
   <div class="card" id="trackCard" style="display:none;">
-    <h2 id="trackHeading">Baanlayout</h2>
+    <h2>
+      <img class="circuit-flag" id="trackFlag" src="" alt="" style="display:none;" onerror="this.style.display='none'">
+      <span id="trackHeading">Baanlayout</span>
+      <img class="circuit-ref-img" id="trackRefImg" src="" alt="" style="display:none;" onerror="this.style.display='none'">
+    </h2>
     <div class="track-wrap"><svg id="trackSvg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet"></svg></div>
     <div class="speed-legend">
       <span id="speedMinLabel">0 km/h</span>
@@ -439,6 +449,22 @@ function renderTrack(location, carData, driver, meeting, session, fastest) {
   document.getElementById('speedMinLabel').textContent = `${Math.round(minSpeed)} km/h`;
   document.getElementById('speedMaxLabel').textContent = `${Math.round(maxSpeed)} km/h`;
   document.getElementById('trackHeading').textContent = `Baanlayout — ${meeting.circuit_short_name || meeting.meeting_name}`;
+
+  const flagEl = document.getElementById('trackFlag');
+  if (meeting.country_flag) {
+    flagEl.src = meeting.country_flag;
+    flagEl.alt = meeting.country_name || '';
+    flagEl.style.display = 'inline-block';
+  } else {
+    flagEl.style.display = 'none';
+  }
+  const refImgEl = document.getElementById('trackRefImg');
+  if (meeting.circuit_image) {
+    refImgEl.src = meeting.circuit_image;
+    refImgEl.style.display = 'block';
+  } else {
+    refImgEl.style.display = 'none';
+  }
 
   const avgSpeedAll = speedsOnly.reduce((a, b) => a + b, 0) / speedsOnly.length;
   const tiles = [
