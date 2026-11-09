@@ -44,6 +44,14 @@ function loadArticles() {
 function saveArticles($articles) {
     return file_put_contents(NEWS_JSON, json_encode($articles, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) !== false;
 }
+function sortPinnedFirst($articles) {
+    usort($articles, function ($a, $b) {
+        $pa = !empty($a['pinned']) ? 1 : 0;
+        $pb = !empty($b['pinned']) ? 1 : 0;
+        return $pb <=> $pa;
+    });
+    return $articles;
+}
 
 $message = null;
 $messageIsError = false;
@@ -105,6 +113,7 @@ if ($isAuthed && $_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if (!$messageIsError) {
+                $pinned = isset($_POST['pinned']);
                 $newArticle = [
                     'slug' => $slug,
                     'title' => $title,
@@ -114,8 +123,14 @@ if ($isAuthed && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     'body' => $body,
                     'image' => $imagePath ?: (IMAGE_URL_PREFIX . '/placeholder.jpg'),
                     'date' => $date,
+                    'pinned' => $pinned,
                 ];
+                if ($pinned) {
+                    foreach ($articles as &$a) { $a['pinned'] = false; }
+                    unset($a);
+                }
                 array_unshift($articles, $newArticle);
+                $articles = sortPinnedFirst($articles);
                 if (saveArticles($articles)) {
                     $message = 'Bericht geplaatst.' . ($imageWarning ? ' ' . $imageWarning : '');
                 } else {
@@ -179,6 +194,13 @@ if ($isAuthed && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 if (!$messageIsError) {
+                    $pinned = isset($_POST['pinned']);
+                    if ($pinned) {
+                        foreach ($articles as $i2 => &$a) {
+                            if ($i2 !== $idx) $a['pinned'] = false;
+                        }
+                        unset($a);
+                    }
                     $articles[$idx]['title'] = $title;
                     $articles[$idx]['tag'] = $tag;
                     $articles[$idx]['color'] = $color;
@@ -186,6 +208,8 @@ if ($isAuthed && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     $articles[$idx]['body'] = $body;
                     $articles[$idx]['date'] = $date;
                     $articles[$idx]['image'] = $imagePath;
+                    $articles[$idx]['pinned'] = $pinned;
+                    $articles = sortPinnedFirst($articles);
                     if (saveArticles($articles)) {
                         $message = 'Bericht bijgewerkt.' . ($imageWarning ? ' ' . $imageWarning : '');
                     } else {
@@ -276,6 +300,10 @@ if ($isAuthed && isset($_GET['edit'])) {
   .article-row button { margin: 0; padding: 6px 12px; font-size: 11px; background: transparent; border: 1px solid var(--accent); color: var(--accent); }
   .logout { float: right; font-size: 12px; color: var(--ink-muted); text-decoration: none; }
   .hint { font-size: 11px; color: var(--ink-muted); margin-top: 6px; }
+  .pin-row { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
+  .pin-row input[type=checkbox] { width: auto; }
+  .pin-row span { font-size: 13px; color: var(--ink-primary); text-transform: none; font-weight: 400; letter-spacing: normal; }
+  .pin-badge { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--warn, #ffb800); border: 1px solid currentColor; border-radius: 3px; padding: 1px 6px; margin-left: 8px; vertical-align: middle; }
 </style>
 </head>
 <body>
@@ -333,6 +361,11 @@ if ($isAuthed && isset($_GET['edit'])) {
       <label for="date">Datum</label>
       <input type="date" id="date" name="date" value="<?= htmlspecialchars($editArticle['date'] ?? date('Y-m-d')) ?>">
 
+      <label class="pin-row" for="pinned">
+        <input type="checkbox" id="pinned" name="pinned" value="1" <?= !empty($editArticle['pinned']) ? 'checked' : '' ?>>
+        <span>Vastzetten bovenaan (altijd als eerste bericht tonen)</span>
+      </label>
+
       <button type="submit"><?= $editArticle ? 'Opslaan' : 'Plaatsen' ?></button>
       <?php if ($editArticle): ?>
         <a href="admin.php" class="secondary" style="display:inline-block;margin-left:8px;margin-top:16px;padding:11px 20px;border:1px solid var(--border);border-radius:4px;color:var(--ink-secondary);text-decoration:none;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;font-size:13px;">Annuleren</a>
@@ -347,7 +380,7 @@ if ($isAuthed && isset($_GET['edit'])) {
     <?php else: foreach ($articles as $a): ?>
       <div class="article-row">
         <div>
-          <div class="title"><?= htmlspecialchars($a['title'] ?? '') ?></div>
+          <div class="title"><?= htmlspecialchars($a['title'] ?? '') ?><?php if (!empty($a['pinned'])): ?><span class="pin-badge">Vastgezet</span><?php endif; ?></div>
           <div class="meta"><?= htmlspecialchars($a['date'] ?? '') ?> · <?= htmlspecialchars($a['slug'] ?? '') ?></div>
         </div>
         <div style="display:flex; gap:8px; flex:none;">
