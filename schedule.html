@@ -134,10 +134,20 @@
   .race-card .expand-btn:hover { border-color: var(--ink-secondary); color: var(--ink-primary); }
 
   .session-rows { grid-column: 1 / -1; display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--grid); }
-  .session-rows.open { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 10px; }
-  .session-tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
-  .session-tile .sname { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); font-weight: 700; }
-  .session-tile .sdate { font-size: 12px; margin-top: 2px; font-weight: 600; }
+  .session-rows.open { display: block; }
+  .session-day { margin-bottom: 10px; }
+  .session-day:last-of-type { margin-bottom: 0; }
+  .sday-label { font-size: 12px; font-weight: 700; text-transform: capitalize; letter-spacing: 0.02em; color: var(--ink-secondary); margin-bottom: 6px; }
+  .sday-items { display: flex; flex-direction: column; gap: 4px; }
+  .session-tile {
+    display: flex; align-items: center; gap: 9px;
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; padding: 7px 12px;
+    font-size: 12px;
+  }
+  .session-tile .clock { opacity: 0.55; font-size: 11px; flex: none; }
+  .session-tile .sname { flex: 1; font-weight: 600; }
+  .session-tile .stime { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink-primary); }
+  .stz-note { font-size: 10px; color: var(--ink-muted); margin-top: 8px; text-align: right; }
 
   footer.site-footer {
     max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0;
@@ -241,17 +251,19 @@ function fmtDateRange(start, end) {
   const opts2 = { day: '2-digit', month: 'short' };
   return `${s.toLocaleDateString('nl-NL', opts1)} – ${e.toLocaleDateString('nl-NL', opts2)}`;
 }
-function fmtSessionTime(dateStr, gmtOffset) {
-  // display in the circuit's own local time, using the gmt_offset from the meeting
+function toLocalDate(dateStr, gmtOffset) {
+  // shift into the circuit's own local time, using the gmt_offset from the meeting
   const d = new Date(dateStr);
-  if (gmtOffset) {
-    const sign = gmtOffset.startsWith('-') ? -1 : 1;
-    const [h, m] = gmtOffset.replace('-', '').replace('+', '').split(':').map(Number);
-    const localMs = d.getTime() + sign * (h * 3600000 + m * 60000);
-    const local = new Date(localMs);
-    return local.toLocaleString('nl-NL', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
-  }
-  return d.toLocaleString('nl-NL', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  if (!gmtOffset) return d;
+  const sign = gmtOffset.startsWith('-') ? -1 : 1;
+  const [h, m] = gmtOffset.replace('-', '').replace('+', '').split(':').map(Number);
+  return new Date(d.getTime() + sign * (h * 3600000 + m * 60000));
+}
+function fmtDayHeader(local) {
+  return local.toLocaleString('nl-NL', { weekday: 'long', day: '2-digit', month: 'short', timeZone: 'UTC' });
+}
+function fmtTimeOnly(local) {
+  return local.toLocaleString('nl-NL', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
 }
 
 const yearSelect = document.getElementById('yearSelect');
@@ -335,11 +347,26 @@ async function toggleSessions(btn) {
     try {
       const sessions = await apiGet(`sessions?meeting_key=${meetingKey}`);
       sessions.sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
-      container.innerHTML = sessions.map(s => `
-        <div class="session-tile">
-          <div class="sname">${s.session_name}</div>
-          <div class="sdate">${fmtSessionTime(s.date_start, offset)}</div>
-        </div>`).join('');
+
+      const byDay = new Map();
+      sessions.forEach(s => {
+        const local = toLocalDate(s.date_start, offset);
+        const key = local.toISOString().slice(0, 10);
+        if (!byDay.has(key)) byDay.set(key, { label: fmtDayHeader(local), items: [] });
+        byDay.get(key).items.push({ name: s.session_name, time: fmtTimeOnly(local) });
+      });
+
+      let html = '';
+      for (const { label, items } of byDay.values()) {
+        html += `<div class="session-day">
+          <div class="sday-label">${label}</div>
+          <div class="sday-items">
+            ${items.map(it => `<div class="session-tile"><span class="clock">🕐</span><span class="sname">${it.name}</span><span class="stime">${it.time}</span></div>`).join('')}
+          </div>
+        </div>`;
+      }
+      html += `<div class="stz-note">Tijden in lokale circuittijd.</div>`;
+      container.innerHTML = html;
       container.dataset.loaded = '1';
     } catch (e) {
       container.innerHTML = `<div style="font-size:12px;color:var(--accent);">${e.message}</div>`;

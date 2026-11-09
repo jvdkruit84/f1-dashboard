@@ -89,18 +89,29 @@
   .btn-ghost { background: transparent; color: var(--ink-primary); border: 1px solid var(--border); }
   .btn-ghost:hover { border-color: var(--ink-secondary); }
 
-  /* ---------- next session strip ---------- */
-  .next-bar {
-    background: var(--surface-1); border-bottom: 1px solid var(--border);
+  /* ---------- combined race-center widget (last race + next race) ---------- */
+  .race-center { background: var(--surface-1); border-bottom: 1px solid var(--border); }
+  .race-center-inner {
+    max-width: 1180px; margin: 0 auto; padding: 20px 24px;
+    display: grid; grid-template-columns: 1fr 1px 1fr; gap: 24px; align-items: start;
   }
-  .next-bar-inner {
-    max-width: 1180px; margin: 0 auto; padding: 10px 24px;
-    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
-    font-size: 12px;
+  @media (max-width: 760px) {
+    .race-center-inner { grid-template-columns: 1fr; gap: 16px; }
+    .rc-divider { display: none; }
   }
-  .next-bar .label { color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; font-size: 10px; }
-  .next-bar .race-name { font-weight: 700; margin-left: 8px; }
-  .next-bar .countdown { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--accent); }
+  .rc-divider { background: var(--border); align-self: stretch; }
+  .rc-label {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted);
+  }
+  .rc-badge {
+    background: var(--accent); color: #fff; font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; padding: 2px 8px; border-radius: 999px;
+  }
+  .rc-race-name { font-size: 15px; font-weight: 700; color: var(--ink-primary); }
+  .rc-session { font-size: 12px; color: var(--ink-secondary); margin-top: 3px; }
+  .rc-countdown { font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; color: var(--accent); margin-top: 10px; }
+  .rc-next .podium-item:first-child { padding-top: 0; }
 
   .wrap { padding-top: 24px; }
 
@@ -153,34 +164,47 @@
     color: var(--ink-secondary); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
   }
 
-  /* ---------- driver grid (teaser, shared markup with drivers.html) ---------- */
-  .driver-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+  /* ---------- driver grid (teaser poster cards, shared pattern with drivers.html) ---------- */
+  .driver-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
   .driver-card {
-    background: var(--page); border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
-    position: relative; transition: border-color 0.15s, transform 0.15s;
-    display: block; text-decoration: none; color: inherit;
+    position: relative; display: block; text-decoration: none; color: inherit;
+    border-radius: 9px; overflow: hidden; aspect-ratio: 3 / 4;
+    background: linear-gradient(165deg, var(--card-color, #222) 0%, #0a0a0c 78%);
+    border: 1px solid var(--border);
+    transition: transform 0.15s, box-shadow 0.15s;
   }
-  .driver-card:hover { border-color: var(--ink-secondary); transform: translateY(-2px); }
-  .driver-card .accent-bar { height: 4px; background: var(--card-color, var(--accent)); }
-  .driver-card .photo-wrap {
-    background: linear-gradient(165deg, var(--card-color, #222) 0%, #0a0a0c 85%);
-    display: flex; align-items: flex-end; justify-content: center; height: 120px; overflow: hidden; position: relative;
+  .driver-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,0.4); }
+  .driver-card::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.045) 0 2px, transparent 2px 36px);
+    pointer-events: none;
   }
-  .driver-card .photo-wrap img { height: 132px; width: auto; object-fit: cover; object-position: top center; }
-  .driver-card .num-watermark {
-    position: absolute; top: 6px; right: 8px; font-size: 34px; font-weight: 900; font-style: italic;
-    color: rgba(255,255,255,0.14); line-height: 1; pointer-events: none;
+  .driver-card .dc-photo {
+    position: absolute; right: -4%; bottom: 0; height: 88%; width: auto; max-width: 112%;
+    display: flex; align-items: flex-end; justify-content: flex-end;
   }
-  .driver-card .info { padding: 10px 12px 12px; }
-  .driver-card .d-name { font-weight: 700; font-size: 12px; text-transform: uppercase; line-height: 1.2; }
-  .driver-card .d-team { font-size: 10px; color: var(--ink-secondary); margin-top: 2px; }
-  .driver-card .d-stats {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);
+  .driver-card .dc-photo img { height: 100%; width: auto; object-fit: cover; object-position: top center; filter: drop-shadow(-6px 6px 10px rgba(0,0,0,0.35)); }
+  .driver-card .dc-num {
+    position: absolute; left: 10px; top: 42px; font-size: 32px; font-weight: 900; font-style: italic;
+    color: rgba(255,255,255,0.9); line-height: 1; text-shadow: 0 2px 10px rgba(0,0,0,0.3);
   }
-  .driver-card .d-pos { font-size: 15px; font-weight: 900; color: var(--ink-primary); }
-  .driver-card .d-pos span, .driver-card .d-pts span { font-size: 9px; color: var(--ink-muted); font-weight: 700; display: block; text-transform: uppercase; letter-spacing: 0.03em; }
-  .driver-card .d-pts { font-size: 13px; font-weight: 700; text-align: right; }
+  .driver-card .dc-name { position: absolute; left: 10px; top: 9px; right: 10px; }
+  .driver-card .dc-name .first { display: block; font-size: 9px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.03em; color: rgba(255,255,255,0.8); }
+  .driver-card .dc-name .last { display: block; font-size: 13px; font-weight: 900; text-transform: uppercase; line-height: 1.08; letter-spacing: -0.01em; }
+  .driver-card .dc-flag {
+    position: absolute; left: 10px; bottom: 44px; width: 18px; height: 18px; border-radius: 50%;
+    background: rgba(0,0,0,0.5); border: 1.5px solid rgba(255,255,255,0.7);
+    display: flex; align-items: center; justify-content: center; font-size: 6px; font-weight: 700; color: #fff;
+  }
+  .driver-card .dc-footer {
+    position: absolute; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6);
+    padding: 6px 10px 7px; display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .driver-card .dc-team { font-size: 8px; color: rgba(255,255,255,0.75); text-transform: uppercase; letter-spacing: 0.02em; font-weight: 600; max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .driver-card .dc-stats { display: flex; gap: 7px; }
+  .driver-card .dc-stats .stat { text-align: right; }
+  .driver-card .dc-stats .stat .v { font-size: 11px; font-weight: 900; color: #fff; line-height: 1; }
+  .driver-card .dc-stats .stat .l { font-size: 6px; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.03em; font-weight: 700; }
 
   footer.site-footer {
     max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0;
@@ -247,9 +271,18 @@
   </div>
 </div>
 
-<div class="next-bar">
-  <div class="next-bar-inner" id="nextBar">
-    <div><span class="label">Volgende sessie</span> <span class="race-name">laden…</span></div>
+<div class="race-center">
+  <div class="race-center-inner">
+    <div class="rc-col rc-last">
+      <div class="rc-label">Laatste race</div>
+      <div class="rc-race-name" id="rcLastName">Laden…</div>
+      <div id="podium" style="margin-top:8px;">Laden…</div>
+    </div>
+    <div class="rc-divider"></div>
+    <div class="rc-col rc-next" id="nextBar">
+      <div class="rc-label">Volgende sessie</div>
+      <div class="rc-race-name" id="rcNextName">Laden…</div>
+    </div>
   </div>
 </div>
 
@@ -262,15 +295,9 @@
     <div id="otdList">Laden…</div>
   </div>
 
-  <div class="two-col">
-    <div class="card">
-      <h2>Laatste race <a href="results.html">Volledige rondetijden →</a></h2>
-      <div id="podium">Laden…</div>
-    </div>
-    <div class="card">
-      <h2>WK-stand (top 5) <a href="drivers.html">Alle coureurs →</a></h2>
-      <table class="mini" id="standingsMini"></table>
-    </div>
+  <div class="card">
+    <h2>WK-stand (top 5) <a href="drivers.html">Alle coureurs →</a></h2>
+    <table class="mini" id="standingsMini"></table>
   </div>
 
   <div class="card">
@@ -483,28 +510,30 @@ function startCountdown(el, targetDate) {
   setInterval(tick, 60000);
 }
 
-/* ---------- driver card markup (shared pattern with drivers.html) ---------- */
+/* ---------- driver card markup (poster style, shared pattern with drivers.html) ---------- */
 function driverCardHTML(d, standing, year, meetingKey, sessionKey) {
   const color = '#' + (d.team_colour || '898781');
   const photo = d.headshot_url
     ? `<img src="${d.headshot_url}" alt="${d.full_name || d.broadcast_name}" loading="lazy" onerror="this.remove()">`
     : '';
-  const posBlock = standing
-    ? `<div class="d-pos">${standing.position_current}<span>Pos</span></div>
-       <div class="d-pts">${standing.points_current.toFixed(0)}<span>Pnt</span></div>`
-    : `<div class="d-pos">–<span>Pos</span></div><div class="d-pts">–<span>Pnt</span></div>`;
+  const first = d.first_name || '';
+  const last = d.last_name || d.name_acronym;
+  const flag = d.country_code ? `<div class="dc-flag">${d.country_code}</div>` : '';
+  const pos = standing ? standing.position_current : '–';
+  const pts = standing ? standing.points_current.toFixed(0) : '–';
   const href = `driver.html?number=${d.driver_number}&year=${year}&meeting=${meetingKey}&session=${sessionKey}`;
   return `
     <a class="driver-card" style="--card-color:${color}" href="${href}">
-      <div class="accent-bar"></div>
-      <div class="photo-wrap">
-        <div class="num-watermark">${d.driver_number}</div>
-        ${photo}
-      </div>
-      <div class="info">
-        <div class="d-name">${d.name_acronym}</div>
-        <div class="d-team">${d.team_name || '–'}</div>
-        <div class="d-stats">${posBlock}</div>
+      <div class="dc-name"><span class="first">${first}</span><span class="last">${last}</span></div>
+      <div class="dc-num">${d.driver_number}</div>
+      <div class="dc-photo">${photo}</div>
+      ${flag}
+      <div class="dc-footer">
+        <div class="dc-team">${d.team_name || '–'}</div>
+        <div class="dc-stats">
+          <div class="stat"><div class="v">${pos}</div><div class="l">Pos</div></div>
+          <div class="stat"><div class="v">${pts}</div><div class="l">Pnt</div></div>
+        </div>
       </div>
     </a>`;
 }
@@ -534,20 +563,22 @@ async function init() {
   }
 
   findNextSession(SEASON_YEARS[0]).then(next => {
-    const bar = document.getElementById('nextBar');
-    if (!next) { bar.innerHTML = '<div><span class="label">Volgende sessie</span> <span class="race-name">seizoen afgelopen</span></div>'; return; }
+    const nameEl = document.getElementById('rcNextName');
+    const col = document.getElementById('nextBar');
+    if (!next) { nameEl.textContent = 'Seizoen afgelopen'; return; }
     const dateStr = new Date(next.session.date_start).toLocaleDateString('nl-NL', { day: '2-digit', month: 'short' });
-    bar.innerHTML = `
-      <div><span class="label">Volgende</span> <span class="race-name">${next.meeting.meeting_name} — ${next.session.session_name} (${dateStr})</span></div>
-      <div class="countdown" id="countdown"></div>`;
+    nameEl.innerHTML = `${next.meeting.meeting_name} <span class="rc-badge" style="margin-left:6px;">Eerstvolgende</span>`;
+    col.insertAdjacentHTML('beforeend', `
+      <div class="rc-session">${next.session.session_name} — ${dateStr}</div>
+      <div class="rc-countdown" id="countdown"></div>`);
     startCountdown(document.getElementById('countdown'), next.session.date_start);
   }).catch(() => {});
 }
 
 function renderPodium(found, byNumber) {
+  document.getElementById('rcLastName').textContent = `${found.meeting.meeting_name} (${found.year})`;
   const top3 = found.results.filter(r => r.position != null && r.position <= 3).sort((a, b) => a.position - b.position);
   document.getElementById('podium').innerHTML = `
-    <div style="font-size:12px;color:var(--ink-muted);margin-bottom:10px;">${found.meeting.meeting_name} (${found.year})</div>
     ${top3.map(r => {
       const d = byNumber.get(r.driver_number);
       const color = d ? '#' + (d.team_colour || '898781') : '#898781';

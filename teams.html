@@ -112,39 +112,42 @@
   #status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; margin-top: 10px; }
   #status.error { color: var(--accent); }
 
-  /* ---------- team cards ---------- */
+  /* ---------- team cards (full-bleed poster style) ---------- */
   .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
   .team-card {
-    background: var(--page); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
-    transition: border-color 0.15s, transform 0.15s;
+    position: relative; overflow: hidden; border-radius: 10px; border: 1px solid var(--border);
+    background: linear-gradient(145deg, var(--team-color, #333) 0%, #0a0a0c 85%);
+    transition: transform 0.15s, box-shadow 0.15s;
   }
-  .team-card:hover { border-color: var(--ink-secondary); transform: translateY(-2px); }
-  .team-accent { height: 5px; background: var(--team-color, var(--accent)); }
+  .team-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,0.4); }
+  .team-card::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.045) 0 2px, transparent 2px 36px);
+    pointer-events: none;
+  }
   .team-head {
     display: flex; justify-content: space-between; align-items: flex-start;
-    padding: 14px 16px 10px; background: linear-gradient(135deg, color-mix(in srgb, var(--team-color, #333) 18%, var(--page)) 0%, var(--page) 70%);
+    padding: 16px 16px 8px; position: relative;
   }
-  .team-name { font-weight: 900; font-size: 16px; text-transform: uppercase; letter-spacing: -0.01em; }
+  .team-name { font-weight: 900; font-size: 18px; text-transform: uppercase; letter-spacing: -0.01em; color: #fff; line-height: 1.08; max-width: 64%; text-shadow: 0 2px 8px rgba(0,0,0,0.25); }
   .team-pos { text-align: right; }
-  .team-pos .num { font-size: 22px; font-weight: 900; font-style: italic; color: var(--team-color, var(--accent)); line-height: 1; }
-  .team-pos .lbl { font-size: 9px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
-  .team-pts { padding: 0 16px 10px; font-size: 13px; color: var(--ink-secondary); }
-  .team-pts strong { color: var(--ink-primary); font-size: 16px; }
-  .team-drivers { display: flex; border-top: 1px solid var(--border); }
+  .team-pos .num { font-size: 30px; font-weight: 900; font-style: italic; color: #fff; line-height: 1; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+  .team-pos .lbl { font-size: 9px; color: rgba(255,255,255,0.65); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+  .team-pts { padding: 0 16px 14px; font-size: 13px; color: rgba(255,255,255,0.75); position: relative; }
+  .team-pts strong { color: #fff; font-size: 18px; }
+  .team-drivers { display: flex; position: relative; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.12); }
   .team-driver {
     flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
     padding: 10px 8px 12px; text-decoration: none; color: inherit; position: relative;
   }
-  .team-driver:first-child { border-right: 1px solid var(--border); }
-  .team-driver:hover { background: rgba(255,255,255,0.04); }
+  .team-driver:first-child { border-right: 1px solid rgba(255,255,255,0.12); }
+  .team-driver:hover { background: rgba(255,255,255,0.06); }
   .team-driver .photo-wrap {
     width: 100%; height: 86px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
-    background: linear-gradient(165deg, var(--team-color, #222) 0%, transparent 85%);
-    border-radius: 6px;
   }
-  .team-driver img { height: 96px; width: auto; object-fit: cover; }
-  .team-driver .dname { font-size: 11px; font-weight: 700; margin-top: 2px; }
-  .team-driver .dnum { font-size: 9px; color: var(--ink-muted); }
+  .team-driver img { height: 96px; width: auto; object-fit: cover; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)); }
+  .team-driver .dname { font-size: 11px; font-weight: 700; margin-top: 2px; color: #fff; }
+  .team-driver .dnum { font-size: 9px; color: rgba(255,255,255,0.6); }
 
   footer.site-footer {
     max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0;
@@ -325,7 +328,6 @@ async function loadTeams(year) {
       const pts = standing ? standing.points_current.toFixed(0) : '–';
       return `
         <div class="team-card" style="--team-color:${color}">
-          <div class="team-accent"></div>
           <div class="team-head">
             <div class="team-name">${t.name}</div>
             ${posBlock}

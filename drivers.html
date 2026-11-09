@@ -105,35 +105,47 @@
   #status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; margin-top: 10px; }
   #status.error { color: var(--critical); }
 
-  /* ---------- driver grid ---------- */
-  .driver-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  /* ---------- driver grid (poster cards) ---------- */
+  .driver-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
   .driver-card {
-    background: var(--page); border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
-    position: relative; transition: border-color 0.15s, transform 0.15s;
-    display: block; text-decoration: none; color: inherit;
+    position: relative; display: block; text-decoration: none; color: inherit;
+    border-radius: 10px; overflow: hidden; aspect-ratio: 3 / 4;
+    background: linear-gradient(165deg, var(--card-color, #222) 0%, #0a0a0c 78%);
+    border: 1px solid var(--border);
+    transition: transform 0.15s, box-shadow 0.15s;
   }
-  .driver-card:hover { border-color: var(--ink-secondary); transform: translateY(-2px); }
-  .driver-card .accent-bar { height: 4px; background: var(--card-color, var(--accent)); }
-  .driver-card .photo-wrap {
-    background: linear-gradient(165deg, var(--card-color, #222) 0%, #0a0a0c 85%);
-    display: flex; align-items: flex-end; justify-content: center; height: 150px; overflow: hidden; position: relative;
+  .driver-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,0.4); }
+  .driver-card::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.045) 0 2px, transparent 2px 36px);
+    pointer-events: none;
   }
-  .driver-card .photo-wrap img { height: 165px; width: auto; object-fit: cover; object-position: top center; }
-  .driver-card .num-watermark {
-    position: absolute; top: 6px; right: 10px; font-size: 44px; font-weight: 900; font-style: italic;
-    color: rgba(255,255,255,0.14); line-height: 1; pointer-events: none;
+  .driver-card .dc-photo {
+    position: absolute; right: -4%; bottom: 0; height: 88%; width: auto; max-width: 112%;
+    display: flex; align-items: flex-end; justify-content: flex-end;
   }
-  .driver-card .info { padding: 12px 14px 14px; }
-  .driver-card .d-name { font-weight: 700; font-size: 14px; text-transform: uppercase; line-height: 1.2; }
-  .driver-card .d-team { font-size: 11px; color: var(--ink-secondary); margin-top: 2px; }
-  .driver-card .d-country { font-size: 10px; color: var(--ink-muted); margin-top: 2px; letter-spacing: 0.04em; }
-  .driver-card .d-stats {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
+  .driver-card .dc-photo img { height: 100%; width: auto; object-fit: cover; object-position: top center; filter: drop-shadow(-6px 6px 10px rgba(0,0,0,0.35)); }
+  .driver-card .dc-num {
+    position: absolute; left: 12px; top: 54px; font-size: 42px; font-weight: 900; font-style: italic;
+    color: rgba(255,255,255,0.9); line-height: 1; text-shadow: 0 2px 10px rgba(0,0,0,0.3);
   }
-  .driver-card .d-pos { font-size: 18px; font-weight: 900; color: var(--ink-primary); }
-  .driver-card .d-pos span, .driver-card .d-pts span { font-size: 10px; color: var(--ink-muted); font-weight: 700; display: block; text-transform: uppercase; letter-spacing: 0.04em; }
-  .driver-card .d-pts { font-size: 15px; font-weight: 700; text-align: right; }
+  .driver-card .dc-name { position: absolute; left: 12px; top: 12px; right: 12px; }
+  .driver-card .dc-name .first { display: block; font-size: 11px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.04em; color: rgba(255,255,255,0.8); }
+  .driver-card .dc-name .last { display: block; font-size: 17px; font-weight: 900; text-transform: uppercase; line-height: 1.08; letter-spacing: -0.01em; }
+  .driver-card .dc-flag {
+    position: absolute; left: 12px; bottom: 52px; width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(0,0,0,0.5); border: 1.5px solid rgba(255,255,255,0.7);
+    display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; color: #fff; letter-spacing: -0.02em;
+  }
+  .driver-card .dc-footer {
+    position: absolute; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
+    padding: 7px 12px 8px; display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .driver-card .dc-team { font-size: 10px; color: rgba(255,255,255,0.75); text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600; max-width: 60%; }
+  .driver-card .dc-stats { display: flex; gap: 10px; }
+  .driver-card .dc-stats .stat { text-align: right; }
+  .driver-card .dc-stats .stat .v { font-size: 14px; font-weight: 900; color: #fff; line-height: 1; }
+  .driver-card .dc-stats .stat .l { font-size: 7px; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; }
 
   footer.site-footer {
     max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0;
@@ -264,29 +276,30 @@ async function findLatestCompletedMeeting(year) {
   return null;
 }
 
-/* ---------- driver card rendering (shared markup also used on index.html) ---------- */
+/* ---------- driver card rendering (poster style, shared markup also used on index.html) ---------- */
 function driverCardHTML(d, standing, year, meetingKey, sessionKey) {
   const color = '#' + (d.team_colour || '898781');
   const photo = d.headshot_url
     ? `<img src="${d.headshot_url}" alt="${d.full_name || d.broadcast_name}" loading="lazy" onerror="this.remove()">`
     : '';
-  const posBlock = standing
-    ? `<div class="d-pos">${standing.position_current}<span>Positie</span></div>
-       <div class="d-pts">${standing.points_current.toFixed(0)}<span>Punten</span></div>`
-    : `<div class="d-pos">–<span>Positie</span></div><div class="d-pts">–<span>Punten</span></div>`;
+  const first = d.first_name || (d.full_name || '').split(' ').slice(0, -1).join(' ');
+  const last = d.last_name || (d.full_name || d.broadcast_name || d.name_acronym);
+  const flag = d.country_code ? `<div class="dc-flag">${d.country_code}</div>` : '';
+  const pos = standing ? standing.position_current : '–';
+  const pts = standing ? standing.points_current.toFixed(0) : '–';
   const href = `driver.html?number=${d.driver_number}&year=${year}&meeting=${meetingKey}&session=${sessionKey}`;
   return `
     <a class="driver-card" style="--card-color:${color}" href="${href}">
-      <div class="accent-bar"></div>
-      <div class="photo-wrap">
-        <div class="num-watermark">${d.driver_number}</div>
-        ${photo}
-      </div>
-      <div class="info">
-        <div class="d-name">${d.full_name || d.broadcast_name || d.name_acronym}</div>
-        <div class="d-team">${d.team_name || '–'}</div>
-        <div class="d-country">${d.country_code || ''}</div>
-        <div class="d-stats">${posBlock}</div>
+      <div class="dc-name"><span class="first">${first}</span><span class="last">${last}</span></div>
+      <div class="dc-num">${d.driver_number}</div>
+      <div class="dc-photo">${photo}</div>
+      ${flag}
+      <div class="dc-footer">
+        <div class="dc-team">${d.team_name || '–'}</div>
+        <div class="dc-stats">
+          <div class="stat"><div class="v">${pos}</div><div class="l">Pos</div></div>
+          <div class="stat"><div class="v">${pts}</div><div class="l">Pnt</div></div>
+        </div>
       </div>
     </a>`;
 }
