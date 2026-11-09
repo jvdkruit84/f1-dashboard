@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Legends — Formule1Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --surface-1: #15151e;
+    --page: #0a0a0c;
+    --ink-primary: #ffffff;
+    --ink-secondary: #9a9aa2;
+    --ink-muted: #6b6b72;
+    --grid: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.12);
+    --accent: #e10600;
+    --gold: #ffcf40;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Titillium Web', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(ellipse 900px 300px at 50% -80px, rgba(225,6,0,0.10), transparent 70%),
+      var(--page);
+    color: var(--ink-primary);
+    padding: 0 0 32px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  .topnav { background: #000; border-bottom: 1px solid var(--border); }
+  .topnav-inner {
+    max-width: 1180px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between; height: 56px;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+  .brand-mark {
+    background: var(--accent); color: #fff; font-weight: 900; font-size: 13px;
+    padding: 3px 7px; border-radius: 3px; letter-spacing: 0.01em; font-style: italic;
+  }
+  .brand-text { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-secondary); }
+  .nav-links { display: flex; gap: 16px; height: 100%; }
+  .nav-link {
+    display: flex; align-items: center; height: 100%;
+    color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent;
+    transition: color 0.15s; white-space: nowrap;
+  }
+  .nav-link:hover { color: var(--ink-primary); }
+  .nav-link.active { color: var(--ink-primary); border-bottom-color: var(--accent); }
+
+  .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
+  .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
+  @media (max-width: 860px) {
+    .nav-toggle { display: flex; }
+    .topnav { position: relative; }
+    .nav-links {
+      display: none; position: absolute; top: 56px; left: 0; right: 0;
+      background: #000; border-bottom: 1px solid var(--border);
+      flex-direction: column; gap: 0; height: auto; padding: 8px 0; z-index: 50;
+    }
+    .nav-links.open { display: flex; }
+    .nav-link { height: auto; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-link.active { border-left-color: var(--accent); }
+    .brand-text { display: none; }
+  }
+
+  .hero {
+    position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #000 0%, #0f0f12 60%, #1a1a1e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px 16px;
+    margin-bottom: 20px;
+  }
+  .hero::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 40px);
+    pointer-events: none;
+  }
+  .hero-inner { max-width: 1180px; margin: 0 auto; position: relative; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 8px;
+  }
+  .eyebrow::before { content: ""; width: 16px; height: 2px; background: var(--accent); display: inline-block; }
+  h1 { font-size: 21px; font-weight: 900; text-transform: uppercase; margin: 0 0 4px; letter-spacing: -0.01em; line-height: 1.05; }
+  .subtitle { color: var(--ink-secondary); font-size: 13px; margin-bottom: 0; }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-secondary); margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+
+  #searchInput {
+    width: 100%; font-size: 15px; padding: 12px 14px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--page); color: var(--ink-primary); font-family: inherit;
+  }
+  #searchInput:focus { outline: none; border-color: var(--accent); }
+  #searchStatus { font-size: 12px; color: var(--ink-muted); margin-top: 8px; }
+
+  .legend-list { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; }
+  .legend-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 10px 12px; border-radius: 6px; text-decoration: none; color: inherit;
+    transition: background 0.1s;
+  }
+  .legend-row:hover { background: rgba(255,255,255,0.05); }
+  .legend-row .lr-name { font-weight: 700; font-size: 14px; }
+  .legend-row .lr-meta { font-size: 11px; color: var(--ink-muted); }
+  .legend-row .lr-flag { width: 24px; height: 18px; object-fit: cover; border-radius: 2px; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.15); }
+
+  .legend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .legend-card {
+    display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px;
+    padding: 16px 10px; border-radius: 8px; background: var(--page); border: 1px solid var(--border);
+    text-decoration: none; color: inherit; transition: border-color 0.15s, transform 0.15s;
+  }
+  .legend-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+  .legend-card .lc-flag { width: 32px; height: 24px; object-fit: cover; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255,255,255,0.15); }
+  .legend-card .lc-name { font-weight: 700; font-size: 13px; margin-top: 4px; }
+  .legend-card .lc-meta { font-size: 10px; color: var(--ink-muted); }
+  .flag-fallback { font-size: 20px; }
+
+  footer.site-footer {
+    max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0;
+    border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="topnav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">F1</span>
+      <span class="brand-text">HUB</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="schedule.html">Kalender</a>
+      <a class="nav-link" href="results.html">Resultaten</a>
+      <a class="nav-link" href="drivers.html">Coureurs</a>
+      <a class="nav-link" href="teams.html">Teams</a>
+      <a class="nav-link" href="history.html">Historie</a>
+      <a class="nav-link" href="head2head.html">Head-to-head</a>
+      <a class="nav-link" href="records.html">Hall of Fame</a>
+      <a class="nav-link" href="circuit.html">Circuit</a>
+      <a class="nav-link active" href="legends.html">Legends</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('navToggle').addEventListener('click', function() {
+    var nl = document.getElementById('navLinks');
+    var open = nl.classList.toggle('open');
+    this.setAttribute('aria-expanded', open);
+  });
+</script>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Jolpica-F1 (Ergast) · Onofficieel</div>
+    <h1>Legends</h1>
+    <div class="subtitle">Zoek elke coureur uit de volledige F1-geschiedenis sinds 1950 — ook degenen die stopten voordat dit dashboard live data bijhield.</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>Zoek een coureur</h2>
+    <input type="text" id="searchInput" placeholder="Typ een naam, bijv. Schumacher, Senna, Fangio…" autocomplete="off">
+    <div id="searchStatus"></div>
+    <div class="legend-list" id="searchResults"></div>
+  </div>
+
+  <div class="card">
+    <h2>Bekende legendes</h2>
+    <div class="legend-grid" id="legendGrid">Laden…</div>
+  </div>
+
+  <footer class="site-footer">Historische data via de gratis Jolpica-F1 API (Ergast-compatibel). Formule1Hub is een onofficieel project, zonder affiliatie met Formula 1®.</footer>
+
+</div>
+
+<script>
+const JOLPICA_API = 'https://api.jolpi.ca/ergast/f1';
+const JOLPICA_DRIVERS_CACHE_KEY = 'f1dash_jolpica_drivers_v1';
+let jolpicaLastCallAt = 0;
+async function jolpicaGet(path, attempt = 0) {
+  const minGap = 280;
+  const wait = Math.max(0, minGap - (Date.now() - jolpicaLastCallAt));
+  if (wait) await sleep(wait);
+  jolpicaLastCallAt = Date.now();
+  let res;
+  try {
+    res = await fetch(`${JOLPICA_API}/${path}`);
+  } catch (e) {
+    throw new Error('Netwerkfout — kon de data niet ophalen.');
+  }
+  if (res.status === 429 && attempt < 6) {
+    await sleep(800 * (attempt + 1));
+    return jolpicaGet(path, attempt + 1);
+  }
+  if (!res.ok) throw new Error(`API-fout ${res.status} bij ${path}`);
+  return res.json();
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function fetchAllJolpicaDrivers() {
+  const cached = JSON.parse(localStorage.getItem(JOLPICA_DRIVERS_CACHE_KEY) || 'null');
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  if (cached && (Date.now() - cached.fetchedAt) < weekMs) return cached.drivers;
+
+  let offset = 0, total = Infinity, all = [];
+  while (offset < total) {
+    const data = await jolpicaGet(`drivers.json?limit=100&offset=${offset}`);
+    total = Number(data.MRData.total);
+    const drivers = data.MRData.DriverTable.Drivers;
+    all = all.concat(drivers);
+    if (!drivers.length) break;
+    offset += drivers.length;
+  }
+  localStorage.setItem(JOLPICA_DRIVERS_CACHE_KEY, JSON.stringify({ fetchedAt: Date.now(), drivers: all }));
+  return all;
+}
+
+const NATIONALITY_ISO = {
+  'British':'gb','German':'de','Brazilian':'br','Italian':'it','French':'fr','Finnish':'fi',
+  'Austrian':'at','Argentine':'ar','American':'us','Mexican':'mx','Dutch':'nl','Spanish':'es',
+  'Monegasque':'mc','Australian':'au','Canadian':'ca','Japanese':'jp','South African':'za',
+  'New Zealander':'nz','Swiss':'ch','Belgian':'be','Swedish':'se','Danish':'dk','Polish':'pl',
+  'Russian':'ru','Thai':'th','Indian':'in','Chinese':'cn','Portuguese':'pt','Irish':'ie',
+  'Hungarian':'hu','Czech':'cz','Colombian':'co','Venezuelan':'ve','Uruguayan':'uy','Chilean':'cl',
+  'Indonesian':'id','Malaysian':'my','Rhodesian':'zw','East German':'de','Liechtensteiner':'li',
+  'Uruguyan':'uy'
+};
+function flagImgFor(nationality, cls) {
+  const iso = NATIONALITY_ISO[nationality];
+  if (!iso) return '<span class="flag-fallback">🏁</span>';
+  return `<img class="${cls}" src="https://flagcdn.com/48x36/${iso}.png" alt="${nationality}" loading="lazy" onerror="this.style.display='none'">`;
+}
+
+function normalizeName(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+}
+
+const LEGEND_IDS = [
+  'michael_schumacher', 'senna', 'fangio', 'prost', 'lauda', 'clark',
+  'stewart', 'hakkinen', 'vettel', 'alonso', 'mansell', 'raikkonen'
+];
+
+let allDrivers = [];
+
+init();
+
+async function init() {
+  try {
+    allDrivers = await fetchAllJolpicaDrivers();
+    renderLegendGrid();
+  } catch (e) {
+    document.getElementById('legendGrid').textContent = 'Kon de coureurslijst niet laden.';
+  }
+}
+
+function renderLegendGrid() {
+  const byId = new Map(allDrivers.map(d => [d.driverId, d]));
+  const cards = LEGEND_IDS.map(id => byId.get(id)).filter(Boolean).map(d => `
+    <a class="legend-card" href="legend.html?id=${d.driverId}">
+      ${flagImgFor(d.nationality, 'lc-flag')}
+      <div class="lc-name">${d.givenName} ${d.familyName}</div>
+      <div class="lc-meta">${d.nationality || ''}</div>
+    </a>`).join('');
+  document.getElementById('legendGrid').innerHTML = cards || 'Geen legendes gevonden.';
+}
+
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+const searchStatus = document.getElementById('searchStatus');
+
+searchInput.addEventListener('input', () => {
+  const q = normalizeName(searchInput.value);
+  if (q.length < 2) {
+    searchResults.innerHTML = '';
+    searchStatus.textContent = q.length === 0 ? '' : 'Typ minstens 2 letters…';
+    return;
+  }
+  const matches = allDrivers.filter(d => {
+    const full = normalizeName(`${d.givenName} ${d.familyName}`);
+    return full.includes(q);
+  }).slice(0, 30);
+
+  if (!matches.length) {
+    searchResults.innerHTML = '';
+    searchStatus.textContent = 'Geen coureurs gevonden.';
+    return;
+  }
+  searchStatus.textContent = `${matches.length} resultaat${matches.length === 1 ? '' : 'en'}${matches.length === 30 ? ' (eerste 30 getoond)' : ''}.`;
+  searchResults.innerHTML = matches.map(d => `
+    <a class="legend-row" href="legend.html?id=${d.driverId}">
+      <div style="display:flex; align-items:center; gap:10px;">
+        ${flagImgFor(d.nationality, 'lr-flag')}
+        <div>
+          <div class="lr-name">${d.givenName} ${d.familyName}</div>
+          <div class="lr-meta">${d.nationality || ''}${d.dateOfBirth ? ' · geb. ' + d.dateOfBirth : ''}</div>
+        </div>
+      </div>
+    </a>`).join('');
+});
+</script>
+</body>
+</html>

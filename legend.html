@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Legend — Formule1Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --surface-1: #15151e;
+    --page: #0a0a0c;
+    --ink-primary: #ffffff;
+    --ink-secondary: #9a9aa2;
+    --ink-muted: #6b6b72;
+    --grid: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.12);
+    --accent: #e10600;
+    --gold: #ffcf40;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Titillium Web', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(ellipse 900px 300px at 50% -80px, rgba(225,6,0,0.10), transparent 70%),
+      var(--page);
+    color: var(--ink-primary);
+    padding: 0 0 32px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  .topnav { background: #000; border-bottom: 1px solid var(--border); }
+  .topnav-inner {
+    max-width: 1180px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between; height: 56px;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+  .brand-mark {
+    background: var(--accent); color: #fff; font-weight: 900; font-size: 13px;
+    padding: 3px 7px; border-radius: 3px; letter-spacing: 0.01em; font-style: italic;
+  }
+  .brand-text { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-secondary); }
+  .nav-links { display: flex; gap: 16px; height: 100%; }
+  .nav-link {
+    display: flex; align-items: center; height: 100%;
+    color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent;
+    transition: color 0.15s; white-space: nowrap;
+  }
+  .nav-link:hover { color: var(--ink-primary); }
+  .nav-link.active { color: var(--ink-primary); border-bottom-color: var(--accent); }
+
+  .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
+  .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
+  @media (max-width: 860px) {
+    .nav-toggle { display: flex; }
+    .topnav { position: relative; }
+    .nav-links {
+      display: none; position: absolute; top: 56px; left: 0; right: 0;
+      background: #000; border-bottom: 1px solid var(--border);
+      flex-direction: column; gap: 0; height: auto; padding: 8px 0; z-index: 50;
+    }
+    .nav-links.open { display: flex; }
+    .nav-link { height: auto; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-link.active { border-left-color: var(--accent); }
+    .brand-text { display: none; }
+  }
+
+  .breadcrumb {
+    max-width: 1180px; margin: 0 auto; padding: 14px 24px 0;
+    font-size: 12px; color: var(--ink-muted);
+  }
+  .breadcrumb a { color: var(--ink-secondary); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--ink-primary); }
+
+  .legend-hero {
+    position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #1a1508 0%, #0a0a0c 70%);
+    border-bottom: 1px solid var(--border);
+    padding: 26px 24px 22px; margin-top: 12px;
+  }
+  .legend-hero::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(-45deg, rgba(255,207,64,0.05) 0 2px, transparent 2px 40px);
+    pointer-events: none;
+  }
+  .legend-hero-inner { max-width: 1180px; margin: 0 auto; position: relative; display: flex; align-items: center; gap: 16px; }
+  .legend-flag { width: 64px; height: 48px; object-fit: cover; border-radius: 4px; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,0.15); }
+  .flag-fallback { font-size: 40px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 6px;
+  }
+  .eyebrow::before { content: ""; width: 16px; height: 2px; background: var(--gold); display: inline-block; }
+  h1 { font-size: 30px; font-weight: 900; text-transform: uppercase; margin: 0 0 2px; letter-spacing: -0.01em; line-height: 1.02; }
+  .legend-meta { color: var(--ink-secondary); font-size: 14px; }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-secondary); margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+
+  #status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; margin-top: 10px; }
+  #status.error { color: var(--accent); }
+  .progress-bar { height: 3px; background: var(--grid); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+  .progress-bar .fill { height: 100%; background: var(--gold); width: 0%; transition: width 0.2s; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 10px; }
+  .stat-tile { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .stat-tile .label { font-size: 11px; color: var(--ink-muted); }
+  .stat-tile .value { font-size: 18px; font-weight: 700; margin-top: 2px; }
+  .stat-tile.highlight .value { color: var(--gold); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--grid); }
+  th:last-child, td:last-child { text-align: right; }
+  thead th {
+    color: var(--ink-secondary); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr:hover { background: rgba(255,255,255,0.04); }
+  .table-scroll { max-height: 400px; overflow-y: auto; }
+
+  footer.site-footer {
+    max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0;
+    border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="topnav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">F1</span>
+      <span class="brand-text">HUB</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="schedule.html">Kalender</a>
+      <a class="nav-link" href="results.html">Resultaten</a>
+      <a class="nav-link" href="drivers.html">Coureurs</a>
+      <a class="nav-link" href="teams.html">Teams</a>
+      <a class="nav-link" href="history.html">Historie</a>
+      <a class="nav-link" href="head2head.html">Head-to-head</a>
+      <a class="nav-link" href="records.html">Hall of Fame</a>
+      <a class="nav-link" href="circuit.html">Circuit</a>
+      <a class="nav-link active" href="legends.html">Legends</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('navToggle').addEventListener('click', function() {
+    var nl = document.getElementById('navLinks');
+    var open = nl.classList.toggle('open');
+    this.setAttribute('aria-expanded', open);
+  });
+</script>
+
+<div class="breadcrumb"><a href="legends.html">← Legends</a></div>
+
+<div class="legend-hero" id="legendHero">
+  <div class="legend-hero-inner">
+    <div id="legendFlag"><span class="flag-fallback">🏁</span></div>
+    <div>
+      <div class="eyebrow">Legend · Onofficieel</div>
+      <h1 id="legendName">Laden…</h1>
+      <div class="legend-meta" id="legendMeta"></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div id="status">Carrièredata laden…</div>
+  <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+
+  <div class="card" id="statsCard" style="display:none;">
+    <h2>Carrière in cijfers</h2>
+    <div class="stat-grid" id="statGrid"></div>
+    <div id="wikiLink" style="margin-top:12px; font-size:12px;"></div>
+  </div>
+
+  <div class="card" id="seasonsCard" style="display:none;">
+    <h2>Per seizoen</h2>
+    <div class="table-scroll">
+      <table id="seasonsTable">
+        <thead><tr><th>Seizoen</th><th>Team(s)</th><th>Races</th><th>Punten</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer class="site-footer">Historische data via de gratis Jolpica-F1 API (Ergast-compatibel). Formule1Hub is een onofficieel project, zonder affiliatie met Formula 1®.</footer>
+
+</div>
+
+<script>
+const JOLPICA_API = 'https://api.jolpi.ca/ergast/f1';
+let jolpicaLastCallAt = 0;
+async function jolpicaGet(path, attempt = 0) {
+  const minGap = 280;
+  const wait = Math.max(0, minGap - (Date.now() - jolpicaLastCallAt));
+  if (wait) await sleep(wait);
+  jolpicaLastCallAt = Date.now();
+  let res;
+  try {
+    res = await fetch(`${JOLPICA_API}/${path}`);
+  } catch (e) {
+    throw new Error('Netwerkfout — kon de data niet ophalen.');
+  }
+  if (res.status === 429 && attempt < 6) {
+    await sleep(800 * (attempt + 1));
+    return jolpicaGet(path, attempt + 1);
+  }
+  if (!res.ok) throw new Error(`API-fout ${res.status} bij ${path}`);
+  return res.json();
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function setStatus(msg, isError) {
+  const el = document.getElementById('status');
+  el.textContent = msg || '';
+  el.classList.toggle('error', !!isError);
+}
+function setProgress(pct) { document.getElementById('progressFill').style.width = `${pct}%`; }
+
+const NATIONALITY_ISO = {
+  'British':'gb','German':'de','Brazilian':'br','Italian':'it','French':'fr','Finnish':'fi',
+  'Austrian':'at','Argentine':'ar','American':'us','Mexican':'mx','Dutch':'nl','Spanish':'es',
+  'Monegasque':'mc','Australian':'au','Canadian':'ca','Japanese':'jp','South African':'za',
+  'New Zealander':'nz','Swiss':'ch','Belgian':'be','Swedish':'se','Danish':'dk','Polish':'pl',
+  'Russian':'ru','Thai':'th','Indian':'in','Chinese':'cn','Portuguese':'pt','Irish':'ie',
+  'Hungarian':'hu','Czech':'cz','Colombian':'co','Venezuelan':'ve','Uruguayan':'uy','Chilean':'cl',
+  'Indonesian':'id','Malaysian':'my','Rhodesian':'zw','East German':'de','Liechtensteiner':'li'
+};
+function flagImgFor(nationality, cls) {
+  const iso = NATIONALITY_ISO[nationality];
+  if (!iso) return '<span class="flag-fallback">🏁</span>';
+  return `<img class="${cls}" src="https://flagcdn.com/48x36/${iso}.png" alt="${nationality}" loading="lazy" onerror="this.style.display='none'">`;
+}
+
+const params = new URLSearchParams(location.search);
+const DRIVER_ID = params.get('id');
+
+if (!DRIVER_ID) {
+  document.body.innerHTML = '<div class="wrap" style="padding-top:40px;"><p>Geen coureur opgegeven. <a href="legends.html" style="color:var(--accent);">Ga terug naar Legends.</a></p></div>';
+  throw new Error('missing driver id');
+}
+
+async function fetchAllPaged(basePath) {
+  let offset = 0, total = Infinity, all = [];
+  while (offset < total) {
+    const sep = basePath.includes('?') ? '&' : '?';
+    const data = await jolpicaGet(`${basePath}${sep}limit=100&offset=${offset}`);
+    total = Number(data.MRData.total);
+    const races = data.MRData.RaceTable.Races;
+    all = all.concat(races);
+    if (!races.length) break;
+    offset += races.length;
+  }
+  return all;
+}
+
+init();
+
+async function init() {
+  try {
+    setStatus('Coureurgegevens laden…');
+    const driverData = await jolpicaGet(`drivers/${DRIVER_ID}.json`);
+    const driver = driverData.MRData.DriverTable.Drivers[0];
+    if (!driver) { setStatus('Coureur niet gevonden.', true); return; }
+
+    document.getElementById('legendFlag').innerHTML = flagImgFor(driver.nationality, 'legend-flag');
+    document.getElementById('legendName').textContent = `${driver.givenName} ${driver.familyName}`;
+    document.title = `${driver.familyName} — Formule1Hub`;
+    const metaParts = [driver.nationality, driver.dateOfBirth ? `geb. ${driver.dateOfBirth}` : null, driver.code].filter(Boolean);
+    document.getElementById('legendMeta').textContent = metaParts.join(' · ');
+
+    setStatus('Carrière-resultaten ophalen…');
+    setProgress(15);
+    const career = await fetchAllPaged(`drivers/${DRIVER_ID}/results.json`);
+    if (!career.length) {
+      setStatus('Geen race-resultaten gevonden voor deze coureur.', true);
+      return;
+    }
+    setProgress(45);
+
+    const wins = career.filter(r => r.Results[0].position === '1').length;
+    const podiums = career.filter(r => Number(r.Results[0].position) <= 3).length;
+    const points = career.reduce((sum, r) => sum + Number(r.Results[0].points || 0), 0);
+    const seasons = Array.from(new Set(career.map(r => r.season))).sort();
+    const teams = Array.from(new Set(career.map(r => r.Results[0].Constructor.name)));
+    const firstRace = career.reduce((a, b) => new Date(a.date) < new Date(b.date) ? a : b);
+    const lastRace = career.reduce((a, b) => new Date(a.date) > new Date(b.date) ? a : b);
+
+    setStatus(`Wereldtitels berekenen… (0/${seasons.length})`);
+    let titles = 0;
+    for (const [i, season] of seasons.entries()) {
+      setStatus(`Wereldtitels berekenen… (${i + 1}/${seasons.length})`);
+      setProgress(45 + Math.round((i / seasons.length) * 50));
+      try {
+        const standing = await jolpicaGet(`${season}/driverStandings/1.json`);
+        const lists = standing.MRData.StandingsTable.StandingsLists;
+        if (lists.length && lists[0].DriverStandings[0].Driver.driverId === DRIVER_ID) titles++;
+      } catch (e) { /* skip season on error */ }
+    }
+
+    const tiles = [
+      { label: 'Actief', value: `${seasons[0]}–${seasons[seasons.length - 1]}` },
+      { label: 'Races', value: career.length },
+      { label: 'Zeges', value: wins },
+      { label: 'Podiums', value: podiums },
+      { label: 'WK-punten', value: points.toFixed(0) },
+      { label: 'Teams', value: teams.length },
+      { label: 'Wereldtitels', value: titles, highlight: titles > 0 }
+    ];
+    document.getElementById('statGrid').innerHTML = tiles.map(t =>
+      `<div class="stat-tile${t.highlight ? ' highlight' : ''}"><div class="label">${t.label}</div><div class="value">${t.value}</div></div>`).join('');
+
+    if (driver.url) {
+      document.getElementById('wikiLink').innerHTML =
+        `<a href="${driver.url}" target="_blank" rel="noopener" style="color:var(--accent);">Volledige biografie op Wikipedia →</a>`;
+    }
+    document.getElementById('statsCard').style.display = 'block';
+
+    const bySeasonMap = new Map();
+    career.forEach(r => {
+      const s = r.season;
+      if (!bySeasonMap.has(s)) bySeasonMap.set(s, { teams: new Set(), races: 0, points: 0 });
+      const entry = bySeasonMap.get(s);
+      entry.teams.add(r.Results[0].Constructor.name);
+      entry.races++;
+      entry.points += Number(r.Results[0].points || 0);
+    });
+    const seasonRows = Array.from(bySeasonMap.entries()).sort((a, b) => b[0] - a[0]).map(([season, d]) => `
+      <tr>
+        <td>${season}</td>
+        <td>${Array.from(d.teams).join(', ')}</td>
+        <td>${d.races}</td>
+        <td>${d.points.toFixed(0)}</td>
+      </tr>`).join('');
+    document.getElementById('seasonsTable').querySelector('tbody').innerHTML = seasonRows;
+    document.getElementById('seasonsCard').style.display = 'block';
+
+    setProgress(100);
+    setStatus(`Klaar — ${career.length} Grand Prix-starts tussen ${firstRace.season} en ${lastRace.season}.`);
+  } catch (e) {
+    setStatus(e.message, true);
+  }
+}
+</script>
+</body>
+</html>

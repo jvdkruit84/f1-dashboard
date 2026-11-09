@@ -198,6 +198,7 @@
       <a class="nav-link" href="head2head.html">Head-to-head</a>
       <a class="nav-link" href="records.html">Hall of Fame</a>
       <a class="nav-link" href="circuit.html">Circuit</a>
+      <a class="nav-link" href="legends.html">Legends</a>
     </div>
   </div>
 </div>
@@ -423,10 +424,10 @@ async function loadProfile(driver) {
     document.getElementById('profileGrid').innerHTML = tiles.map(t =>
       `<div class="stat-tile"><div class="label">${t.label}</div><div class="value">${t.value}</div></div>`).join('');
 
-    if (jd.url) {
-      document.getElementById('profileWiki').innerHTML =
-        `<a href="${jd.url}" target="_blank" rel="noopener" style="color:var(--accent);">Volledige biografie op Wikipedia →</a>`;
-    }
+    const wikiLinks = [];
+    if (jd.url) wikiLinks.push(`<a href="${jd.url}" target="_blank" rel="noopener" style="color:var(--accent);">Volledige biografie op Wikipedia →</a>`);
+    wikiLinks.push(`<a href="legend.html?id=${jd.driverId}" style="color:var(--accent);">Volledig carrière-overzicht →</a>`);
+    document.getElementById('profileWiki').innerHTML = wikiLinks.join('<br>');
 
     document.getElementById('profileCard').style.display = 'block';
   } catch (e) {
