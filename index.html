@@ -169,9 +169,32 @@
   #status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; }
   #status.error { color: var(--critical); }
 
-  /* ---------- headlines ---------- */
-  .headline-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
-  .headline-card { display: block; background: var(--page); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; text-decoration: none; color: inherit; transition: border-color 0.15s, transform 0.15s; }
+  /* ---------- headlines (carousel: 3 visible, arrows to browse the rest) ---------- */
+  .headline-carousel { position: relative; }
+  .headline-grid {
+    display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory;
+    scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none;
+  }
+  .headline-grid::-webkit-scrollbar { display: none; }
+  @media (max-width: 760px) { .headline-card { flex-basis: calc((100% - 16px) / 2) !important; } }
+  @media (max-width: 520px) { .headline-card { flex-basis: 85% !important; } }
+  .carousel-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,0.65);
+    border: 1px solid var(--border); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; z-index: 5; padding: 0;
+    transition: opacity 0.15s, border-color 0.15s;
+  }
+  .carousel-arrow:hover { border-color: var(--accent); }
+  .carousel-arrow:disabled { opacity: 0.25; cursor: default; }
+  .carousel-arrow:disabled:hover { border-color: var(--border); }
+  .carousel-arrow.prev { left: -14px; }
+  .carousel-arrow.next { right: -14px; }
+  .headline-card {
+    display: block; flex: 0 0 calc((100% - 32px) / 3); scroll-snap-align: start; min-width: 200px; height: 100%;
+    background: var(--page); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    text-decoration: none; color: inherit; transition: border-color 0.15s, transform 0.15s;
+  }
   .headline-card.clickable:hover { border-color: var(--ink-secondary); transform: translateY(-2px); }
   .headline-card .thumb-wrap { width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #000; }
   .headline-card .thumb-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -368,7 +391,11 @@
 
   <div class="card" id="headlinesCard" style="display:none;">
     <h2>Nieuws</h2>
-    <div class="headline-grid" id="headlineGrid"></div>
+    <div class="headline-carousel">
+      <button class="carousel-arrow prev" id="newsPrev" type="button" aria-label="Vorige">‹</button>
+      <div class="headline-grid" id="headlineGrid"></div>
+      <button class="carousel-arrow next" id="newsNext" type="button" aria-label="Volgende">›</button>
+    </div>
   </div>
 
 </div>
@@ -742,6 +769,34 @@ async function loadAndRenderHeadlines(found, byNumber, champDrivers) {
       : `<div class="headline-card">${inner}</div>`;
   }).join('');
   card.style.display = 'block';
+  initNewsCarousel();
+}
+
+function initNewsCarousel() {
+  const grid = document.getElementById('headlineGrid');
+  const prevBtn = document.getElementById('newsPrev');
+  const nextBtn = document.getElementById('newsNext');
+
+  function cardStep() {
+    const card = grid.querySelector('.headline-card');
+    if (!card) return 0;
+    const style = getComputedStyle(card);
+    return card.getBoundingClientRect().width + parseFloat(style.marginRight || 0) + 16;
+  }
+  function updateArrows() {
+    const max = grid.scrollWidth - grid.clientWidth;
+    prevBtn.disabled = grid.scrollLeft <= 4;
+    nextBtn.disabled = grid.scrollLeft >= max - 4;
+    const hasOverflow = max > 4;
+    prevBtn.style.display = hasOverflow ? 'flex' : 'none';
+    nextBtn.style.display = hasOverflow ? 'flex' : 'none';
+  }
+
+  prevBtn.onclick = () => grid.scrollBy({ left: -cardStep(), behavior: 'smooth' });
+  nextBtn.onclick = () => grid.scrollBy({ left: cardStep(), behavior: 'smooth' });
+  grid.onscroll = updateArrows;
+  window.addEventListener('resize', updateArrows);
+  updateArrows();
 }
 
 /* Each auto headline has a fixed `img` path (images/news/<slot>.jpg).
