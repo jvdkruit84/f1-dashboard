@@ -232,6 +232,12 @@
 
 <div class="wrap">
 
+  <div class="card" id="profileCard" style="display:none;">
+    <h2>Profiel &amp; carrière</h2>
+    <div class="stat-grid" id="profileGrid"></div>
+    <div id="profileWiki" style="margin-top:12px; font-size:12px;"></div>
+  </div>
+
   <div class="card">
     <h2>Sessie</h2>
     <div class="controls-grid">
@@ -310,6 +316,123 @@ async function apiGet(path, attempt = 0) {
   return res.json();
 }
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ---------- Jolpica-F1 (separate host/throttle, used for the career profile) ---------- */
+const JOLPICA_API = 'https://api.jolpi.ca/ergast/f1';
+const JOLPICA_DRIVERS_CACHE_KEY = 'f1dash_jolpica_drivers_v1';
+let jolpicaLastCallAt = 0;
+async function jolpicaGet(path, attempt = 0) {
+  const minGap = 280;
+  const wait = Math.max(0, minGap - (Date.now() - jolpicaLastCallAt));
+  if (wait) await sleep(wait);
+  jolpicaLastCallAt = Date.now();
+  let res;
+  try {
+    res = await fetch(`${JOLPICA_API}/${path}`);
+  } catch (e) {
+    throw new Error('Netwerkfout — kon de carrièredata niet ophalen.');
+  }
+  if (res.status === 429 && attempt < 6) {
+    await sleep(800 * (attempt + 1));
+    return jolpicaGet(path, attempt + 1);
+  }
+  if (!res.ok) throw new Error(`API-fout ${res.status} bij ${path}`);
+  return res.json();
+}
+
+async function fetchAllJolpicaDrivers() {
+  const cached = JSON.parse(localStorage.getItem(JOLPICA_DRIVERS_CACHE_KEY) || 'null');
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  if (cached && (Date.now() - cached.fetchedAt) < weekMs) return cached.drivers;
+
+  let offset = 0, total = Infinity, all = [];
+  while (offset < total) {
+    const data = await jolpicaGet(`drivers.json?limit=100&offset=${offset}`);
+    total = Number(data.MRData.total);
+    const drivers = data.MRData.DriverTable.Drivers;
+    all = all.concat(drivers);
+    if (!drivers.length) break;
+    offset += drivers.length;
+  }
+  localStorage.setItem(JOLPICA_DRIVERS_CACHE_KEY, JSON.stringify({ fetchedAt: Date.now(), drivers: all }));
+  return all;
+}
+
+function normalizeName(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+}
+
+function matchJolpicaDriver(allDrivers, driver) {
+  const firstN = normalizeName(driver.first_name);
+  const lastN = normalizeName(driver.last_name);
+  if (!lastN) return null;
+  return allDrivers.find(jd => {
+    const jFirst = normalizeName(jd.givenName);
+    const jLast = normalizeName(jd.familyName);
+    if (jLast !== lastN) return false;
+    return jFirst === firstN || jFirst.includes(firstN) || firstN.includes(jFirst);
+  }) || null;
+}
+
+async function fetchCareerResults(driverId) {
+  let offset = 0, total = Infinity, all = [];
+  while (offset < total) {
+    const data = await jolpicaGet(`drivers/${driverId}/results.json?limit=100&offset=${offset}`);
+    total = Number(data.MRData.total);
+    const races = data.MRData.RaceTable.Races;
+    all = all.concat(races);
+    if (!races.length) break;
+    offset += races.length;
+  }
+  return all;
+}
+
+let profileAttempted = false;
+async function loadProfile(driver) {
+  if (profileAttempted) return;
+  profileAttempted = true;
+  try {
+    const allDrivers = await fetchAllJolpicaDrivers();
+    const jd = matchJolpicaDriver(allDrivers, driver);
+    if (!jd) return;
+
+    const career = await fetchCareerResults(jd.driverId);
+    if (!career.length) return;
+
+    const wins = career.filter(r => r.Results[0].position === '1').length;
+    const podiums = career.filter(r => Number(r.Results[0].position) <= 3).length;
+    const points = career.reduce((sum, r) => sum + Number(r.Results[0].points || 0), 0);
+    const firstRace = career.reduce((a, b) => new Date(a.date) < new Date(b.date) ? a : b);
+    const teams = Array.from(new Set(career.map(r => r.Results[0].Constructor.name)));
+
+    const age = jd.dateOfBirth
+      ? Math.floor((Date.now() - new Date(jd.dateOfBirth)) / (365.2425 * 86400000))
+      : null;
+
+    const tiles = [
+      { label: 'Nationaliteit', value: jd.nationality || '–' },
+      { label: 'Leeftijd', value: age != null ? `${age} jaar` : '–' },
+      { label: 'Eerste GP', value: `${firstRace.raceName} (${firstRace.season})` },
+      { label: 'Races', value: career.length },
+      { label: 'Zeges', value: wins },
+      { label: 'Podiums', value: podiums },
+      { label: 'WK-punten (carrière)', value: points.toFixed(0) },
+      { label: 'Teams', value: teams.length }
+    ];
+
+    document.getElementById('profileGrid').innerHTML = tiles.map(t =>
+      `<div class="stat-tile"><div class="label">${t.label}</div><div class="value">${t.value}</div></div>`).join('');
+
+    if (jd.url) {
+      document.getElementById('profileWiki').innerHTML =
+        `<a href="${jd.url}" target="_blank" rel="noopener" style="color:var(--accent);">Volledige biografie op Wikipedia →</a>`;
+    }
+
+    document.getElementById('profileCard').style.display = 'block';
+  } catch (e) {
+    /* profile is a bonus — fail silently so it never blocks the main page */
+  }
+}
 function fmtLap(sec) {
   if (sec == null || isNaN(sec)) return '–';
   const m = Math.floor(sec / 60);
@@ -424,6 +547,7 @@ async function loadAndRender() {
     }
 
     renderHero(driver);
+    loadProfile(driver);
 
     setStatus('Rondetijden, banden en WK-stand ophalen…');
     const [laps, pit, stints, results, champDrivers] = await Promise.all([
@@ -469,7 +593,7 @@ function renderHero(driver) {
   } else {
     photo.style.display = 'none';
   }
-  document.title = `${driver.name_acronym} — F1 Dashboard`;
+  document.title = `${driver.name_acronym} — Formule1Hub`;
 }
 
 function renderBadges(standing) {
