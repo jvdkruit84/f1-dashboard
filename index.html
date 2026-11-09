@@ -747,6 +747,11 @@ async function loadCustomNews() {
   }
 }
 
+function truncateSummary(text, max = 62) {
+  if (!text || text.length <= max) return text || '';
+  return text.slice(0, max) + '..';
+}
+
 async function loadAndRenderHeadlines() {
   const headlines = await loadCustomNews();
   const card = document.getElementById('headlinesCard');
@@ -757,7 +762,7 @@ async function loadAndRenderHeadlines() {
       <div class="headline-body">
         <span class="tag" style="background:${h.color}">${h.tag}</span>
         <div class="headline">${h.headline}</div>
-        <div class="sub">${h.sub}</div>
+        <div class="sub">${truncateSummary(h.sub)}</div>
       </div>`;
     return h.href
       ? `<a class="headline-card clickable" href="${h.href}">${inner}</a>`
