@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artikel — Formule1Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --surface-1: #15151e;
+    --page: #0a0a0c;
+    --ink-primary: #ffffff;
+    --ink-secondary: #9a9aa2;
+    --ink-muted: #6b6b72;
+    --grid: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.12);
+    --accent: #e10600;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Titillium Web', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(ellipse 900px 300px at 50% -80px, rgba(225,6,0,0.10), transparent 70%),
+      var(--page);
+    color: var(--ink-primary);
+    padding: 0 0 32px;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 0 24px; }
+
+  .topnav { background: #000; border-bottom: 1px solid var(--border); }
+  .topnav-inner {
+    max-width: 1180px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between; height: 56px;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+  .brand-mark {
+    background: var(--accent); color: #fff; font-weight: 900; font-size: 13px;
+    padding: 3px 7px; border-radius: 3px; letter-spacing: 0.01em; font-style: italic;
+  }
+  .brand-text { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-secondary); }
+  .nav-links { display: flex; gap: 16px; height: 100%; }
+  .nav-link {
+    display: flex; align-items: center; height: 100%;
+    color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent;
+    transition: color 0.15s; white-space: nowrap;
+  }
+  .nav-link:hover { color: var(--ink-primary); }
+  .nav-link.active { color: var(--ink-primary); border-bottom-color: var(--accent); }
+
+  .nav-group { position: relative; height: 100%; }
+  .nav-group-trigger {
+    background: none; border: none; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; gap: 4px; height: 100%;
+    color: var(--ink-secondary); font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent;
+    transition: color 0.15s; white-space: nowrap; padding: 0;
+  }
+  .nav-group-trigger:hover { color: var(--ink-primary); }
+  .nav-group-trigger .caret { font-size: 9px; transition: transform 0.15s; }
+  .nav-group.open .nav-group-trigger .caret { transform: rotate(180deg); }
+  .nav-group.active .nav-group-trigger { color: var(--ink-primary); border-bottom-color: var(--accent); }
+  .nav-dropdown {
+    display: none; position: absolute; top: 56px; left: 0; min-width: 190px;
+    background: #000; border: 1px solid var(--border); border-top: none;
+    border-radius: 0 0 6px 6px; flex-direction: column; padding: 6px 0; z-index: 60;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.4);
+  }
+  .nav-group:hover .nav-dropdown, .nav-group.open .nav-dropdown { display: flex; }
+  .nav-dropdown a {
+    padding: 10px 16px; color: var(--ink-secondary); text-decoration: none;
+    font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
+    border-left: 2px solid transparent;
+  }
+  .nav-dropdown a:hover { color: var(--ink-primary); background: rgba(255,255,255,0.05); }
+  .nav-dropdown a.active { color: var(--ink-primary); border-left-color: var(--accent); background: rgba(225,6,0,0.08); }
+
+  .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
+  .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
+  @media (max-width: 860px) {
+    .nav-toggle { display: flex; }
+    .topnav { position: relative; }
+    .nav-links {
+      display: none; position: absolute; top: 56px; left: 0; right: 0;
+      background: #000; border-bottom: 1px solid var(--border);
+      flex-direction: column; gap: 0; height: auto; padding: 8px 0; z-index: 50;
+    }
+    .nav-links.open { display: flex; }
+    .nav-link { height: auto; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-link.active { border-left-color: var(--accent); }
+
+    .nav-group { height: auto; }
+    .nav-group-trigger {
+      width: 100%; justify-content: space-between; padding: 14px 24px;
+      border-bottom: 1px solid var(--grid); border-left: 3px solid transparent;
+    }
+    .nav-group.active .nav-group-trigger { border-left-color: var(--accent); }
+    .nav-dropdown {
+      position: static; display: none; background: rgba(255,255,255,0.03); border: none;
+      box-shadow: none; padding: 0;
+    }
+    .nav-group.open .nav-dropdown { display: flex; }
+    .nav-dropdown a { padding: 12px 24px 12px 36px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-dropdown a.active { border-left-color: var(--accent); }
+    .brand-text { display: none; }
+  }
+
+  .breadcrumb {
+    max-width: 820px; margin: 0 auto; padding: 14px 24px 0;
+    font-size: 12px; color: var(--ink-muted);
+  }
+  .breadcrumb a { color: var(--ink-secondary); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--ink-primary); }
+
+  .article-header { padding: 18px 0 0; }
+  .tag {
+    display: inline-block; color: #fff; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; padding: 4px 10px; border-radius: 999px; margin-bottom: 12px;
+  }
+  h1 { font-size: 28px; font-weight: 900; text-transform: uppercase; margin: 0 0 8px; letter-spacing: -0.01em; line-height: 1.08; }
+  .article-date { font-size: 12px; color: var(--ink-muted); margin-bottom: 18px; }
+  .article-image { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; display: block; }
+  .article-body { font-size: 15px; line-height: 1.7; color: var(--ink-secondary); }
+  .article-body p { margin: 0 0 16px; }
+  .article-body p:last-child { margin-bottom: 0; }
+
+  footer.site-footer {
+    max-width: 820px; margin: 32px auto 0; padding: 18px 24px 0;
+    border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="topnav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">F1</span>
+      <span class="brand-text">HUB</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a class="nav-link" href="index.html">Home</a>
+      <div class="nav-group">
+        <button class="nav-group-trigger" type="button">Actueel <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="schedule.html">Kalender</a>
+          <a href="results.html">Resultaten</a>
+          <a href="drivers.html">Coureurs</a>
+          <a href="teams.html">Teams</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="nav-group-trigger" type="button">Analyse <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="head2head.html">Head-to-head</a>
+          <a href="circuit.html">Circuit</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="nav-group-trigger" type="button">Historie <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="history.html">Historie</a>
+          <a href="records.html">Hall of Fame</a>
+          <a href="legends.html">Legends</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('navToggle').addEventListener('click', function() {
+    var nl = document.getElementById('navLinks');
+    var open = nl.classList.toggle('open');
+    this.setAttribute('aria-expanded', open);
+  });
+  document.querySelectorAll('.nav-group-trigger').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var group = btn.closest('.nav-group');
+      var wasOpen = group.classList.contains('open');
+      document.querySelectorAll('.nav-group.open').forEach(function(g) { g.classList.remove('open'); });
+      if (!wasOpen) group.classList.add('open');
+    });
+  });
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.nav-group')) {
+      document.querySelectorAll('.nav-group.open').forEach(function(g) { g.classList.remove('open'); });
+    }
+  });
+</script>
+
+<div class="breadcrumb"><a href="index.html">← Home</a></div>
+
+<div class="wrap">
+  <div class="article-header" id="articleHeader">
+    <div id="status" style="font-size:13px; color:var(--ink-secondary);">Artikel laden…</div>
+  </div>
+
+  <footer class="site-footer">Formule1Hub is een onofficieel project, zonder affiliatie met Formula 1®.</footer>
+</div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const SLUG = params.get('slug');
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+async function init() {
+  const header = document.getElementById('articleHeader');
+  if (!SLUG) {
+    header.innerHTML = '<p>Geen artikel opgegeven. <a href="index.html" style="color:var(--accent);">Terug naar home.</a></p>';
+    return;
+  }
+  try {
+    const res = await fetch('news.json');
+    if (!res.ok) throw new Error('news.json niet gevonden');
+    const articles = await res.json();
+    const article = articles.find(a => a.slug === SLUG);
+    if (!article) {
+      header.innerHTML = '<p>Artikel niet gevonden. <a href="index.html" style="color:var(--accent);">Terug naar home.</a></p>';
+      return;
+    }
+
+    document.title = `${article.title} — Formule1Hub`;
+    const dateStr = article.date
+      ? new Date(article.date).toLocaleDateString('nl-NL', { day: '2-digit', month: 'long', year: 'numeric' })
+      : '';
+    const paragraphs = (article.body || '').split(/\n\s*\n/).map(p => `<p>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`).join('');
+
+    header.innerHTML = `
+      <span class="tag" style="background:${article.color || 'var(--accent)'}">${escapeHtml(article.tag || 'Nieuws')}</span>
+      <h1>${escapeHtml(article.title)}</h1>
+      ${dateStr ? `<div class="article-date">${dateStr}</div>` : ''}
+      ${article.image ? `<img class="article-image" src="${article.image}" alt="${escapeHtml(article.title)}">` : ''}
+      <div class="article-body">${paragraphs}</div>
+    `;
+  } catch (e) {
+    header.innerHTML = `<p style="color:var(--accent);">Kon het artikel niet laden: ${escapeHtml(e.message)}</p>`;
+  }
+}
+init();
+</script>
+</body>
+</html>
