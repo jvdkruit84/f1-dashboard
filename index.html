@@ -169,6 +169,16 @@
   #status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; }
   #status.error { color: var(--critical); }
 
+  /* ---------- headlines ---------- */
+  .headline-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .headline-card { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .headline-card .tag {
+    display: inline-block; color: #fff; font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; padding: 3px 9px; border-radius: 999px; margin-bottom: 9px;
+  }
+  .headline-card .headline { font-size: 15px; font-weight: 700; line-height: 1.32; margin-bottom: 5px; }
+  .headline-card .sub { font-size: 11px; color: var(--ink-muted); }
+
   /* ---------- on this day ---------- */
   .otd-item { display: flex; align-items: baseline; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--grid); }
   .otd-item:last-child { border-bottom: none; }
@@ -366,6 +376,11 @@
 <div class="wrap">
 
   <div id="status"></div>
+
+  <div class="card" id="headlinesCard" style="display:none;">
+    <h2>Nieuws</h2>
+    <div class="headline-grid" id="headlineGrid"></div>
+  </div>
 
   <div class="card" id="otdCard" style="display:none;">
     <h2>Op deze dag in de F1 <span style="font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink-muted);" id="otdDateLabel"></span></h2>
@@ -633,6 +648,7 @@ async function init() {
     renderPodium(found, byNumber);
     renderStandingsMini(champDrivers, byNumber);
     renderDriverTeaser(drivers, champDrivers, found);
+    renderHeadlines(found, byNumber, champDrivers);
 
     setStatus('');
   } catch (e) {
@@ -675,6 +691,64 @@ function renderPodium(found, byNumber) {
         <div class="podium-time">${time}</div>
       </div>`;
     }).join('')}`;
+}
+
+/* ---------- headlines (data-driven, not editorial news — see memory note) ---------- */
+async function renderHeadlines(found, byNumber, champDrivers) {
+  const card = document.getElementById('headlinesCard');
+  const headlines = [];
+  const raceLabel = `${found.meeting.meeting_name} (${found.year})`;
+
+  const winner = found.results.find(r => r.position === 1);
+  if (winner) {
+    const d = byNumber.get(winner.driver_number);
+    const name = d ? (d.full_name || d.broadcast_name) : `#${winner.driver_number}`;
+    headlines.push({
+      tag: 'Race', color: 'var(--accent)',
+      headline: `${name} wint ${found.meeting.meeting_name}`,
+      sub: `${d ? d.team_name + ' · ' : ''}${raceLabel}`
+    });
+  }
+
+  try {
+    const sessions = await apiGet(`sessions?meeting_key=${found.meeting.meeting_key}`);
+    const quali = sessions.find(s => s.session_name === 'Qualifying');
+    if (quali) {
+      const qResults = await apiGet(`session_result?session_key=${quali.session_key}`);
+      const pole = qResults.find(r => r.position === 1);
+      if (pole) {
+        const d = byNumber.get(pole.driver_number);
+        const name = d ? (d.full_name || d.broadcast_name) : `#${pole.driver_number}`;
+        headlines.push({
+          tag: 'Kwalificatie', color: 'var(--good)',
+          headline: `${name} pakt pole voor ${found.meeting.meeting_name}`,
+          sub: `${d ? d.team_name + ' · ' : ''}${raceLabel}`
+        });
+      }
+    }
+  } catch (e) { /* skip this headline if qualifying data is unavailable */ }
+
+  if (champDrivers.length >= 2) {
+    const sorted = champDrivers.slice().sort((a, b) => a.position_current - b.position_current);
+    const [leader, second] = sorted;
+    const d = byNumber.get(leader.driver_number);
+    const name = d ? (d.full_name || d.broadcast_name) : `#${leader.driver_number}`;
+    const gap = (leader.points_current - second.points_current).toFixed(0);
+    headlines.push({
+      tag: 'WK-stand', color: 'var(--warn)',
+      headline: `${name} leidt het kampioenschap met ${gap} punten voorsprong`,
+      sub: `${leader.points_current.toFixed(0)} punten na ${raceLabel}`
+    });
+  }
+
+  if (!headlines.length) { card.style.display = 'none'; return; }
+  document.getElementById('headlineGrid').innerHTML = headlines.map(h => `
+    <div class="headline-card">
+      <span class="tag" style="background:${h.color}">${h.tag}</span>
+      <div class="headline">${h.headline}</div>
+      <div class="sub">${h.sub}</div>
+    </div>`).join('');
+  card.style.display = 'block';
 }
 
 function renderStandingsMini(champDrivers, byNumber) {
