@@ -166,6 +166,8 @@
     background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.045) 0 2px, transparent 2px 36px);
     pointer-events: none;
   }
+  .team-head-link { display: block; text-decoration: none; color: inherit; }
+  .team-head-link:hover .team-name { text-decoration: underline; }
   .team-head {
     display: flex; justify-content: space-between; align-items: flex-start;
     padding: 16px 16px 8px; position: relative;
@@ -399,11 +401,13 @@ async function loadTeams(year) {
       const pts = standing ? standing.points_current.toFixed(0) : '–';
       return `
         <div class="team-card" style="--team-color:${color}">
-          <div class="team-head">
-            <div class="team-name">${t.name}</div>
-            ${posBlock}
-          </div>
-          <div class="team-pts"><strong>${pts}</strong> punten</div>
+          <a class="team-head-link" href="team.html?name=${encodeURIComponent(t.name)}">
+            <div class="team-head">
+              <div class="team-name">${t.name}</div>
+              ${posBlock}
+            </div>
+            <div class="team-pts"><strong>${pts}</strong> punten</div>
+          </a>
           <div class="team-drivers">
             ${t.drivers.slice(0, 2).map(d => driverTileHTML(d, found.meeting)).join('')}
           </div>

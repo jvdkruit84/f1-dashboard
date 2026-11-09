@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team — Formule1Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --surface-1: #15151e;
+    --page: #0a0a0c;
+    --ink-primary: #ffffff;
+    --ink-secondary: #9a9aa2;
+    --ink-muted: #6b6b72;
+    --grid: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.12);
+    --accent: #e10600;
+    --gold: #ffcf40;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Titillium Web', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(ellipse 900px 300px at 50% -80px, rgba(225,6,0,0.10), transparent 70%),
+      var(--page);
+    color: var(--ink-primary);
+    padding: 0 0 32px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  .topnav { background: #000; border-bottom: 1px solid var(--border); }
+  .topnav-inner {
+    max-width: 1180px; margin: 0 auto; padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between; height: 56px;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+  .brand-mark {
+    background: var(--accent); color: #fff; font-weight: 900; font-size: 13px;
+    padding: 3px 7px; border-radius: 3px; letter-spacing: 0.01em; font-style: italic;
+  }
+  .brand-text { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-secondary); }
+  .nav-links { display: flex; gap: 16px; height: 100%; }
+  .nav-link {
+    display: flex; align-items: center; height: 100%;
+    color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent;
+    transition: color 0.15s; white-space: nowrap;
+  }
+  .nav-link:hover { color: var(--ink-primary); }
+  .nav-link.active { color: var(--ink-primary); border-bottom-color: var(--accent); }
+
+  .nav-group { position: relative; height: 100%; }
+  .nav-group-trigger {
+    background: none; border: none; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; gap: 4px; height: 100%;
+    color: var(--ink-secondary); font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent;
+    transition: color 0.15s; white-space: nowrap; padding: 0;
+  }
+  .nav-group-trigger:hover { color: var(--ink-primary); }
+  .nav-group-trigger .caret { font-size: 9px; transition: transform 0.15s; }
+  .nav-group.open .nav-group-trigger .caret { transform: rotate(180deg); }
+  .nav-group.active .nav-group-trigger { color: var(--ink-primary); border-bottom-color: var(--accent); }
+  .nav-dropdown {
+    display: none; position: absolute; top: 56px; left: 0; min-width: 190px;
+    background: #000; border: 1px solid var(--border); border-top: none;
+    border-radius: 0 0 6px 6px; flex-direction: column; padding: 6px 0; z-index: 60;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.4);
+  }
+  .nav-group:hover .nav-dropdown, .nav-group.open .nav-dropdown { display: flex; }
+  .nav-dropdown a {
+    padding: 10px 16px; color: var(--ink-secondary); text-decoration: none;
+    font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;
+    border-left: 2px solid transparent;
+  }
+  .nav-dropdown a:hover { color: var(--ink-primary); background: rgba(255,255,255,0.05); }
+  .nav-dropdown a.active { color: var(--ink-primary); border-left-color: var(--accent); background: rgba(225,6,0,0.08); }
+
+  .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
+  .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
+  @media (max-width: 860px) {
+    .nav-toggle { display: flex; }
+    .topnav { position: relative; }
+    .nav-links {
+      display: none; position: absolute; top: 56px; left: 0; right: 0;
+      background: #000; border-bottom: 1px solid var(--border);
+      flex-direction: column; gap: 0; height: auto; padding: 8px 0; z-index: 50;
+    }
+    .nav-links.open { display: flex; }
+    .nav-link { height: auto; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-link.active { border-left-color: var(--accent); }
+
+    .nav-group { height: auto; }
+    .nav-group-trigger {
+      width: 100%; justify-content: space-between; padding: 14px 24px;
+      border-bottom: 1px solid var(--grid); border-left: 3px solid transparent;
+    }
+    .nav-group.active .nav-group-trigger { border-left-color: var(--accent); }
+    .nav-dropdown {
+      position: static; display: none; background: rgba(255,255,255,0.03); border: none;
+      box-shadow: none; padding: 0;
+    }
+    .nav-group.open .nav-dropdown { display: flex; }
+    .nav-dropdown a { padding: 12px 24px 12px 36px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-dropdown a.active { border-left-color: var(--accent); }
+    .brand-text { display: none; }
+  }
+
+  .breadcrumb {
+    max-width: 1180px; margin: 0 auto; padding: 14px 24px 0;
+    font-size: 12px; color: var(--ink-muted);
+  }
+  .breadcrumb a { color: var(--ink-secondary); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--ink-primary); }
+
+  .team-hero {
+    position: relative; overflow: hidden;
+    background: linear-gradient(135deg, var(--card-color, #1a1a1e) 0%, #0a0a0c 75%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 24px 24px; margin-top: 12px;
+  }
+  .team-hero::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.06) 0 2px, transparent 2px 40px);
+    pointer-events: none;
+  }
+  .team-hero-inner { max-width: 1180px; margin: 0 auto; position: relative; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #fff; opacity: 0.85; margin-bottom: 8px;
+  }
+  .eyebrow::before { content: ""; width: 16px; height: 2px; background: #fff; opacity: 0.85; display: inline-block; }
+  h1 { font-size: 34px; font-weight: 900; text-transform: uppercase; margin: 0 0 2px; letter-spacing: -0.01em; line-height: 1.02; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+  .team-meta { color: rgba(255,255,255,0.85); font-size: 14px; display: flex; align-items: center; gap: 10px; }
+  .team-flag { width: 26px; height: 19px; object-fit: cover; border-radius: 2px; box-shadow: 0 0 0 1px rgba(255,255,255,0.25); }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-secondary); margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+
+  #status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; margin-top: 10px; }
+  #status.error { color: var(--accent); }
+  .progress-bar { height: 3px; background: var(--grid); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+  .progress-bar .fill { height: 100%; background: var(--gold); width: 0%; transition: width 0.2s; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 10px; }
+  .stat-tile { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .stat-tile .label { font-size: 11px; color: var(--ink-muted); }
+  .stat-tile .value { font-size: 18px; font-weight: 700; margin-top: 2px; }
+  .stat-tile.highlight .value { color: var(--gold); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--grid); }
+  th:last-child, td:last-child, th:nth-child(3), td:nth-child(3) { text-align: right; }
+  thead th {
+    color: var(--ink-secondary); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr:hover { background: rgba(255,255,255,0.04); }
+  .table-scroll { max-height: 400px; overflow-y: auto; }
+  .champ-row { color: var(--gold); font-weight: 700; }
+
+  footer.site-footer {
+    max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0;
+    border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="topnav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">F1</span>
+      <span class="brand-text">HUB</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a class="nav-link" href="index.html">Home</a>
+      <div class="nav-group active">
+        <button class="nav-group-trigger" type="button">Actueel <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="schedule.html">Kalender</a>
+          <a href="results.html">Resultaten</a>
+          <a href="drivers.html">Coureurs</a>
+          <a href="teams.html" class="active">Teams</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="nav-group-trigger" type="button">Analyse <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="head2head.html">Head-to-head</a>
+          <a href="circuit.html">Circuit</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="nav-group-trigger" type="button">Historie <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="history.html">Historie</a>
+          <a href="records.html">Hall of Fame</a>
+          <a href="legends.html">Legends</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('navToggle').addEventListener('click', function() {
+    var nl = document.getElementById('navLinks');
+    var open = nl.classList.toggle('open');
+    this.setAttribute('aria-expanded', open);
+  });
+  document.querySelectorAll('.nav-group-trigger').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var group = btn.closest('.nav-group');
+      var wasOpen = group.classList.contains('open');
+      document.querySelectorAll('.nav-group.open').forEach(function(g) { g.classList.remove('open'); });
+      if (!wasOpen) group.classList.add('open');
+    });
+  });
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.nav-group')) {
+      document.querySelectorAll('.nav-group.open').forEach(function(g) { g.classList.remove('open'); });
+    }
+  });
+</script>
+
+<div class="breadcrumb"><a href="teams.html">← Alle teams</a></div>
+
+<div class="team-hero" id="teamHero">
+  <div class="team-hero-inner">
+    <div class="eyebrow">Team · Onofficieel</div>
+    <h1 id="teamName">Laden…</h1>
+    <div class="team-meta" id="teamMeta"></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div id="status">Teamdata laden…</div>
+  <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+
+  <div class="card" id="statsCard" style="display:none;">
+    <h2>Team in cijfers</h2>
+    <div class="stat-grid" id="statGrid"></div>
+    <div id="wikiLink" style="margin-top:12px; font-size:12px;"></div>
+  </div>
+
+  <div class="card" id="seasonsCard" style="display:none;">
+    <h2>Per seizoen</h2>
+    <div class="table-scroll">
+      <table id="seasonsTable">
+        <thead><tr><th>Seizoen</th><th>Positie</th><th>Punten</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div style="font-size:11px; color:var(--ink-muted); margin-top:8px;">Goud = constructeurskampioen dat seizoen.</div>
+  </div>
+
+  <footer class="site-footer">Historische data via de gratis Jolpica-F1 API (Ergast-compatibel). Formule1Hub is een onofficieel project, zonder affiliatie met Formula 1®.</footer>
+
+</div>
+
+<script>
+const JOLPICA_API = 'https://api.jolpi.ca/ergast/f1';
+const JOLPICA_CONSTRUCTORS_CACHE_KEY = 'f1dash_jolpica_constructors_v1';
+let jolpicaLastCallAt = 0;
+async function jolpicaGet(path, attempt = 0) {
+  const minGap = 350;
+  const wait = Math.max(0, minGap - (Date.now() - jolpicaLastCallAt));
+  if (wait) await sleep(wait);
+  jolpicaLastCallAt = Date.now();
+  let res;
+  try {
+    res = await fetch(`${JOLPICA_API}/${path}`);
+  } catch (e) {
+    throw new Error('Netwerkfout — kon de data niet ophalen.');
+  }
+  if (res.status === 429 && attempt < 10) {
+    await sleep(900 * (attempt + 1));
+    return jolpicaGet(path, attempt + 1);
+  }
+  if (!res.ok) throw new Error(`API-fout ${res.status} bij ${path}`);
+  return res.json();
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* Constructor standings per season are shared across every team profile and,
+   for completed seasons, never change again — cache them indefinitely so
+   browsing multiple teams doesn't repeatedly hit the same rate-limited
+   endpoint. Only the current (still-evolving) season gets a short TTL. */
+const STANDINGS_CACHE_PREFIX = 'f1dash_constructor_standings_';
+const CURRENT_YEAR = new Date().getFullYear();
+async function getSeasonStandings(season) {
+  const key = STANDINGS_CACHE_PREFIX + season;
+  const cached = JSON.parse(localStorage.getItem(key) || 'null');
+  const isCurrentSeason = Number(season) >= CURRENT_YEAR;
+  const ttl = isCurrentSeason ? 6 * 60 * 60 * 1000 : Infinity;
+  if (cached && (Date.now() - cached.fetchedAt) < ttl) return cached.data;
+
+  const data = await jolpicaGet(`${season}/constructorStandings.json`);
+  localStorage.setItem(key, JSON.stringify({ fetchedAt: Date.now(), data }));
+  return data;
+}
+
+function setStatus(msg, isError) {
+  const el = document.getElementById('status');
+  el.textContent = msg || '';
+  el.classList.toggle('error', !!isError);
+}
+function setProgress(pct) { document.getElementById('progressFill').style.width = `${pct}%`; }
+
+const NATIONALITY_ISO = {
+  'British':'gb','German':'de','Italian':'it','French':'fr','Austrian':'at','American':'us',
+  'Swiss':'ch','Japanese':'jp','Irish':'ie','Dutch':'nl','Indian':'in','Malaysian':'my',
+  'Spanish':'es','Canadian':'ca','New Zealander':'nz','South African':'za','Rhodesian':'zw',
+  'Australian':'au','Brazilian':'br'
+};
+function flagImgFor(nationality, cls) {
+  const iso = NATIONALITY_ISO[nationality];
+  if (!iso) return '';
+  return `<img class="${cls}" src="https://flagcdn.com/48x36/${iso}.png" alt="${nationality}" loading="lazy" onerror="this.style.display='none'">`;
+}
+
+async function fetchAllJolpicaConstructors() {
+  const cached = JSON.parse(localStorage.getItem(JOLPICA_CONSTRUCTORS_CACHE_KEY) || 'null');
+  const weekMs = 7 * 24 * 60 * 60 * 1000;
+  if (cached && (Date.now() - cached.fetchedAt) < weekMs) return cached.constructors;
+
+  let offset = 0, total = Infinity, all = [];
+  while (offset < total) {
+    const data = await jolpicaGet(`constructors.json?limit=100&offset=${offset}`);
+    total = Number(data.MRData.total);
+    const batch = data.MRData.ConstructorTable.Constructors;
+    all = all.concat(batch);
+    if (!batch.length) break;
+    offset += batch.length;
+  }
+  localStorage.setItem(JOLPICA_CONSTRUCTORS_CACHE_KEY, JSON.stringify({ fetchedAt: Date.now(), constructors: all }));
+  return all;
+}
+
+function normalizeName(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+}
+
+const CONSTRUCTOR_ALIASES = {
+  'Racing Bulls': 'rb',
+  'Red Bull Racing': 'red_bull',
+  'Kick Sauber': 'sauber'
+};
+
+function matchConstructor(all, teamName) {
+  if (CONSTRUCTOR_ALIASES[teamName]) {
+    const found = all.find(c => c.constructorId === CONSTRUCTOR_ALIASES[teamName]);
+    if (found) return found;
+  }
+  const n = normalizeName(teamName);
+  const exact = all.find(c => normalizeName(c.name) === n);
+  if (exact) return exact;
+  const words = n.split(/\s+/).filter(w => w.length >= 4);
+  return all.find(c => {
+    const cwords = normalizeName(c.name).split(/\s+/).filter(w => w.length >= 4);
+    return words.some(w => cwords.includes(w));
+  }) || null;
+}
+
+async function fetchAllPaged(basePath) {
+  // NOTE: the API's offset/limit count individual result ROWS, not Race
+  // objects. For endpoints where a Race can hold multiple Results (e.g.
+  // constructors/{id}/results.json has one row per driver per race), the
+  // offset must advance by the row count in the page, not races.length,
+  // otherwise pages overlap and every stat gets double-counted.
+  let offset = 0, total = Infinity, all = [];
+  while (offset < total) {
+    const sep = basePath.includes('?') ? '&' : '?';
+    const data = await jolpicaGet(`${basePath}${sep}limit=100&offset=${offset}`);
+    total = Number(data.MRData.total);
+    const races = data.MRData.RaceTable.Races;
+    all = all.concat(races);
+    const rowCount = races.reduce((sum, r) => sum + r.Results.length, 0);
+    if (!rowCount) break;
+    offset += rowCount;
+  }
+  return all;
+}
+
+const params = new URLSearchParams(location.search);
+const TEAM_NAME = params.get('name');
+const DIRECT_ID = params.get('id');
+
+if (!TEAM_NAME && !DIRECT_ID) {
+  document.body.innerHTML = '<div class="wrap" style="padding-top:40px;"><p>Geen team opgegeven. <a href="teams.html" style="color:var(--accent);">Ga terug naar Teams.</a></p></div>';
+  throw new Error('missing team identifier');
+}
+
+init();
+
+async function init() {
+  try {
+    setStatus('Team opzoeken…');
+    const allConstructors = await fetchAllJolpicaConstructors();
+    const c = DIRECT_ID
+      ? allConstructors.find(x => x.constructorId === DIRECT_ID)
+      : matchConstructor(allConstructors, TEAM_NAME);
+
+    if (!c) {
+      setStatus(`Kon "${TEAM_NAME || DIRECT_ID}" niet matchen met de historische database.`, true);
+      return;
+    }
+
+    document.getElementById('teamHero').style.setProperty('--card-color', '#333');
+    document.getElementById('teamName').textContent = TEAM_NAME || c.name;
+    document.title = `${c.name} — Formule1Hub`;
+    const flag = flagImgFor(c.nationality, 'team-flag');
+    document.getElementById('teamMeta').innerHTML = `${flag}<span>${c.nationality || ''}</span>`;
+
+    setStatus('Resultaten uit de hele geschiedenis ophalen…');
+    setProgress(15);
+    const races = await fetchAllPaged(`constructors/${c.constructorId}/results.json`);
+    if (!races.length) {
+      setStatus('Geen resultaten gevonden voor dit team.', true);
+      return;
+    }
+    setProgress(45);
+
+    // flatten: each race can have multiple Results entries (one per driver)
+    const flat = races.flatMap(r => r.Results.map(res => ({ season: r.season, round: r.round, res })));
+
+    const wins = flat.filter(x => x.res.position === '1').length;
+    const podiums = flat.filter(x => Number(x.res.position) <= 3).length;
+    const points = flat.reduce((sum, x) => sum + Number(x.res.points || 0), 0);
+    const seasons = Array.from(new Set(flat.map(x => x.season))).sort();
+    const distinctRaces = new Set(flat.map(x => `${x.season}-${x.round}`)).size;
+
+    // Brief cooldown: the pagination fetch above can already be a heavy burst
+    // of calls, so give the API's rate limit a moment before the (also
+    // sizeable, one-call-per-season) championship loop starts.
+    setStatus('Even pauzeren voor de volgende reeks aanvragen…');
+    await sleep(1500);
+
+    setStatus(`WK-standen per seizoen ophalen… (0/${seasons.length})`);
+    let titles = 0;
+    const titleSeasons = new Set();
+    const positionBySeason = new Map();
+    const failedSeasons = [];
+    for (const [i, season] of seasons.entries()) {
+      setStatus(`WK-standen per seizoen ophalen… (${i + 1}/${seasons.length})`);
+      setProgress(45 + Math.round((i / seasons.length) * 45));
+      try {
+        const standing = await getSeasonStandings(season);
+        const lists = standing.MRData.StandingsTable.StandingsLists;
+        if (lists.length) {
+          const row = lists[0].ConstructorStandings.find(s => s.Constructor.constructorId === c.constructorId);
+          if (row) {
+            positionBySeason.set(season, row.position);
+            if (row.position === '1') { titles++; titleSeasons.add(season); }
+          }
+        }
+      } catch (e) { failedSeasons.push(season); }
+    }
+
+    const tiles = [
+      { label: 'Actief', value: `${seasons[0]}–${seasons[seasons.length - 1]}` },
+      { label: 'Grand Prix-weekenden', value: distinctRaces },
+      { label: 'Zeges', value: wins },
+      { label: 'Podiums', value: podiums },
+      { label: 'WK-punten', value: points.toFixed(0) },
+      { label: 'Constructeurstitels', value: titles, highlight: titles > 0 }
+    ];
+    document.getElementById('statGrid').innerHTML = tiles.map(t =>
+      `<div class="stat-tile${t.highlight ? ' highlight' : ''}"><div class="label">${t.label}</div><div class="value">${t.value}</div></div>`).join('');
+
+    if (c.url) {
+      document.getElementById('wikiLink').innerHTML =
+        `<a href="${c.url}" target="_blank" rel="noopener" style="color:var(--accent);">Volledige geschiedenis op Wikipedia →</a>`;
+    }
+    document.getElementById('statsCard').style.display = 'block';
+
+    // season-by-season: need points per season from constructorStandings (already fetched above for titles);
+    // re-derive points per season from the flattened race results instead (no extra calls needed)
+    const bySeasonPoints = new Map();
+    flat.forEach(x => {
+      bySeasonPoints.set(x.season, (bySeasonPoints.get(x.season) || 0) + Number(x.res.points || 0));
+    });
+    const seasonRows = seasons.slice().reverse().map(season => {
+      const isChamp = titleSeasons.has(season);
+      const pts = bySeasonPoints.get(season) || 0;
+      const pos = positionBySeason.get(season) || '–';
+      return `<tr class="${isChamp ? 'champ-row' : ''}">
+        <td>${season}${isChamp ? ' 🏆' : ''}</td>
+        <td>${pos}</td>
+        <td>${pts.toFixed(0)}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('seasonsTable').querySelector('tbody').innerHTML = seasonRows;
+    document.getElementById('seasonsCard').style.display = 'block';
+
+    setProgress(100);
+    const warn = failedSeasons.length
+      ? ` Let op: ${failedSeasons.length} seizoen(en) konden niet gecontroleerd worden op titels (API-limiet) — ververs de pagina om het opnieuw te proberen.`
+      : '';
+    setStatus(`Klaar — ${seasons.length} seizoenen in de Formule 1, van ${seasons[0]} tot ${seasons[seasons.length - 1]}.${warn}`, failedSeasons.length > 0);
+  } catch (e) {
+    setStatus(e.message, true);
+  }
+}
+</script>
+</body>
+</html>
