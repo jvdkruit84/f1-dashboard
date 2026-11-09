@@ -1,12 +1,12 @@
 [
-  {
-    "slug": "welkom-bij-formule1hub",
-    "title": "Welkom bij Formule1Hub",
-    "tag": "Nieuws",
-    "color": "#e10600",
-    "summary": "Dit is een voorbeeldbericht — pas dit aan of verwijder het en voeg je eigen berichten toe aan news.json.",
-    "body": "Dit is een voorbeeldartikel. Je kunt dit bewerken door het bestand news.json via FTP te openen en aan te passen.\n\nElk bericht in het bestand heeft een paar velden: slug (een unieke naam zonder spaties, gebruikt in de link), title (de titel), tag (het label boven de titel, bijvoorbeeld \"Nieuws\" of \"Analyse\"), color (de kleur van dat label, bijvoorbeeld #e10600 voor rood), summary (de korte tekst op de homepage-kaart), body (de volledige tekst van het artikel — gebruik een dubbele regel-enter voor een nieuwe alinea), image (het pad naar de afbeelding) en date (de datum).\n\nOm een nieuw bericht toe te voegen, kopieer je dit hele blok tussen de { en } en pas je de velden aan. Vergeet niet een komma te zetten tussen twee berichten.\n\nUpload je eigen afbeelding via FTP naar images/news/custom/ en verwijs ernaar vanuit het image-veld.",
-    "image": "images/news/custom/welkom.jpg",
-    "date": "2026-11-10"
-  }
+    {
+        "slug": "welkom-bij-formule1hub",
+        "title": "Welkom bij Formule1Hub",
+        "tag": "Nieuws",
+        "color": "#e10600",
+        "summary": "Dit is een voorbeeldbericht — pas dit aan of verwijder het en voeg je eigen berichten toe aan news.json.",
+        "body": "Dit is een voorbeeldartikel. Je kunt dit bewerken door het bestand news.json via FTP te openen en aan te passen.\n\nElk bericht in het bestand heeft een paar velden: slug (een unieke naam zonder spaties, gebruikt in de link), title (de titel), tag (het label boven de titel, bijvoorbeeld \"Nieuws\" of \"Analyse\"), color (de kleur van dat label, bijvoorbeeld #e10600 voor rood), summary (de korte tekst op de homepage-kaart), body (de volledige tekst van het artikel — gebruik een dubbele regel-enter voor een nieuwe alinea), image (het pad naar de afbeelding) en date (de datum).\n\nOm een nieuw bericht toe te voegen, kopieer je dit hele blok tussen de { en } en pas je de velden aan. Vergeet niet een komma te zetten tussen twee berichten.\n\nUpload je eigen afbeelding via FTP naar images/news/custom/ en verwijs ernaar vanuit het image-veld.",
+        "image": "images/news/custom/welkom.jpg",
+        "date": "2026-11-10"
+    }
 ]
