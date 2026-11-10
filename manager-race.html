@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Race-weekend — Formule1Hub Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --surface-1: #15151e;
+    --page: #0a0a0c;
+    --ink-primary: #ffffff;
+    --ink-secondary: #9a9aa2;
+    --ink-muted: #6b6b72;
+    --grid: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.12);
+    --accent: #e10600;
+    --good: #19a974;
+    --critical: #e10600;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Titillium Web', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(ellipse 900px 300px at 50% -80px, rgba(225,6,0,0.10), transparent 70%),
+      var(--page);
+    color: var(--ink-primary);
+    padding: 0 0 32px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+  .topnav { background: #000; border-bottom: 1px solid var(--border); }
+  .topnav-inner { max-width: 1180px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+  .brand-mark { background: var(--accent); color: #fff; font-weight: 900; font-size: 13px; padding: 3px 7px; border-radius: 3px; letter-spacing: 0.01em; font-style: italic; }
+  .brand-text { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-secondary); }
+  .nav-links { display: flex; gap: 16px; height: 100%; }
+  .nav-link { display: flex; align-items: center; height: 100%; color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent; transition: color 0.15s; white-space: nowrap; }
+  .nav-link:hover { color: var(--ink-primary); }
+  .nav-link.active { color: var(--ink-primary); border-bottom-color: var(--accent); }
+  .nav-group { position: relative; height: 100%; }
+  .nav-group-trigger { background: none; border: none; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 4px; height: 100%; color: var(--ink-secondary); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent; transition: color 0.15s; white-space: nowrap; padding: 0; }
+  .nav-group-trigger:hover { color: var(--ink-primary); }
+  .nav-group-trigger .caret { font-size: 9px; transition: transform 0.15s; }
+  .nav-group.open .nav-group-trigger .caret { transform: rotate(180deg); }
+  .nav-group.active .nav-group-trigger { color: var(--ink-primary); border-bottom-color: var(--accent); }
+  .nav-dropdown { display: none; position: absolute; top: 56px; left: 0; min-width: 190px; background: #000; border: 1px solid var(--border); border-top: none; border-radius: 0 0 6px 6px; flex-direction: column; padding: 6px 0; z-index: 60; box-shadow: 0 12px 24px rgba(0,0,0,0.4); }
+  .nav-group:hover .nav-dropdown, .nav-group.open .nav-dropdown { display: flex; }
+  .nav-dropdown a { padding: 10px 16px; color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; border-left: 2px solid transparent; }
+  .nav-dropdown a:hover { color: var(--ink-primary); background: rgba(255,255,255,0.05); }
+  .nav-dropdown a.active { color: var(--ink-primary); border-left-color: var(--accent); background: rgba(225,6,0,0.08); }
+  .hero { position: relative; overflow: hidden; background: linear-gradient(135deg, #000 0%, #0f0f12 60%, #1a1a1e 100%); border-bottom: 1px solid var(--border); padding: 18px 24px 16px; margin-bottom: 20px; }
+  .hero::before { content: ""; position: absolute; inset: 0; background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 40px); pointer-events: none; }
+  .hero-inner { max-width: 1180px; margin: 0 auto; position: relative; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  .eyebrow::before { content: ""; width: 16px; height: 2px; background: var(--accent); display: inline-block; }
+  h1 { font-size: 21px; font-weight: 900; text-transform: uppercase; margin: 0 0 4px; letter-spacing: -0.01em; line-height: 1.05; }
+  .subtitle { color: var(--ink-secondary); font-size: 13px; margin-bottom: 0; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; padding: 18px 20px; margin-bottom: 16px; }
+  .card h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-secondary); margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 9px; }
+  button { width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 4px; border: 1px solid var(--border); background: var(--page); color: var(--ink-primary); font-family: inherit; }
+  button.primary { background: var(--accent); color: #fff; border: 1px solid var(--accent); cursor: pointer; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; }
+  button.primary:hover { opacity: 0.88; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  #status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; margin-top: 10px; }
+  #status.error { color: var(--critical); }
+  .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .mode-tab { flex: 1; text-align: center; padding: 10px; border-radius: 4px; border: 1px solid var(--border); background: var(--page); cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+  .mode-tab.active { border-color: var(--accent); color: var(--accent); }
+  .strategy-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 10px; margin: 14px 0; }
+  .strategy-option { border: 1px solid var(--border); border-radius: 6px; padding: 12px; cursor: pointer; background: var(--page); }
+  .strategy-option.selected { border-color: var(--accent); }
+  .strategy-option .label { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .strategy-option .meta { font-size: 11px; color: var(--ink-muted); }
+  .grid-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+  .grid-table td { padding: 5px 8px; border-bottom: 1px solid var(--grid); }
+  .grid-table tr.player td { color: var(--accent); font-weight: 700; }
+  footer.site-footer { max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0; border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px; }
+  .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
+  .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
+  @media (max-width: 860px) {
+    .nav-toggle { display: flex; }
+    .topnav { position: relative; }
+    .nav-links { display: none; position: absolute; top: 56px; left: 0; right: 0; background: #000; border-bottom: 1px solid var(--border); flex-direction: column; gap: 0; height: auto; padding: 8px 0; z-index: 50; }
+    .nav-links.open { display: flex; }
+    .nav-link { height: auto; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-link.active { border-left-color: var(--accent); }
+    .nav-group { height: auto; }
+    .nav-group-trigger { width: 100%; justify-content: space-between; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-group.active .nav-group-trigger { border-left-color: var(--accent); }
+    .nav-dropdown { position: static; display: none; background: rgba(255,255,255,0.03); border: none; box-shadow: none; padding: 0; }
+    .nav-group.open .nav-dropdown { display: flex; }
+    .nav-dropdown a { padding: 12px 24px 12px 36px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-dropdown a.active { border-left-color: var(--accent); }
+    .brand-text { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="topnav-inner">
+    <a class="brand" href="index.html"><span class="brand-mark">F1</span><span class="brand-text">HUB</span></a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a class="nav-link" href="index.html">Home</a>
+      <div class="nav-group">
+        <button class="nav-group-trigger" type="button">Actueel <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="schedule.html">Kalender</a>
+          <a href="results.html">Resultaten</a>
+          <a href="drivers.html">Coureurs</a>
+          <a href="teams.html">Teams</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="nav-group-trigger" type="button">Analyse <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="head2head.html">Head-to-head</a>
+          <a href="circuit.html">Circuit</a>
+          <a href="telemetry.html">Telemetrie</a>
+        </div>
+      </div>
+      <div class="nav-group active">
+        <button class="nav-group-trigger" type="button">Manager <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="manager.html">Dashboard</a>
+          <a href="manager-race.html" class="active">Race</a>
+          <a href="manager-standings.html">Stand</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="nav-group-trigger" type="button">Historie <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="history.html">Historie</a>
+          <a href="records.html">Hall of Fame</a>
+          <a href="legends.html">Legends</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('navToggle').addEventListener('click', function() {
+    var nl = document.getElementById('navLinks');
+    var open = nl.classList.toggle('open');
+    this.setAttribute('aria-expanded', open);
+  });
+  document.querySelectorAll('.nav-group-trigger').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var group = btn.closest('.nav-group');
+      var wasOpen = group.classList.contains('open');
+      document.querySelectorAll('.nav-group.open').forEach(function(g) { g.classList.remove('open'); });
+      if (!wasOpen) group.classList.add('open');
+    });
+  });
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.nav-group')) {
+      document.querySelectorAll('.nav-group.open').forEach(function(g) { g.classList.remove('open'); });
+    }
+  });
+</script>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Formule1Hub · Manager</div>
+    <h1>Race-weekend</h1>
+    <div class="subtitle">Kies je strategie en rij de race. Seizoensmodus ontgrendelt een race zodra het echte GP-weekend is verreden.</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>Modus</h2>
+    <div class="mode-tabs">
+      <div class="mode-tab active" data-mode="season">Seizoensmodus</div>
+      <div class="mode-tab" data-mode="career">Carrièremodus</div>
+    </div>
+    <div id="raceArea">Laden…</div>
+    <div id="status"></div>
+  </div>
+
+  <div class="card" id="resultCard" style="display:none;">
+    <h2 id="resultHeading">Uitslag</h2>
+    <div id="resultBody"></div>
+  </div>
+
+  <footer class="site-footer">Formule1Hub Manager is een onofficieel, fictief managementspel en heeft geen affiliatie met Formula 1® of de F1 Manager-videogames.</footer>
+
+</div>
+
+<script>
+const API = 'manager/api';
+let currentMode = 'season';
+let selectedStrategy = null;
+
+async function apiPost(path, params) {
+  const res = await fetch(`${API}/${path}`, { method: 'POST', body: new URLSearchParams(params) });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Onbekende fout.');
+  return data;
+}
+async function apiGet(path) {
+  const res = await fetch(`${API}/${path}`);
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Onbekende fout.');
+  return data;
+}
+function setStatus(msg, isError) {
+  const el = document.getElementById('status');
+  el.textContent = msg || '';
+  el.classList.toggle('error', !!isError);
+}
+
+document.querySelectorAll('.mode-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    document.getElementById('resultCard').style.display = 'none';
+    loadRaceState();
+  });
+});
+
+async function loadRaceState() {
+  setStatus('');
+  selectedStrategy = null;
+  const el = document.getElementById('raceArea');
+  el.textContent = 'Laden…';
+  try {
+    const me = await apiGet('me.php');
+    if (!me.loggedIn) {
+      el.innerHTML = `<p style="color:var(--ink-secondary); font-size:13px;">Je bent niet ingelogd. Ga naar <a href="manager.html" style="color:var(--accent);">het dashboard</a> om in te loggen.</p>`;
+      return;
+    }
+    const data = await apiGet(`race.php?mode=${currentMode}`);
+    if (!data.nextRace) {
+      el.innerHTML = `<p style="color:var(--ink-secondary); font-size:13px;">Geen race beschikbaar in deze modus op dit moment. ${currentMode === 'season' ? 'Seizoensmodus wacht op het volgende verreden GP-weekend.' : ''}</p>`;
+      return;
+    }
+    el.innerHTML = `
+      <p style="font-size:14px; font-weight:700; margin-bottom:6px;">${data.nextRace.raceName}</p>
+      <p style="color:var(--ink-secondary); font-size:12px;">${data.team.name} — auto-rating ${data.team.car_rating}/100</p>
+      <div class="strategy-options" id="strategyOptions">
+        ${Object.entries(data.strategies).map(([key, s]) => `
+          <div class="strategy-option" data-key="${key}">
+            <div class="label">${s.label}</div>
+            <div class="meta">bonus +${s.bonus} · risico ±${s.risk}</div>
+          </div>
+        `).join('')}
+      </div>
+      <button class="primary" id="raceBtn" disabled>Kies eerst een strategie</button>
+    `;
+    document.querySelectorAll('.strategy-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        document.querySelectorAll('.strategy-option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        selectedStrategy = opt.dataset.key;
+        const btn = document.getElementById('raceBtn');
+        btn.disabled = false;
+        btn.textContent = 'Rij de race';
+      });
+    });
+    document.getElementById('raceBtn').addEventListener('click', runRace);
+  } catch (e) {
+    setStatus(e.message, true);
+  }
+}
+
+async function runRace() {
+  if (!selectedStrategy) return;
+  const btn = document.getElementById('raceBtn');
+  btn.disabled = true;
+  try {
+    const result = await apiPost('race.php', { mode: currentMode, strategy: selectedStrategy });
+    document.getElementById('resultHeading').textContent = `Uitslag — ${result.raceName}`;
+    document.getElementById('resultBody').innerHTML = `
+      <p style="font-size:16px; margin-bottom:8px;"><strong>P${result.position}</strong> — ${result.points} punten</p>
+      <table class="grid-table">
+        ${result.grid.map(g => `<tr class="${g.isPlayer ? 'player' : ''}"><td>P${g.position}</td><td>${g.label}</td></tr>`).join('')}
+      </table>
+    `;
+    document.getElementById('resultCard').style.display = 'block';
+    document.getElementById('raceArea').innerHTML = '<p style="color:var(--ink-secondary); font-size:13px;">Race gereden. Ga naar de stand of kom later terug voor de volgende race.</p>';
+  } catch (e) {
+    setStatus(e.message, true);
+    btn.disabled = false;
+  }
+}
+
+loadRaceState();
+</script>
+</body>
+</html>

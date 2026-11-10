@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stand — Formule1Hub Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --surface-1: #15151e;
+    --page: #0a0a0c;
+    --ink-primary: #ffffff;
+    --ink-secondary: #9a9aa2;
+    --ink-muted: #6b6b72;
+    --grid: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.12);
+    --accent: #e10600;
+    --critical: #e10600;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Titillium Web', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: radial-gradient(ellipse 900px 300px at 50% -80px, rgba(225,6,0,0.10), transparent 70%), var(--page);
+    color: var(--ink-primary);
+    padding: 0 0 32px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+  .topnav { background: #000; border-bottom: 1px solid var(--border); }
+  .topnav-inner { max-width: 1180px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+  .brand-mark { background: var(--accent); color: #fff; font-weight: 900; font-size: 13px; padding: 3px 7px; border-radius: 3px; letter-spacing: 0.01em; font-style: italic; }
+  .brand-text { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-secondary); }
+  .nav-links { display: flex; gap: 16px; height: 100%; }
+  .nav-link { display: flex; align-items: center; height: 100%; color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent; transition: color 0.15s; white-space: nowrap; }
+  .nav-link:hover { color: var(--ink-primary); }
+  .nav-link.active { color: var(--ink-primary); border-bottom-color: var(--accent); }
+  .nav-group { position: relative; height: 100%; }
+  .nav-group-trigger { background: none; border: none; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 4px; height: 100%; color: var(--ink-secondary); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent; transition: color 0.15s; white-space: nowrap; padding: 0; }
+  .nav-group-trigger:hover { color: var(--ink-primary); }
+  .nav-group-trigger .caret { font-size: 9px; transition: transform 0.15s; }
+  .nav-group.open .nav-group-trigger .caret { transform: rotate(180deg); }
+  .nav-group.active .nav-group-trigger { color: var(--ink-primary); border-bottom-color: var(--accent); }
+  .nav-dropdown { display: none; position: absolute; top: 56px; left: 0; min-width: 190px; background: #000; border: 1px solid var(--border); border-top: none; border-radius: 0 0 6px 6px; flex-direction: column; padding: 6px 0; z-index: 60; box-shadow: 0 12px 24px rgba(0,0,0,0.4); }
+  .nav-group:hover .nav-dropdown, .nav-group.open .nav-dropdown { display: flex; }
+  .nav-dropdown a { padding: 10px 16px; color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; border-left: 2px solid transparent; }
+  .nav-dropdown a:hover { color: var(--ink-primary); background: rgba(255,255,255,0.05); }
+  .nav-dropdown a.active { color: var(--ink-primary); border-left-color: var(--accent); background: rgba(225,6,0,0.08); }
+  .hero { position: relative; overflow: hidden; background: linear-gradient(135deg, #000 0%, #0f0f12 60%, #1a1a1e 100%); border-bottom: 1px solid var(--border); padding: 18px 24px 16px; margin-bottom: 20px; }
+  .hero::before { content: ""; position: absolute; inset: 0; background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 40px); pointer-events: none; }
+  .hero-inner { max-width: 1180px; margin: 0 auto; position: relative; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  .eyebrow::before { content: ""; width: 16px; height: 2px; background: var(--accent); display: inline-block; }
+  h1 { font-size: 21px; font-weight: 900; text-transform: uppercase; margin: 0 0 4px; letter-spacing: -0.01em; line-height: 1.05; }
+  .subtitle { color: var(--ink-secondary); font-size: 13px; margin-bottom: 0; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; padding: 18px 20px; margin-bottom: 16px; }
+  .card h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-secondary); margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 9px; }
+  .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .mode-tab { flex: 1; text-align: center; padding: 10px; border-radius: 4px; border: 1px solid var(--border); background: var(--page); cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+  .mode-tab.active { border-color: var(--accent); color: var(--accent); }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 10px; margin-bottom: 16px; }
+  .stat-tile { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .stat-tile .label { font-size: 11px; color: var(--ink-muted); }
+  .stat-tile .value { font-size: 18px; font-weight: 700; margin-top: 2px; }
+  table.history { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.history th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-muted); padding: 8px; border-bottom: 1px solid var(--border); }
+  table.history td { padding: 8px; border-bottom: 1px solid var(--grid); }
+  footer.site-footer { max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0; border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px; }
+  .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
+  .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
+  @media (max-width: 860px) {
+    .nav-toggle { display: flex; }
+    .topnav { position: relative; }
+    .nav-links { display: none; position: absolute; top: 56px; left: 0; right: 0; background: #000; border-bottom: 1px solid var(--border); flex-direction: column; gap: 0; height: auto; padding: 8px 0; z-index: 50; }
+    .nav-links.open { display: flex; }
+    .nav-link { height: auto; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-link.active { border-left-color: var(--accent); }
+    .nav-group { height: auto; }
+    .nav-group-trigger { width: 100%; justify-content: space-between; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-group.active .nav-group-trigger { border-left-color: var(--accent); }
+    .nav-dropdown { position: static; display: none; background: rgba(255,255,255,0.03); border: none; box-shadow: none; padding: 0; }
+    .nav-group.open .nav-dropdown { display: flex; }
+    .nav-dropdown a { padding: 12px 24px 12px 36px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-dropdown a.active { border-left-color: var(--accent); }
+    .brand-text { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="topnav-inner">
+    <a class="brand" href="index.html"><span class="brand-mark">F1</span><span class="brand-text">HUB</span></a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a class="nav-link" href="index.html">Home</a>
+      <div class="nav-group">
+        <button class="nav-group-trigger" type="button">Actueel <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="schedule.html">Kalender</a>
+          <a href="results.html">Resultaten</a>
+          <a href="drivers.html">Coureurs</a>
+          <a href="teams.html">Teams</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="nav-group-trigger" type="button">Analyse <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="head2head.html">Head-to-head</a>
+          <a href="circuit.html">Circuit</a>
+          <a href="telemetry.html">Telemetrie</a>
+        </div>
+      </div>
+      <div class="nav-group active">
+        <button class="nav-group-trigger" type="button">Manager <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="manager.html">Dashboard</a>
+          <a href="manager-race.html">Race</a>
+          <a href="manager-standings.html" class="active">Stand</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="nav-group-trigger" type="button">Historie <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="history.html">Historie</a>
+          <a href="records.html">Hall of Fame</a>
+          <a href="legends.html">Legends</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('navToggle').addEventListener('click', function() {
+    var nl = document.getElementById('navLinks');
+    var open = nl.classList.toggle('open');
+    this.setAttribute('aria-expanded', open);
+  });
+  document.querySelectorAll('.nav-group-trigger').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var group = btn.closest('.nav-group');
+      var wasOpen = group.classList.contains('open');
+      document.querySelectorAll('.nav-group.open').forEach(function(g) { g.classList.remove('open'); });
+      if (!wasOpen) group.classList.add('open');
+    });
+  });
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.nav-group')) {
+      document.querySelectorAll('.nav-group.open').forEach(function(g) { g.classList.remove('open'); });
+    }
+  });
+</script>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Formule1Hub · Manager</div>
+    <h1>Jouw stand</h1>
+    <div class="subtitle">Totaalpunten en racegeschiedenis per modus. v0.1 toont alleen je eigen team — ranglijsten tussen spelers volgen in een latere update.</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <h2>Modus</h2>
+    <div class="mode-tabs">
+      <div class="mode-tab active" data-mode="season">Seizoensmodus</div>
+      <div class="mode-tab" data-mode="career">Carrièremodus</div>
+    </div>
+    <div id="standingsArea">Laden…</div>
+  </div>
+
+  <footer class="site-footer">Formule1Hub Manager is een onofficieel, fictief managementspel en heeft geen affiliatie met Formula 1® of de F1 Manager-videogames.</footer>
+</div>
+
+<script>
+const API = 'manager/api';
+let currentMode = 'season';
+
+async function apiGet(path) {
+  const res = await fetch(`${API}/${path}`);
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Onbekende fout.');
+  return data;
+}
+
+document.querySelectorAll('.mode-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    loadStandings();
+  });
+});
+
+async function loadStandings() {
+  const el = document.getElementById('standingsArea');
+  el.textContent = 'Laden…';
+  try {
+    const me = await apiGet('me.php');
+    if (!me.loggedIn) {
+      el.innerHTML = `<p style="color:var(--ink-secondary); font-size:13px;">Je bent niet ingelogd. Ga naar <a href="manager.html" style="color:var(--accent);">het dashboard</a> om in te loggen.</p>`;
+      return;
+    }
+    const data = await apiGet(`standings.php?mode=${currentMode}`);
+    el.innerHTML = `
+      <div class="stat-grid">
+        <div class="stat-tile"><div class="label">Team</div><div class="value">${data.team.name}</div></div>
+        <div class="stat-tile"><div class="label">Races gespeeld</div><div class="value">${data.racesPlayed}</div></div>
+        <div class="stat-tile"><div class="label">Totaalpunten</div><div class="value">${data.totalPoints}</div></div>
+      </div>
+      <table class="history">
+        <thead><tr><th>Race</th><th>Strategie</th><th>Positie</th><th>Punten</th></tr></thead>
+        <tbody>
+          ${data.history.length ? data.history.map(h => `<tr><td>${h.raceName}</td><td>${h.strategy}</td><td>P${h.position}</td><td>${h.points}</td></tr>`).join('') : '<tr><td colspan="4" style="color:var(--ink-muted);">Nog geen races gespeeld.</td></tr>'}
+        </tbody>
+      </table>
+    `;
+  } catch (e) {
+    el.innerHTML = `<p style="color:var(--critical); font-size:13px;">${e.message}</p>`;
+  }
+}
+
+loadStandings();
+</script>
+</body>
+</html>

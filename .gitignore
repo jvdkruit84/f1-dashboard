@@ -1,4 +1,6 @@
 .claude/
 admin-config.php
 .ftp-credentials
+.db-credentials
+manager/db-config.php
 
