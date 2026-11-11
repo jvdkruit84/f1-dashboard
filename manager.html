@@ -148,8 +148,6 @@
   .team-meta .sub { color: var(--ink-muted); font-size: 11px; }
   .driver-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-secondary); padding: 4px 0; }
 
-  .auth-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  @media (max-width: 700px) { .auth-grid { grid-template-columns: 1fr; } }
 
   footer.site-footer {
     max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0;
@@ -265,20 +263,23 @@
 
   <div class="card" id="authCard">
     <h2>Account</h2>
-    <div class="auth-grid">
-      <div>
-        <div class="controls-grid" style="margin-bottom:10px;">
-          <div><label for="loginUser">Gebruikersnaam</label><input id="loginUser" autocomplete="username"></div>
-          <div><label for="loginPass">Wachtwoord</label><input id="loginPass" type="password" autocomplete="current-password"></div>
-          <div><button id="loginBtn">Inloggen</button></div>
-        </div>
+    <div class="mode-tabs">
+      <div class="mode-tab active" data-auth="login">Ik heb al een account</div>
+      <div class="mode-tab" data-auth="register">Nieuw hier? Registreren</div>
+    </div>
+
+    <div id="loginForm">
+      <div class="controls-grid" style="margin-bottom:10px;">
+        <div><label for="loginUser">Gebruikersnaam</label><input id="loginUser" autocomplete="username"></div>
+        <div><label for="loginPass">Wachtwoord</label><input id="loginPass" type="password" autocomplete="current-password"></div>
+        <div><button id="loginBtn">Inloggen</button></div>
       </div>
-      <div>
-        <div class="controls-grid" style="margin-bottom:10px;">
-          <div><label for="regUser">Nieuwe gebruikersnaam</label><input id="regUser" autocomplete="username"></div>
-          <div><label for="regPass">Wachtwoord (min. 8 tekens)</label><input id="regPass" type="password" autocomplete="new-password"></div>
-          <div><button id="regBtn">Registreren</button></div>
-        </div>
+    </div>
+    <div id="registerForm" style="display:none;">
+      <div class="controls-grid" style="margin-bottom:10px;">
+        <div><label for="regUser">Nieuwe gebruikersnaam</label><input id="regUser" autocomplete="username"></div>
+        <div><label for="regPass">Wachtwoord (min. 8 tekens)</label><input id="regPass" type="password" autocomplete="new-password"></div>
+        <div><button id="regBtn">Account aanmaken</button></div>
       </div>
     </div>
     <div id="status"></div>
@@ -343,12 +344,22 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
   await apiPost('logout.php', {});
   await refreshSession();
 });
-document.querySelectorAll('.mode-tab').forEach(tab => {
+document.querySelectorAll('.mode-tab[data-mode]').forEach(tab => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.mode-tab[data-mode]').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     currentMode = tab.dataset.mode;
     renderTeamArea();
+  });
+});
+document.querySelectorAll('.mode-tab[data-auth]').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.mode-tab[data-auth]').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const isLogin = tab.dataset.auth === 'login';
+    document.getElementById('loginForm').style.display = isLogin ? 'block' : 'none';
+    document.getElementById('registerForm').style.display = isLogin ? 'none' : 'block';
+    setStatus('');
   });
 });
 
