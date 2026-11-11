@@ -211,6 +211,7 @@
         <div class="nav-dropdown">
           <a href="manager.html" class="active">Dashboard</a>
           <a href="manager-race.html">Race</a>
+          <a href="manager-replay.html">Replay</a>
           <a href="manager-standings.html">Stand</a>
         </div>
       </div>
@@ -308,6 +309,8 @@ const API = 'manager/api';
 let currentMode = 'season';
 let driverPool = [];
 let teamsByMode = {};
+let realTeams = null;
+let creationSource = 'custom';
 
 function setStatus(msg, isError) {
   const el = document.getElementById('status');
@@ -407,7 +410,29 @@ function renderTeamArea() {
   }
 
   el.innerHTML = `
-    <p style="color:var(--ink-secondary); font-size:13px;">Nog geen team in deze modus. Stel er één samen:</p>
+    <p style="color:var(--ink-secondary); font-size:13px;">Nog geen team in deze modus.</p>
+    <div class="mode-tabs" style="margin-bottom:14px;">
+      <div class="mode-tab ${creationSource === 'custom' ? 'active' : ''}" data-source="custom">Fictief team samenstellen</div>
+      <div class="mode-tab ${creationSource === 'real' ? 'active' : ''}" data-source="real">Bestaand team overnemen</div>
+    </div>
+    <div id="creationArea"></div>
+  `;
+  el.querySelectorAll('.mode-tab[data-source]').forEach(tab => {
+    tab.addEventListener('click', () => {
+      creationSource = tab.dataset.source;
+      renderTeamArea();
+    });
+  });
+  if (creationSource === 'real') {
+    renderRealTeamPicker();
+  } else {
+    renderCustomTeamForm();
+  }
+}
+
+function renderCustomTeamForm() {
+  const area = document.getElementById('creationArea');
+  area.innerHTML = `
     <div class="controls-grid" style="margin-bottom:12px;">
       <div><label for="teamName">Teamnaam</label><input id="teamName" maxlength="60"></div>
       <div><label for="teamColor">Teamkleur</label><input id="teamColor" type="color" value="#e10600"></div>
@@ -428,6 +453,7 @@ function renderTeamArea() {
     try {
       await apiPost('team.php', {
         mode: currentMode,
+        source: 'custom',
         name: document.getElementById('teamName').value,
         color_hex: document.getElementById('teamColor').value.replace('#', ''),
         driver_id_a: document.getElementById('driverA').value,
@@ -436,6 +462,56 @@ function renderTeamArea() {
       await loadTeams();
     } catch (e) { setStatus(e.message, true); }
   });
+}
+
+async function renderRealTeamPicker() {
+  const area = document.getElementById('creationArea');
+  area.innerHTML = '<p style="color:var(--ink-secondary); font-size:13px;">Teams laden…</p>';
+  try {
+    if (!realTeams) {
+      const data = await apiGet('real_teams.php');
+      realTeams = data.teams;
+    }
+    const renderPreview = (constructorId) => {
+      const t = realTeams.find(x => x.constructorId === constructorId);
+      if (!t) return '';
+      return `
+        <div class="team-card" style="margin-top:12px;">
+          <div class="team-swatch" style="background:#${t.colorHex}"></div>
+          <div class="team-meta">
+            <div class="name">${t.name}</div>
+            <div class="sub">Indicatieve auto-rating (op basis van de actuele WK-stand): ${t.carRating} / 100</div>
+            ${t.drivers.map(d => `<div class="driver-row"><span>${d.name}</span><span>pace ${d.pace} · consistentie ${d.consistency}</span></div>`).join('')}
+          </div>
+        </div>
+      `;
+    };
+    area.innerHTML = `
+      <div class="controls-grid" style="margin-bottom:12px;">
+        <div>
+          <label for="realTeamSelect">Team</label>
+          <select id="realTeamSelect">${realTeams.map(t => `<option value="${t.constructorId}">${t.name}</option>`).join('')}</select>
+        </div>
+        <div><button id="createRealTeamBtn">Dit team overnemen</button></div>
+      </div>
+      <div id="realTeamPreview">${realTeams.length ? renderPreview(realTeams[0].constructorId) : ''}</div>
+    `;
+    document.getElementById('realTeamSelect').addEventListener('change', (e) => {
+      document.getElementById('realTeamPreview').innerHTML = renderPreview(e.target.value);
+    });
+    document.getElementById('createRealTeamBtn').addEventListener('click', async () => {
+      try {
+        await apiPost('team.php', {
+          mode: currentMode,
+          source: 'real',
+          constructor_id: document.getElementById('realTeamSelect').value,
+        });
+        await loadTeams();
+      } catch (e) { setStatus(e.message, true); }
+    });
+  } catch (e) {
+    area.innerHTML = `<p style="color:var(--critical); font-size:13px;">${e.message}</p>`;
+  }
 }
 
 refreshSession();

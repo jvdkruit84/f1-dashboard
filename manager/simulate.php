@@ -62,3 +62,48 @@ function f1hub_simulate_race($playerCarRating, $playerDrivers, $playerStrategyKe
         'grid' => array_map(fn($e, $i) => ['position' => $i + 1, 'label' => $e['label'], 'isPlayer' => $e['isPlayer']], $entries, array_keys($entries)),
     ];
 }
+
+/**
+ * Race Replay (v0.2): herspeelt een al verreden race. $classification is de
+ * echte einduitslag (per coureur, gesorteerd op positie). Alleen de
+ * best-geklasseerde coureur van het gekozen team krijgt de strategiebonus/
+ * -ruis bovenop zijn echte baseline-score; de rest van het veld staat vast
+ * op het echte resultaat — zo kun je het echte resultaat proberen te
+ * verslaan, zoals de "Race Moments" uit de echte F1 Manager-games.
+ */
+function f1hub_simulate_replay($classification, $playerConstructorName, $strategyKey) {
+    $strategy = F1HUB_STRATEGIES[$strategyKey];
+    $total = count($classification);
+
+    $entries = [];
+    $playerIdx = null;
+    $realPosition = null;
+    foreach ($classification as $i => $c) {
+        $entries[] = [
+            'label' => $c['driverName'] . ' (' . $c['constructorName'] . ')',
+            'isPlayer' => false,
+            'score' => $total - $c['position'] + 1,
+        ];
+        if ($playerIdx === null && $c['constructorName'] === $playerConstructorName) {
+            $playerIdx = $i;
+            $realPosition = (int)$c['position'];
+        }
+    }
+    if ($playerIdx === null) return null;
+
+    $entries[$playerIdx]['isPlayer'] = true;
+    $entries[$playerIdx]['score'] += $strategy['bonus'] + f1hub_random_float(-$strategy['risk'], $strategy['risk']);
+
+    usort($entries, fn($a, $b) => $b['score'] <=> $a['score']);
+
+    $simPosition = null;
+    foreach ($entries as $idx => $e) {
+        if ($e['isPlayer']) { $simPosition = $idx + 1; break; }
+    }
+
+    return [
+        'realPosition' => $realPosition,
+        'simPosition' => $simPosition,
+        'grid' => array_map(fn($e, $i) => ['position' => $i + 1, 'label' => $e['label'], 'isPlayer' => $e['isPlayer']], $entries, array_keys($entries)),
+    ];
+}

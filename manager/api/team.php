@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/../db.php';
 require __DIR__ . '/../driver_pool.php';
+require __DIR__ . '/../real_teams.php';
 
 $userId = f1hub_require_login();
 $pdo = f1hub_db();
@@ -22,27 +23,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $mode = (string)($_POST['mode'] ?? '');
-    $name = trim((string)($_POST['name'] ?? ''));
-    $colorHex = strtolower(preg_replace('/[^0-9a-f]/i', '', (string)($_POST['color_hex'] ?? '')));
-    $driverIdA = (int)($_POST['driver_id_a'] ?? 0);
-    $driverIdB = (int)($_POST['driver_id_b'] ?? 0);
+    $source = (string)($_POST['source'] ?? 'custom');
 
     if (!in_array($mode, ['season', 'career'], true)) {
         f1hub_json(['ok' => false, 'error' => 'Ongeldige modus.'], 422);
     }
-    if ($name === '' || strlen($name) > 60) {
-        f1hub_json(['ok' => false, 'error' => 'Teamnaam is verplicht (max 60 tekens).'], 422);
-    }
-    if (strlen($colorHex) !== 6) {
-        $colorHex = 'e10600';
-    }
-    if ($driverIdA === $driverIdB) {
-        f1hub_json(['ok' => false, 'error' => 'Kies twee verschillende coureurs.'], 422);
-    }
-    $driverA = f1hub_driver_from_pool($driverIdA);
-    $driverB = f1hub_driver_from_pool($driverIdB);
-    if (!$driverA || !$driverB) {
-        f1hub_json(['ok' => false, 'error' => 'Onbekende coureur gekozen.'], 422);
+
+    if ($source === 'real') {
+        $constructorId = (string)($_POST['constructor_id'] ?? '');
+        $year = (int)date('Y');
+        $realTeam = null;
+        foreach (f1hub_fetch_real_teams($year) as $t) {
+            if ($t['constructorId'] === $constructorId) { $realTeam = $t; break; }
+        }
+        if (!$realTeam) {
+            f1hub_json(['ok' => false, 'error' => 'Onbekend team.'], 422);
+        }
+        $name = $realTeam['name'];
+        $colorHex = $realTeam['colorHex'];
+        $carRating = $realTeam['carRating'];
+        [$driverA, $driverB] = $realTeam['drivers'];
+    } else {
+        $name = trim((string)($_POST['name'] ?? ''));
+        $colorHex = strtolower(preg_replace('/[^0-9a-f]/i', '', (string)($_POST['color_hex'] ?? '')));
+        $driverIdA = (int)($_POST['driver_id_a'] ?? 0);
+        $driverIdB = (int)($_POST['driver_id_b'] ?? 0);
+
+        if ($name === '' || strlen($name) > 60) {
+            f1hub_json(['ok' => false, 'error' => 'Teamnaam is verplicht (max 60 tekens).'], 422);
+        }
+        if (strlen($colorHex) !== 6) {
+            $colorHex = 'e10600';
+        }
+        if ($driverIdA === $driverIdB) {
+            f1hub_json(['ok' => false, 'error' => 'Kies twee verschillende coureurs.'], 422);
+        }
+        $driverA = f1hub_driver_from_pool($driverIdA);
+        $driverB = f1hub_driver_from_pool($driverIdB);
+        if (!$driverA || !$driverB) {
+            f1hub_json(['ok' => false, 'error' => 'Onbekende coureur gekozen.'], 422);
+        }
+        $carRating = mt_rand(60, 85);
     }
 
     $stmt = $pdo->prepare('SELECT id FROM teams WHERE user_id = ? AND mode = ?');
@@ -50,8 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($stmt->fetch()) {
         f1hub_json(['ok' => false, 'error' => 'Je hebt al een team in deze modus.'], 409);
     }
-
-    $carRating = mt_rand(60, 85);
 
     $pdo->beginTransaction();
     try {

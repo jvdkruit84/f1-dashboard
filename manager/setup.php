@@ -59,4 +59,17 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS race_results (
     CONSTRAINT fk_results_team FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-echo "Setup voltooid: users, teams, drivers, race_results zijn aangemaakt (of bestonden al).\n";
+$pdo->exec("CREATE TABLE IF NOT EXISTS replay_attempts (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNSIGNED NOT NULL,
+    race_key VARCHAR(40) NOT NULL,
+    race_name VARCHAR(120) NOT NULL,
+    constructor_name VARCHAR(60) NOT NULL,
+    strategy VARCHAR(30) NOT NULL,
+    real_position TINYINT UNSIGNED NOT NULL,
+    sim_position TINYINT UNSIGNED NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_replay_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+echo "Setup voltooid: users, teams, drivers, race_results, replay_attempts zijn aangemaakt (of bestonden al).\n";
