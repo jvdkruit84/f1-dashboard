@@ -52,6 +52,7 @@
   .nav-dropdown a { padding: 10px 16px; color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; border-left: 2px solid transparent; }
   .nav-dropdown a:hover { color: var(--ink-primary); background: rgba(255,255,255,0.05); }
   .nav-dropdown a.active { color: var(--ink-primary); border-left-color: var(--accent); background: rgba(225,6,0,0.08); }
+  .nav-dropdown a.mgr-auth-only { display: none; }
   .hero { position: relative; overflow: hidden; background: linear-gradient(135deg, #000 0%, #0f0f12 60%, #1a1a1e 100%); border-bottom: 1px solid var(--border); padding: 18px 24px 16px; margin-bottom: 20px; }
   .hero::before { content: ""; position: absolute; inset: 0; background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 40px); pointer-events: none; }
   .hero-inner { max-width: 1180px; margin: 0 auto; position: relative; }
@@ -127,10 +128,10 @@
       <div class="nav-group active">
         <button class="nav-group-trigger" type="button">Manager <span class="caret">▾</span></button>
         <div class="nav-dropdown">
-          <a href="manager.html">Mijn Team</a>
-          <a href="manager-race.html" class="active">Race</a>
-          <a href="manager-replay.html">Replay</a>
-          <a href="manager-transfers.html">Transfers</a>
+          <a href="manager.html" class="mgr-auth-only">Mijn Team</a>
+          <a href="manager-race.html" class="mgr-auth-only active">Race</a>
+          <a href="manager-replay.html" class="mgr-auth-only">Replay</a>
+          <a href="manager-transfers.html" class="mgr-auth-only">Transfers</a>
           <a href="manager-standings.html">Stand</a>
         </div>
       </div>
@@ -166,6 +167,9 @@
       document.querySelectorAll('.nav-group.open').forEach(function(g) { g.classList.remove('open'); });
     }
   });
+  fetch('manager/api/me.php').then(function(r) { return r.json(); }).then(function(me) {
+    if (me.loggedIn) document.querySelectorAll('.mgr-auth-only').forEach(function(el) { el.classList.remove('mgr-auth-only'); });
+  }).catch(function() {});
 </script>
 
 <div class="hero">

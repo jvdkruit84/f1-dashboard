@@ -79,6 +79,7 @@
   }
   .nav-dropdown a:hover { color: var(--ink-primary); background: rgba(255,255,255,0.05); }
   .nav-dropdown a.active { color: var(--ink-primary); border-left-color: var(--accent); background: rgba(225,6,0,0.08); }
+  .nav-dropdown a.mgr-auth-only { display: none; }
 
   .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
   .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
@@ -210,10 +211,10 @@
       <div class="nav-group">
         <button class="nav-group-trigger" type="button">Manager <span class="caret">▾</span></button>
         <div class="nav-dropdown">
-          <a href="manager.html">Mijn Team</a>
-          <a href="manager-race.html">Race</a>
-          <a href="manager-replay.html">Replay</a>
-          <a href="manager-transfers.html">Transfers</a>
+          <a href="manager.html" class="mgr-auth-only">Mijn Team</a>
+          <a href="manager-race.html" class="mgr-auth-only">Race</a>
+          <a href="manager-replay.html" class="mgr-auth-only">Replay</a>
+          <a href="manager-transfers.html" class="mgr-auth-only">Transfers</a>
           <a href="manager-standings.html">Stand</a>
         </div>
       </div>
@@ -249,6 +250,9 @@
       document.querySelectorAll('.nav-group.open').forEach(function(g) { g.classList.remove('open'); });
     }
   });
+  fetch('manager/api/me.php').then(function(r) { return r.json(); }).then(function(me) {
+    if (me.loggedIn) document.querySelectorAll('.mgr-auth-only').forEach(function(el) { el.classList.remove('mgr-auth-only'); });
+  }).catch(function() {});
 </script>
 
 <div class="breadcrumb"><a href="legends.html">← Legends</a></div>
