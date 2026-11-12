@@ -72,6 +72,16 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS replay_attempts (
     CONSTRAINT fk_replay_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+$pdo->exec("CREATE TABLE IF NOT EXISTS scouted_drivers (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    team_id INT UNSIGNED NOT NULL,
+    pool_driver_id TINYINT UNSIGNED NOT NULL,
+    asking_price INT UNSIGNED NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_team_driver (team_id, pool_driver_id),
+    CONSTRAINT fk_scouted_team FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
 // idempotente kolom-toevoeging (veilig op een DB met bestaande teams/spelers)
 function f1hub_add_column_if_missing($pdo, $table, $column, $definition) {
     $stmt = $pdo->prepare(
@@ -90,4 +100,4 @@ function f1hub_add_column_if_missing($pdo, $table, $column, $definition) {
 f1hub_add_column_if_missing($pdo, 'teams', 'budget', 'budget INT UNSIGNED NOT NULL DEFAULT 50 AFTER car_rating');
 f1hub_add_column_if_missing($pdo, 'teams', 'engine_level', 'engine_level TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER budget');
 
-echo "Setup voltooid: users, teams, drivers, race_results, replay_attempts zijn aangemaakt (of bestonden al).\n";
+echo "Setup voltooid: users, teams, drivers, race_results, replay_attempts, scouted_drivers zijn aangemaakt (of bestonden al).\n";

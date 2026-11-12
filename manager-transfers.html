@@ -83,6 +83,7 @@
   .pool-option .name { font-weight: 700; font-size: 13px; }
   .pool-option .sub { color: var(--ink-muted); font-size: 11px; margin: 2px 0 8px; }
   .pool-option .price { color: var(--accent); font-weight: 700; font-size: 13px; }
+  .pool-option .unknown { color: var(--ink-muted); font-size: 11px; margin: 2px 0 10px; }
   footer.site-footer { max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0; border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px; }
   .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
   .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
@@ -178,9 +179,9 @@
 
 <div class="hero">
   <div class="hero-inner">
-    <div class="eyebrow">Formule1Hub · Manager · v0.4</div>
+    <div class="eyebrow">Formule1Hub · Manager · v0.6</div>
     <h1>Transfermarkt</h1>
-    <div class="subtitle">Vervang een coureur door iemand uit de pool. Je verdient budget door races te rijden; een transfer kost de volle prijs van de nieuwkomer.</div>
+    <div class="subtitle">Scout een coureur om zijn kwaliteiten én vraagprijs te onthullen, en teken hem daarna. Je verdient budget door races te rijden.</div>
   </div>
 </div>
 
@@ -204,7 +205,6 @@
 const API = 'manager/api';
 let currentMode = 'season';
 let currentTeam = null;
-let driverPool = [];
 let releaseDriverId = null;
 let selectedPoolId = null;
 
@@ -244,7 +244,6 @@ async function loadTransferState() {
   try {
     const data = await apiGet(`transfer.php?mode=${currentMode}`);
     currentTeam = data.team;
-    driverPool = data.driverPool;
     renderTransferArea();
   } catch (e) {
     el.innerHTML = `<p style="color:var(--ink-secondary); font-size:13px;">${e.message}</p>`;
@@ -276,29 +275,63 @@ function renderTransferArea() {
   });
 }
 
-function renderPool() {
+async function renderPool() {
   selectedPoolId = null;
   const el = document.getElementById('poolArea');
   const releaseDriver = currentTeam.drivers.find(d => d.id === releaseDriverId);
+  el.innerHTML = `<h2 style="margin-top:18px;">Kies een vervanger voor ${releaseDriver.name}</h2><p style="color:var(--ink-secondary); font-size:13px;">Laden…</p>`;
+  try {
+    const data = await apiGet(`scout.php?mode=${currentMode}`);
+    renderPoolGrid(releaseDriver, data);
+  } catch (e) {
+    setStatus(e.message, true);
+  }
+}
+
+function renderPoolGrid(releaseDriver, scoutData) {
+  const el = document.getElementById('poolArea');
+  const budget = scoutData.budget;
   el.innerHTML = `
     <h2 style="margin-top:18px;">Kies een vervanger voor ${releaseDriver.name}</h2>
     <div class="pool-grid" id="poolGrid">
-      ${driverPool.map(p => `
-        <div class="pool-option" data-pool="${p.id}">
-          <div class="name">${p.name}</div>
-          <div class="sub">pace ${p.pace} · consistentie ${p.consistency}</div>
-          <div class="price">€${p.price}M</div>
-        </div>
-      `).join('')}
+      ${scoutData.pool.map(p => {
+        if (!p.scouted) {
+          const canScout = budget >= scoutData.scoutCost;
+          return `
+            <div class="pool-option">
+              <div class="name">${p.name}</div>
+              <div class="unknown">Onbekende coureur — scout hem eerst.</div>
+              <button data-scout="${p.id}" ${canScout ? '' : 'disabled'}>${canScout ? `Scout (€${scoutData.scoutCost}M)` : 'Onvoldoende budget'}</button>
+            </div>
+          `;
+        }
+        return `
+          <div class="pool-option" data-pool="${p.id}">
+            <div class="name">${p.name}</div>
+            <div class="sub">pace ${p.pace} · consistentie ${p.consistency}</div>
+            <div class="price">€${p.askingPrice}M</div>
+          </div>
+        `;
+      }).join('')}
     </div>
-    <button class="primary" id="confirmBtn" style="margin-top:14px;" disabled>Kies eerst een coureur</button>
+    <button class="primary" id="confirmBtn" style="margin-top:14px;" disabled>Kies eerst een gescoute coureur</button>
   `;
-  document.querySelectorAll('.pool-option').forEach(opt => {
+  document.querySelectorAll('[data-scout]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      try {
+        const result = await apiPost('scout.php', { mode: currentMode, pool_driver_id: btn.dataset.scout });
+        currentTeam.budget = result.budget;
+        setStatus(`${result.driver.name} gescout.`);
+        renderPool();
+      } catch (e) { setStatus(e.message, true); }
+    });
+  });
+  document.querySelectorAll('.pool-option[data-pool]').forEach(opt => {
     opt.addEventListener('click', () => {
-      document.querySelectorAll('.pool-option').forEach(o => o.classList.remove('selected'));
+      document.querySelectorAll('.pool-option[data-pool]').forEach(o => o.classList.remove('selected'));
       opt.classList.add('selected');
       selectedPoolId = Number(opt.dataset.pool);
-      const price = driverPool.find(p => p.id === selectedPoolId).price;
+      const price = scoutData.pool.find(p => p.id === selectedPoolId).askingPrice;
       const btn = document.getElementById('confirmBtn');
       btn.disabled = price > currentTeam.budget;
       btn.textContent = price > currentTeam.budget ? 'Onvoldoende budget' : `Bevestig transfer (€${price}M)`;

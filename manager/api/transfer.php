@@ -41,7 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($keepDriver && $keepDriver['name'] === $poolDriver['name']) {
         f1hub_json(['ok' => false, 'error' => 'Deze coureur zit al in je team.'], 422);
     }
-    if ((int)$team['budget'] < $poolDriver['price']) {
+
+    $stmt = $pdo->prepare('SELECT asking_price FROM scouted_drivers WHERE team_id = ? AND pool_driver_id = ?');
+    $stmt->execute([$team['id'], $poolDriverId]);
+    $askingPrice = $stmt->fetchColumn();
+    if ($askingPrice === false) {
+        f1hub_json(['ok' => false, 'error' => 'Scout deze coureur eerst.'], 422);
+    }
+    $askingPrice = (int)$askingPrice;
+    if ((int)$team['budget'] < $askingPrice) {
         f1hub_json(['ok' => false, 'error' => 'Onvoldoende budget voor deze transfer.'], 422);
     }
 
@@ -54,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$team['id'], $poolDriver['name'], $poolDriver['pace'], $poolDriver['consistency']]);
 
         $stmt = $pdo->prepare('UPDATE teams SET budget = budget - ? WHERE id = ?');
-        $stmt->execute([$poolDriver['price'], $team['id']]);
+        $stmt->execute([$askingPrice, $team['id']]);
 
         $pdo->commit();
     } catch (Exception $e) {
