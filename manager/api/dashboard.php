@@ -29,6 +29,7 @@ f1hub_json([
     'nextRace' => $next,
     'racesPlayed' => (int)$stats['races_played'],
     'totalPoints' => (int)$stats['total_points'],
-    'engineMaxLevel' => F1HUB_ENGINE_MAX_LEVEL,
-    'nextEngineCost' => f1hub_next_engine_cost((int)$team['engine_level']),
+    'partMaxLevel' => F1HUB_PART_MAX_LEVEL,
+    'nextEngineCost' => f1hub_next_part_cost((int)$team['engine_level']),
+    'nextAeroCost' => f1hub_next_part_cost((int)$team['aero_level']),
 ]);

@@ -38,7 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $effectiveCarRating = f1hub_effective_car_rating($team);
-    $result = f1hub_simulate_race($effectiveCarRating, $team['drivers'], $strategyKey);
+    $riskReduction = max(0, (int)$team['aero_level'] - 1);
+    $result = f1hub_simulate_race($effectiveCarRating, $team['drivers'], $strategyKey, $riskReduction);
 
     try {
         $stmt = $pdo->prepare('INSERT INTO race_results (team_id, mode, race_key, strategy, finish_position, points) VALUES (?, ?, ?, ?, ?, ?)');

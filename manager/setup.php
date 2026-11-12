@@ -99,5 +99,6 @@ function f1hub_add_column_if_missing($pdo, $table, $column, $definition) {
 
 f1hub_add_column_if_missing($pdo, 'teams', 'budget', 'budget INT UNSIGNED NOT NULL DEFAULT 50 AFTER car_rating');
 f1hub_add_column_if_missing($pdo, 'teams', 'engine_level', 'engine_level TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER budget');
+f1hub_add_column_if_missing($pdo, 'teams', 'aero_level', 'aero_level TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER engine_level');
 
 echo "Setup voltooid: users, teams, drivers, race_results, replay_attempts, scouted_drivers zijn aangemaakt (of bestonden al).\n";

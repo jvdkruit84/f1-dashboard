@@ -1,9 +1,9 @@
 <?php
 require_once __DIR__ . '/f1_calendar.php';
 
-/** Haalt een team (incl. budget/engine_level) + coureurs op voor de ingelogde gebruiker in een modus. */
+/** Haalt een team (incl. budget/engine_level/aero_level) + coureurs op voor de ingelogde gebruiker in een modus. */
 function f1hub_get_team_full($pdo, $userId, $mode) {
-    $stmt = $pdo->prepare('SELECT id, name, color_hex, car_rating, budget, engine_level FROM teams WHERE user_id = ? AND mode = ?');
+    $stmt = $pdo->prepare('SELECT id, name, color_hex, car_rating, budget, engine_level, aero_level FROM teams WHERE user_id = ? AND mode = ?');
     $stmt->execute([$userId, $mode]);
     $team = $stmt->fetch();
     if (!$team) return null;
@@ -42,10 +42,11 @@ function f1hub_effective_car_rating($team) {
 }
 
 // kosten om van niveau N naar N+1 te gaan; index 0 = 1->2, ... index 3 = 4->5. Max niveau 5.
-const F1HUB_ENGINE_UPGRADE_COSTS = [20, 30, 40, 50];
-const F1HUB_ENGINE_MAX_LEVEL = 5;
+// Gedeeld door alle opwaardeerbare auto-onderdelen (motor, aero, ...) — zelfde curve voor elk.
+const F1HUB_PART_UPGRADE_COSTS = [20, 30, 40, 50];
+const F1HUB_PART_MAX_LEVEL = 5;
 
-function f1hub_next_engine_cost($level) {
-    if ($level >= F1HUB_ENGINE_MAX_LEVEL) return null;
-    return F1HUB_ENGINE_UPGRADE_COSTS[$level - 1];
+function f1hub_next_part_cost($level) {
+    if ($level >= F1HUB_PART_MAX_LEVEL) return null;
+    return F1HUB_PART_UPGRADE_COSTS[$level - 1];
 }

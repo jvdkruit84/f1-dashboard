@@ -19,15 +19,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     f1hub_json([
         'ok' => true,
         'engineLevel' => (int)$team['engine_level'],
-        'maxLevel' => F1HUB_ENGINE_MAX_LEVEL,
+        'maxLevel' => F1HUB_PART_MAX_LEVEL,
         'budget' => (int)$team['budget'],
-        'nextCost' => f1hub_next_engine_cost((int)$team['engine_level']),
+        'nextCost' => f1hub_next_part_cost((int)$team['engine_level']),
     ]);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $level = (int)$team['engine_level'];
-    $cost = f1hub_next_engine_cost($level);
+    $cost = f1hub_next_part_cost($level);
     if ($cost === null) {
         f1hub_json(['ok' => false, 'error' => 'De motor zit al op het maximale niveau.'], 422);
     }
@@ -42,9 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     f1hub_json([
         'ok' => true,
         'engineLevel' => (int)$updated['engine_level'],
-        'maxLevel' => F1HUB_ENGINE_MAX_LEVEL,
+        'maxLevel' => F1HUB_PART_MAX_LEVEL,
         'budget' => (int)$updated['budget'],
-        'nextCost' => f1hub_next_engine_cost((int)$updated['engine_level']),
+        'nextCost' => f1hub_next_part_cost((int)$updated['engine_level']),
     ]);
 }
 

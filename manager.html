@@ -272,11 +272,11 @@
 
 <div class="hero">
   <div class="hero-inner">
-    <div class="eyebrow">Formule1Hub · Manager · v0.5</div>
+    <div class="eyebrow">Formule1Hub · Manager · v0.7</div>
     <h1>Mijn Team</h1>
     <div class="subtitle">
-      Kies een modus, stel je team samen, upgrade je motor en speel races. Seizoensmodus volgt de echte kalender (1 race per verreden GP-weekend); carrièremodus speel je in je eigen tempo.
-      <span class="note">Losse auto-onderdelen, scouting en een vrije strategie-editor volgen in latere maandelijkse updates.</span>
+      Kies een modus, stel je team samen, upgrade motor en aerodynamica en speel races. Seizoensmodus volgt de echte kalender (1 race per verreden GP-weekend); carrièremodus speel je in je eigen tempo.
+      <span class="note">Losse onderdelen, contractduur en een vrije strategie-editor volgen in latere maandelijkse updates.</span>
     </div>
   </div>
 </div>
@@ -397,14 +397,31 @@ async function renderTeamArea() {
   }
 }
 
+function renderPartCard(opts) {
+  const atMax = opts.nextCost === null;
+  const canAfford = !atMax && opts.nextCost <= opts.budget;
+  const segments = Array.from({ length: opts.maxLevel }, (_, i) =>
+    `<div class="engine-seg ${i < opts.level ? 'filled' : ''}"></div>`
+  ).join('');
+  return `
+    <div class="engine-card">
+      <div class="engine-header">
+        <div>
+          <div class="engine-title">${opts.title}</div>
+          <div class="engine-sub">Niveau ${opts.level} / ${opts.maxLevel} · ${opts.subtitle}</div>
+        </div>
+        <button id="${opts.btnId}" style="width:auto;" ${atMax || !canAfford ? 'disabled' : ''}>
+          ${atMax ? 'Max. niveau' : (canAfford ? `Upgrade (€${opts.nextCost}M)` : `Onvoldoende budget (€${opts.nextCost}M)`)}
+        </button>
+      </div>
+      <div class="engine-bar">${segments}</div>
+    </div>
+  `;
+}
+
 function renderDashboard(data) {
   const el = document.getElementById('teamArea');
   const team = data.team;
-  const atMax = data.nextEngineCost === null;
-  const canAfford = !atMax && data.nextEngineCost <= team.budget;
-  const engineSegments = Array.from({ length: data.engineMaxLevel }, (_, i) =>
-    `<div class="engine-seg ${i < team.engine_level ? 'filled' : ''}"></div>`
-  ).join('');
 
   el.innerHTML = `
     <div class="team-card">
@@ -422,18 +439,14 @@ function renderDashboard(data) {
       <div class="stat-tile"><div class="label">Totaalpunten</div><div class="value">${data.totalPoints}</div></div>
     </div>
 
-    <div class="engine-card">
-      <div class="engine-header">
-        <div>
-          <div class="engine-title">Motor</div>
-          <div class="engine-sub">Niveau ${team.engine_level} / ${data.engineMaxLevel} · prestatiebonus +${(team.engine_level - 1) * 4}</div>
-        </div>
-        <button id="engineUpgradeBtn" style="width:auto;" ${atMax || !canAfford ? 'disabled' : ''}>
-          ${atMax ? 'Max. niveau' : (canAfford ? `Upgrade (€${data.nextEngineCost}M)` : `Onvoldoende budget (€${data.nextEngineCost}M)`)}
-        </button>
-      </div>
-      <div class="engine-bar">${engineSegments}</div>
-    </div>
+    ${renderPartCard({
+      title: 'Motor', level: team.engine_level, maxLevel: data.partMaxLevel, nextCost: data.nextEngineCost,
+      budget: team.budget, subtitle: `prestatiebonus +${(team.engine_level - 1) * 4}`, btnId: 'engineUpgradeBtn',
+    })}
+    ${renderPartCard({
+      title: 'Aerodynamica', level: team.aero_level, maxLevel: data.partMaxLevel, nextCost: data.nextAeroCost,
+      budget: team.budget, subtitle: `risico −${team.aero_level - 1} bij elke strategie`, btnId: 'aeroUpgradeBtn',
+    })}
 
     ${data.nextRace ? `
       <div class="next-race-card">
@@ -449,14 +462,18 @@ function renderDashboard(data) {
     </div>
   `;
 
-  if (!atMax && canAfford) {
-    document.getElementById('engineUpgradeBtn').addEventListener('click', async () => {
-      try {
-        await apiPost('engine.php', { mode: currentMode });
-        renderTeamArea();
-      } catch (e) { setStatus(e.message, true); }
-    });
-  }
+  document.getElementById('engineUpgradeBtn').addEventListener('click', async () => {
+    try {
+      await apiPost('engine.php', { mode: currentMode });
+      renderTeamArea();
+    } catch (e) { setStatus(e.message, true); }
+  });
+  document.getElementById('aeroUpgradeBtn').addEventListener('click', async () => {
+    try {
+      await apiPost('aero.php', { mode: currentMode });
+      renderTeamArea();
+    } catch (e) { setStatus(e.message, true); }
+  });
 }
 
 function renderCustomTeamForm() {

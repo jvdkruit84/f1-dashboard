@@ -12,26 +12,29 @@ function f1hub_random_float($min, $max) {
     return $min + mt_rand() / mt_getrandmax() * ($max - $min);
 }
 
-function f1hub_team_score($carRating, $drivers, $strategyKey) {
+function f1hub_team_score($carRating, $drivers, $strategyKey, $riskReduction = 0) {
     $strategy = F1HUB_STRATEGIES[$strategyKey];
     $avgPace = array_sum(array_column($drivers, 'pace')) / count($drivers);
     $avgConsistency = array_sum(array_column($drivers, 'consistency')) / count($drivers);
-    $noise = f1hub_random_float(-$strategy['risk'], $strategy['risk']);
+    $risk = max(1, $strategy['risk'] - $riskReduction);
+    $noise = f1hub_random_float(-$risk, $risk);
     return $carRating * 0.5 + $avgPace * 0.35 + $avgConsistency * 0.15 + $strategy['bonus'] + $noise;
 }
 
 /**
  * Simuleert één race: speler + 19 AI-teams, retourneert de volledige uitslag
- * (gesorteerd op score) en de positie/punten van de speler.
+ * (gesorteerd op score) en de positie/punten van de speler. $riskReduction
+ * komt van de aero-upgrade (v0.7) en geldt alleen voor de speler — AI-teams
+ * hebben geen onderdelen om te upgraden.
  */
-function f1hub_simulate_race($playerCarRating, $playerDrivers, $playerStrategyKey) {
+function f1hub_simulate_race($playerCarRating, $playerDrivers, $playerStrategyKey, $riskReduction = 0) {
     $strategyKeys = array_keys(F1HUB_STRATEGIES);
     $entries = [];
 
     $entries[] = [
         'isPlayer' => true,
         'label' => 'Jouw team',
-        'score' => f1hub_team_score($playerCarRating, $playerDrivers, $playerStrategyKey),
+        'score' => f1hub_team_score($playerCarRating, $playerDrivers, $playerStrategyKey, $riskReduction),
     ];
 
     for ($i = 0; $i < 19; $i++) {
