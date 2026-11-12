@@ -73,16 +73,21 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS replay_attempts (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
 // idempotente kolom-toevoeging (veilig op een DB met bestaande teams/spelers)
-$stmt = $pdo->prepare(
-    "SELECT COUNT(*) FROM information_schema.COLUMNS
-     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'teams' AND COLUMN_NAME = 'budget'"
-);
-$stmt->execute();
-if ((int)$stmt->fetchColumn() === 0) {
-    $pdo->exec("ALTER TABLE teams ADD COLUMN budget INT UNSIGNED NOT NULL DEFAULT 50 AFTER car_rating");
-    echo "Kolom 'budget' toegevoegd aan teams (bestaande teams kregen budget 50).\n";
-} else {
-    echo "Kolom 'budget' bestond al.\n";
+function f1hub_add_column_if_missing($pdo, $table, $column, $definition) {
+    $stmt = $pdo->prepare(
+        "SELECT COUNT(*) FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?"
+    );
+    $stmt->execute([$table, $column]);
+    if ((int)$stmt->fetchColumn() === 0) {
+        $pdo->exec("ALTER TABLE {$table} ADD COLUMN {$definition}");
+        echo "Kolom '{$column}' toegevoegd aan {$table}.\n";
+    } else {
+        echo "Kolom '{$column}' bestond al.\n";
+    }
 }
+
+f1hub_add_column_if_missing($pdo, 'teams', 'budget', 'budget INT UNSIGNED NOT NULL DEFAULT 50 AFTER car_rating');
+f1hub_add_column_if_missing($pdo, 'teams', 'engine_level', 'engine_level TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER budget');
 
 echo "Setup voltooid: users, teams, drivers, race_results, replay_attempts zijn aangemaakt (of bestonden al).\n";

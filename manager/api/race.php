@@ -1,51 +1,17 @@
 <?php
 require __DIR__ . '/../db.php';
-require __DIR__ . '/../f1_calendar.php';
+require __DIR__ . '/../team_helpers.php';
 require __DIR__ . '/../simulate.php';
 
 $userId = f1hub_require_login();
 $pdo = f1hub_db();
-
-function f1hub_get_team($pdo, $userId, $mode) {
-    $stmt = $pdo->prepare('SELECT id, name, color_hex, car_rating, budget FROM teams WHERE user_id = ? AND mode = ?');
-    $stmt->execute([$userId, $mode]);
-    $team = $stmt->fetch();
-    if (!$team) return null;
-    $dstmt = $pdo->prepare('SELECT name, pace, consistency FROM drivers WHERE team_id = ?');
-    $dstmt->execute([$team['id']]);
-    $team['drivers'] = $dstmt->fetchAll();
-    return $team;
-}
-
-/** Bepaalt de eerstvolgende te spelen race voor dit team, of null als er (nu) geen is. */
-function f1hub_next_race($pdo, $team, $mode) {
-    $stmt = $pdo->prepare('SELECT race_key FROM race_results WHERE team_id = ?');
-    $stmt->execute([$team['id']]);
-    $played = array_column($stmt->fetchAll(), 'race_key');
-
-    if ($mode === 'career') {
-        $n = 1;
-        while (in_array('career-' . $n, $played, true)) $n++;
-        return ['raceKey' => 'career-' . $n, 'raceName' => 'Carrière-race ' . $n];
-    }
-
-    $year = (int)date('Y');
-    $calendar = f1hub_fetch_season_calendar($year);
-    $today = date('Y-m-d');
-    foreach ($calendar as $race) {
-        if ($race['date'] === null || $race['date'] > $today) continue; // nog niet verreden
-        if (in_array($race['raceKey'], $played, true)) continue; // al gespeeld
-        return ['raceKey' => $race['raceKey'], 'raceName' => $race['raceName']];
-    }
-    return null;
-}
 
 $mode = (string)($_GET['mode'] ?? $_POST['mode'] ?? '');
 if (!in_array($mode, ['season', 'career'], true)) {
     f1hub_json(['ok' => false, 'error' => 'Ongeldige modus.'], 422);
 }
 
-$team = f1hub_get_team($pdo, $userId, $mode);
+$team = f1hub_get_team_full($pdo, $userId, $mode);
 if (!$team) {
     f1hub_json(['ok' => false, 'error' => 'Maak eerst een team aan in deze modus.'], 404);
 }
@@ -71,7 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         f1hub_json(['ok' => false, 'error' => 'Geen race beschikbaar om te spelen (seizoensmodus wacht op het volgende GP-weekend).'], 409);
     }
 
-    $result = f1hub_simulate_race((int)$team['car_rating'], $team['drivers'], $strategyKey);
+    $effectiveCarRating = f1hub_effective_car_rating($team);
+    $result = f1hub_simulate_race($effectiveCarRating, $team['drivers'], $strategyKey);
 
     try {
         $stmt = $pdo->prepare('INSERT INTO race_results (team_id, mode, race_key, strategy, finish_position, points) VALUES (?, ?, ?, ?, ?, ?)');

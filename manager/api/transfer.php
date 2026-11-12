@@ -1,27 +1,17 @@
 <?php
 require __DIR__ . '/../db.php';
 require __DIR__ . '/../driver_pool.php';
+require __DIR__ . '/../team_helpers.php';
 
 $userId = f1hub_require_login();
 $pdo = f1hub_db();
-
-function f1hub_transfer_team($pdo, $userId, $mode) {
-    $stmt = $pdo->prepare('SELECT id, name, color_hex, car_rating, budget FROM teams WHERE user_id = ? AND mode = ?');
-    $stmt->execute([$userId, $mode]);
-    $team = $stmt->fetch();
-    if (!$team) return null;
-    $dstmt = $pdo->prepare('SELECT id, name, pace, consistency FROM drivers WHERE team_id = ?');
-    $dstmt->execute([$team['id']]);
-    $team['drivers'] = $dstmt->fetchAll();
-    return $team;
-}
 
 $mode = (string)($_GET['mode'] ?? $_POST['mode'] ?? '');
 if (!in_array($mode, ['season', 'career'], true)) {
     f1hub_json(['ok' => false, 'error' => 'Ongeldige modus.'], 422);
 }
 
-$team = f1hub_transfer_team($pdo, $userId, $mode);
+$team = f1hub_get_team_full($pdo, $userId, $mode);
 if (!$team) {
     f1hub_json(['ok' => false, 'error' => 'Maak eerst een team aan in deze modus.'], 404);
 }
@@ -72,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         f1hub_json(['ok' => false, 'error' => 'Transfer mislukt.'], 500);
     }
 
-    $updated = f1hub_transfer_team($pdo, $userId, $mode);
+    $updated = f1hub_get_team_full($pdo, $userId, $mode);
     f1hub_json(['ok' => true, 'team' => $updated]);
 }
 

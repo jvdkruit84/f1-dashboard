@@ -149,6 +149,22 @@
   .team-meta .sub { color: var(--ink-muted); font-size: 11px; }
   .driver-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-secondary); padding: 4px 0; }
 
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 10px; margin-bottom: 16px; }
+  .stat-tile { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .stat-tile .label { font-size: 11px; color: var(--ink-muted); }
+  .stat-tile .value { font-size: 18px; font-weight: 700; margin-top: 2px; }
+
+  .engine-card { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 16px; }
+  .engine-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+  .engine-title { font-weight: 700; font-size: 14px; }
+  .engine-sub { color: var(--ink-muted); font-size: 11px; margin-top: 2px; }
+  .engine-bar { display: flex; gap: 4px; }
+  .engine-seg { flex: 1; height: 10px; border-radius: 3px; background: var(--border); }
+  .engine-seg.filled { background: var(--accent); }
+
+  .next-race-card { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 16px; }
+  .next-race-card .label { font-size: 11px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .next-race-card .value { font-weight: 700; font-size: 15px; margin-top: 4px; }
 
   footer.site-footer {
     max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0;
@@ -256,11 +272,11 @@
 
 <div class="hero">
   <div class="hero-inner">
-    <div class="eyebrow">Formule1Hub · Manager · v0.3</div>
+    <div class="eyebrow">Formule1Hub · Manager · v0.5</div>
     <h1>Mijn Team</h1>
     <div class="subtitle">
-      Kies een modus, stel je team samen en speel races. Seizoensmodus volgt de echte kalender (1 race per verreden GP-weekend); carrièremodus speel je in je eigen tempo.
-      <span class="note">Autowikkeling, transfers en een vrije strategie-editor volgen in latere maandelijkse updates.</span>
+      Kies een modus, stel je team samen, upgrade je motor en speel races. Seizoensmodus volgt de echte kalender (1 race per verreden GP-weekend); carrièremodus speel je in je eigen tempo.
+      <span class="note">Losse auto-onderdelen, scouting en een vrije strategie-editor volgen in latere maandelijkse updates.</span>
     </div>
   </div>
 </div>
@@ -346,25 +362,17 @@ async function loadTeams() {
   renderTeamArea();
 }
 
-function renderTeamArea() {
+async function renderTeamArea() {
   const el = document.getElementById('teamArea');
   const team = teamsByMode[currentMode];
   if (team) {
-    el.innerHTML = `
-      <div class="team-card">
-        <div class="team-swatch" style="background:#${team.color_hex}"></div>
-        <div class="team-meta">
-          <div class="name">${team.name}</div>
-          <div class="sub">Auto-rating: ${team.car_rating} / 100 · Budget: €${team.budget}M</div>
-          ${team.drivers.map(d => `<div class="driver-row"><span>${d.name}</span><span>pace ${d.pace} · consistentie ${d.consistency}</span></div>`).join('')}
-        </div>
-      </div>
-      <div class="controls-grid">
-        <div><a href="manager-race.html"><button>Naar race-weekend</button></a></div>
-        <div><a href="manager-transfers.html"><button class="ghost">Transfermarkt</button></a></div>
-        <div><a href="manager-standings.html"><button class="ghost">Bekijk stand</button></a></div>
-      </div>
-    `;
+    el.innerHTML = '<p style="color:var(--ink-secondary); font-size:13px;">Laden…</p>';
+    try {
+      const data = await apiGet(`dashboard.php?mode=${currentMode}`);
+      renderDashboard(data);
+    } catch (e) {
+      setStatus(e.message, true);
+    }
     return;
   }
 
@@ -386,6 +394,68 @@ function renderTeamArea() {
     renderRealTeamPicker();
   } else {
     renderCustomTeamForm();
+  }
+}
+
+function renderDashboard(data) {
+  const el = document.getElementById('teamArea');
+  const team = data.team;
+  const atMax = data.nextEngineCost === null;
+  const canAfford = !atMax && data.nextEngineCost <= team.budget;
+  const engineSegments = Array.from({ length: data.engineMaxLevel }, (_, i) =>
+    `<div class="engine-seg ${i < team.engine_level ? 'filled' : ''}"></div>`
+  ).join('');
+
+  el.innerHTML = `
+    <div class="team-card">
+      <div class="team-swatch" style="background:#${team.color_hex}"></div>
+      <div class="team-meta">
+        <div class="name">${team.name}</div>
+        <div class="sub">Auto-rating: ${team.car_rating} / 100 · Budget: €${team.budget}M</div>
+        ${team.drivers.map(d => `<div class="driver-row"><span>${d.name}</span><span>pace ${d.pace} · consistentie ${d.consistency}</span></div>`).join('')}
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-tile"><div class="label">Budget</div><div class="value">€${team.budget}M</div></div>
+      <div class="stat-tile"><div class="label">Races gespeeld</div><div class="value">${data.racesPlayed}</div></div>
+      <div class="stat-tile"><div class="label">Totaalpunten</div><div class="value">${data.totalPoints}</div></div>
+    </div>
+
+    <div class="engine-card">
+      <div class="engine-header">
+        <div>
+          <div class="engine-title">Motor</div>
+          <div class="engine-sub">Niveau ${team.engine_level} / ${data.engineMaxLevel} · prestatiebonus +${(team.engine_level - 1) * 4}</div>
+        </div>
+        <button id="engineUpgradeBtn" style="width:auto;" ${atMax || !canAfford ? 'disabled' : ''}>
+          ${atMax ? 'Max. niveau' : (canAfford ? `Upgrade (€${data.nextEngineCost}M)` : `Onvoldoende budget (€${data.nextEngineCost}M)`)}
+        </button>
+      </div>
+      <div class="engine-bar">${engineSegments}</div>
+    </div>
+
+    ${data.nextRace ? `
+      <div class="next-race-card">
+        <div class="label">Eerstvolgende race</div>
+        <div class="value">${data.nextRace.raceName}</div>
+      </div>
+    ` : ''}
+
+    <div class="controls-grid">
+      <div><a href="manager-race.html"><button>Naar race-weekend</button></a></div>
+      <div><a href="manager-transfers.html"><button class="ghost">Transfermarkt</button></a></div>
+      <div><a href="manager-standings.html"><button class="ghost">Bekijk stand</button></a></div>
+    </div>
+  `;
+
+  if (!atMax && canAfford) {
+    document.getElementById('engineUpgradeBtn').addEventListener('click', async () => {
+      try {
+        await apiPost('engine.php', { mode: currentMode });
+        renderTeamArea();
+      } catch (e) { setStatus(e.message, true); }
+    });
   }
 }
 

@@ -1,9 +1,9 @@
 <?php
 // Vaste strategie-opties voor v0.1 (geen vrije pitstop-editor, dat komt in een latere minor-versie).
 const F1HUB_STRATEGIES = [
-    'onestop_safe'       => ['label' => 'One-stop (medium → hard)',  'bonus' => 0, 'risk' => 4],
-    'onestop_aggressive' => ['label' => 'One-stop (soft → hard)',    'bonus' => 3, 'risk' => 7],
-    'twostop'            => ['label' => 'Two-stop (soft → soft → hard)', 'bonus' => 1, 'risk' => 5],
+    'onestop_safe'       => ['label' => 'One-stop (medium → hard)',  'bonus' => 0, 'risk' => 4, 'tyres' => ['medium', 'hard']],
+    'onestop_aggressive' => ['label' => 'One-stop (soft → hard)',    'bonus' => 3, 'risk' => 7, 'tyres' => ['soft', 'hard']],
+    'twostop'            => ['label' => 'Two-stop (soft → soft → hard)', 'bonus' => 1, 'risk' => 5, 'tyres' => ['soft', 'soft', 'hard']],
 ];
 
 const F1HUB_POINTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];

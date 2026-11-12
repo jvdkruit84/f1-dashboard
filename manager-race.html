@@ -76,6 +76,11 @@
   .strategy-option.selected { border-color: var(--accent); }
   .strategy-option .label { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
   .strategy-option .meta { font-size: 11px; color: var(--ink-muted); }
+  .tyre-badges { display: flex; gap: 4px; margin: 6px 0; }
+  .tyre-badge { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: #000; }
+  .tyre-badge.soft { background: #e10600; color: #fff; }
+  .tyre-badge.medium { background: #ffd21f; }
+  .tyre-badge.hard { background: #f2f2f2; border: 1px solid var(--border); }
   .grid-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
   .grid-table td { padding: 5px 8px; border-bottom: 1px solid var(--grid); }
   .grid-table tr.player td { color: var(--accent); font-weight: 700; }
@@ -252,6 +257,7 @@ async function loadRaceState() {
         ${Object.entries(data.strategies).map(([key, s]) => `
           <div class="strategy-option" data-key="${key}">
             <div class="label">${s.label}</div>
+            <div class="tyre-badges">${s.tyres.map(t => `<span class="tyre-badge ${t}">${t[0].toUpperCase()}</span>`).join('')}</div>
             <div class="meta">bonus +${s.bonus} · risico ±${s.risk}</div>
           </div>
         `).join('')}
