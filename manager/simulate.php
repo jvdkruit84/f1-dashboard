@@ -8,12 +8,43 @@ const F1HUB_STRATEGIES = [
 
 const F1HUB_POINTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 
+// Vrije strategie-editor (v0.8, Race-weekend): de speler bouwt zelf een
+// bandenvolgorde van 2-3 stints i.p.v. te kiezen uit F1HUB_STRATEGIES hierboven
+// (die blijft bestaan, alleen nog gebruikt door Race Replay).
+const F1HUB_TYRE_COMPOUNDS = [
+    'soft'   => ['label' => 'Soft',   'bonus' => 3,   'risk' => 3],
+    'medium' => ['label' => 'Medium', 'bonus' => 1,   'risk' => 1.5],
+    'hard'   => ['label' => 'Hard',   'bonus' => 0,   'risk' => 0.5],
+];
+const F1HUB_MIN_STINTS = 2;
+const F1HUB_MAX_STINTS = 3;
+
+/** Bouwt een strategie-array (zelfde vorm als een F1HUB_STRATEGIES-item) uit een bandenvolgorde. */
+function f1hub_custom_strategy(array $compounds) {
+    $bonus = array_sum(array_map(fn($c) => F1HUB_TYRE_COMPOUNDS[$c]['bonus'], $compounds));
+    $risk = array_sum(array_map(fn($c) => F1HUB_TYRE_COMPOUNDS[$c]['risk'], $compounds))
+        + max(0, count($compounds) - 2); // elke pitstop boven de verplichte eerste kost extra tijd/risico
+    return [
+        'bonus' => $bonus,
+        'risk' => $risk,
+        'tyres' => $compounds,
+        'label' => implode(' → ', array_map(fn($c) => F1HUB_TYRE_COMPOUNDS[$c]['label'], $compounds)),
+    ];
+}
+
+function f1hub_random_compounds() {
+    $keys = array_keys(F1HUB_TYRE_COMPOUNDS);
+    $n = mt_rand(F1HUB_MIN_STINTS, F1HUB_MAX_STINTS);
+    $compounds = [];
+    for ($i = 0; $i < $n; $i++) $compounds[] = $keys[array_rand($keys)];
+    return $compounds;
+}
+
 function f1hub_random_float($min, $max) {
     return $min + mt_rand() / mt_getrandmax() * ($max - $min);
 }
 
-function f1hub_team_score($carRating, $drivers, $strategyKey, $riskReduction = 0) {
-    $strategy = F1HUB_STRATEGIES[$strategyKey];
+function f1hub_team_score($carRating, $drivers, $strategy, $riskReduction = 0) {
     $avgPace = array_sum(array_column($drivers, 'pace')) / count($drivers);
     $avgConsistency = array_sum(array_column($drivers, 'consistency')) / count($drivers);
     $risk = max(1, $strategy['risk'] - $riskReduction);
@@ -23,18 +54,19 @@ function f1hub_team_score($carRating, $drivers, $strategyKey, $riskReduction = 0
 
 /**
  * Simuleert één race: speler + 19 AI-teams, retourneert de volledige uitslag
- * (gesorteerd op score) en de positie/punten van de speler. $riskReduction
- * komt van de aero-upgrade (v0.7) en geldt alleen voor de speler — AI-teams
- * hebben geen onderdelen om te upgraden.
+ * (gesorteerd op score) en de positie/punten van de speler. $playerStrategy is
+ * een array (zie f1hub_custom_strategy()), geen preset-sleutel meer sinds de
+ * vrije strategie-editor (v0.8). $riskReduction komt van de aero-upgrade
+ * (v0.7) en geldt alleen voor de speler — AI-teams hebben geen onderdelen om
+ * te upgraden, maar bouwen wel dezelfde soort willekeurige bandenstrategie.
  */
-function f1hub_simulate_race($playerCarRating, $playerDrivers, $playerStrategyKey, $riskReduction = 0) {
-    $strategyKeys = array_keys(F1HUB_STRATEGIES);
+function f1hub_simulate_race($playerCarRating, $playerDrivers, $playerStrategy, $riskReduction = 0) {
     $entries = [];
 
     $entries[] = [
         'isPlayer' => true,
         'label' => 'Jouw team',
-        'score' => f1hub_team_score($playerCarRating, $playerDrivers, $playerStrategyKey, $riskReduction),
+        'score' => f1hub_team_score($playerCarRating, $playerDrivers, $playerStrategy, $riskReduction),
     ];
 
     for ($i = 0; $i < 19; $i++) {
@@ -43,7 +75,7 @@ function f1hub_simulate_race($playerCarRating, $playerDrivers, $playerStrategyKe
             ['pace' => mt_rand(50, 95), 'consistency' => mt_rand(50, 95)],
             ['pace' => mt_rand(50, 95), 'consistency' => mt_rand(50, 95)],
         ];
-        $aiStrategy = $strategyKeys[array_rand($strategyKeys)];
+        $aiStrategy = f1hub_custom_strategy(f1hub_random_compounds());
         $entries[] = [
             'isPlayer' => false,
             'label' => 'AI-team ' . ($i + 1),

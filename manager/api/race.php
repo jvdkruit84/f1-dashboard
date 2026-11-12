@@ -22,15 +22,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         'ok' => true,
         'team' => $team,
         'nextRace' => $next,
-        'strategies' => F1HUB_STRATEGIES,
+        'compounds' => F1HUB_TYRE_COMPOUNDS,
+        'minStints' => F1HUB_MIN_STINTS,
+        'maxStints' => F1HUB_MAX_STINTS,
     ]);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $strategyKey = (string)($_POST['strategy'] ?? '');
-    if (!array_key_exists($strategyKey, F1HUB_STRATEGIES)) {
-        f1hub_json(['ok' => false, 'error' => 'Ongeldige strategie.'], 422);
+    $compounds = array_filter(explode(',', (string)($_POST['compounds'] ?? '')));
+    $count = count($compounds);
+    if ($count < F1HUB_MIN_STINTS || $count > F1HUB_MAX_STINTS) {
+        f1hub_json(['ok' => false, 'error' => "Kies tussen de " . F1HUB_MIN_STINTS . " en " . F1HUB_MAX_STINTS . " bandenstints."], 422);
     }
+    foreach ($compounds as $c) {
+        if (!array_key_exists($c, F1HUB_TYRE_COMPOUNDS)) {
+            f1hub_json(['ok' => false, 'error' => 'Onbekende bandencompound.'], 422);
+        }
+    }
+    $strategy = f1hub_custom_strategy(array_values($compounds));
 
     $next = f1hub_next_race($pdo, $team, $mode);
     if (!$next) {
@@ -39,11 +48,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $effectiveCarRating = f1hub_effective_car_rating($team);
     $riskReduction = max(0, (int)$team['aero_level'] - 1);
-    $result = f1hub_simulate_race($effectiveCarRating, $team['drivers'], $strategyKey, $riskReduction);
+    $result = f1hub_simulate_race($effectiveCarRating, $team['drivers'], $strategy, $riskReduction);
+    $strategyLabel = implode('-', $strategy['tyres']);
 
     try {
         $stmt = $pdo->prepare('INSERT INTO race_results (team_id, mode, race_key, strategy, finish_position, points) VALUES (?, ?, ?, ?, ?, ?)');
-        $stmt->execute([$team['id'], $mode, $next['raceKey'], $strategyKey, $result['position'], $result['points']]);
+        $stmt->execute([$team['id'], $mode, $next['raceKey'], $strategyLabel, $result['position'], $result['points']]);
 
         $stmt = $pdo->prepare('UPDATE teams SET budget = budget + ? WHERE id = ?');
         $stmt->execute([$result['points'], $team['id']]);
