@@ -1,16 +1,8 @@
 <?php
-// Vaste strategie-opties voor v0.1 (geen vrije pitstop-editor, dat komt in een latere minor-versie).
-const F1HUB_STRATEGIES = [
-    'onestop_safe'       => ['label' => 'One-stop (medium → hard)',  'bonus' => 0, 'risk' => 4, 'tyres' => ['medium', 'hard']],
-    'onestop_aggressive' => ['label' => 'One-stop (soft → hard)',    'bonus' => 3, 'risk' => 7, 'tyres' => ['soft', 'hard']],
-    'twostop'            => ['label' => 'Two-stop (soft → soft → hard)', 'bonus' => 1, 'risk' => 5, 'tyres' => ['soft', 'soft', 'hard']],
-];
-
 const F1HUB_POINTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 
-// Vrije strategie-editor (v0.8, Race-weekend): de speler bouwt zelf een
-// bandenvolgorde van 2-3 stints i.p.v. te kiezen uit F1HUB_STRATEGIES hierboven
-// (die blijft bestaan, alleen nog gebruikt door Race Replay).
+// Vrije strategie-editor (v0.8 Race-weekend, v1.0 ook Race Replay): de speler
+// bouwt zelf een bandenvolgorde van 2-3 stints uit onderstaande compounds.
 const F1HUB_TYRE_COMPOUNDS = [
     'soft'   => ['label' => 'Soft',   'bonus' => 3,   'risk' => 3],
     'medium' => ['label' => 'Medium', 'bonus' => 1,   'risk' => 1.5],
@@ -19,7 +11,7 @@ const F1HUB_TYRE_COMPOUNDS = [
 const F1HUB_MIN_STINTS = 2;
 const F1HUB_MAX_STINTS = 3;
 
-/** Bouwt een strategie-array (zelfde vorm als een F1HUB_STRATEGIES-item) uit een bandenvolgorde. */
+/** Bouwt een strategie-array (bonus/risk/tyres/label) uit een bandenvolgorde. */
 function f1hub_custom_strategy(array $compounds) {
     $bonus = array_sum(array_map(fn($c) => F1HUB_TYRE_COMPOUNDS[$c]['bonus'], $compounds));
     $risk = array_sum(array_map(fn($c) => F1HUB_TYRE_COMPOUNDS[$c]['risk'], $compounds))
@@ -99,15 +91,16 @@ function f1hub_simulate_race($playerCarRating, $playerDrivers, $playerStrategy, 
 }
 
 /**
- * Race Replay (v0.2): herspeelt een al verreden race. $classification is de
- * echte einduitslag (per coureur, gesorteerd op positie). Alleen de
- * best-geklasseerde coureur van het gekozen team krijgt de strategiebonus/
- * -ruis bovenop zijn echte baseline-score; de rest van het veld staat vast
- * op het echte resultaat — zo kun je het echte resultaat proberen te
- * verslaan, zoals de "Race Moments" uit de echte F1 Manager-games.
+ * Race Replay (v0.2, vrije strategie-editor sinds v1.0): herspeelt een al
+ * verreden race. $classification is de echte einduitslag (per coureur,
+ * gesorteerd op positie). Alleen de best-geklasseerde coureur van het
+ * gekozen team krijgt de strategiebonus/-ruis bovenop zijn echte
+ * baseline-score; de rest van het veld staat vast op het echte resultaat —
+ * zo kun je het echte resultaat proberen te verslaan, zoals de
+ * "Race Moments" uit de echte F1 Manager-games. $strategy is een
+ * samengesteld array (zie f1hub_custom_strategy()), geen preset-sleutel meer.
  */
-function f1hub_simulate_replay($classification, $playerConstructorName, $strategyKey) {
-    $strategy = F1HUB_STRATEGIES[$strategyKey];
+function f1hub_simulate_replay($classification, $playerConstructorName, $strategy) {
     $total = count($classification);
 
     $entries = [];

@@ -70,14 +70,16 @@
   button:disabled { opacity: 0.5; cursor: not-allowed; }
   #status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; margin-top: 10px; }
   #status.error { color: var(--critical); }
-  .strategy-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 10px; margin: 14px 0; }
-  .strategy-option { border: 1px solid var(--border); border-radius: 6px; padding: 12px; cursor: pointer; background: var(--page); transition: border-color 0.12s, transform 0.12s; }
-  .strategy-option:hover { border-color: var(--accent); transform: translateY(-2px); }
-  .strategy-option.selected { border-color: var(--accent); }
   @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   #resultCard.revealed { animation: fadeInUp 0.4s ease both; }
-  .strategy-option .label { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
-  .strategy-option .meta { font-size: 11px; color: var(--ink-muted); }
+  .compound-picker { display: flex; gap: 8px; margin: 14px 0 10px; }
+  .compound-btn { flex: 1; padding: 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--page); cursor: pointer; font-weight: 700; font-size: 12px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.12s, border-color 0.12s; }
+  .compound-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .compound-btn:not(:disabled):hover { border-color: var(--accent); transform: translateY(-2px); }
+  .stint-sequence { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 8px 0; flex-wrap: wrap; }
+  .stint-sequence .placeholder { color: var(--ink-muted); font-size: 12px; }
+  .strategy-preview { font-size: 12px; color: var(--ink-secondary); margin: 6px 0 14px; }
+  .strategy-preview strong { color: var(--ink-primary); }
   .tyre-badges { display: flex; gap: 4px; margin: 6px 0; }
   .tyre-badge { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: #000; }
   .tyre-badge.soft { background: #e10600; color: #fff; }
@@ -230,8 +232,10 @@
 <script>
 const API = 'manager/api';
 let races = [];
-let selectedStrategy = null;
-let currentStrategies = {};
+let currentCompounds = {};
+let minStints = 2;
+let maxStints = 3;
+let stints = [];
 
 async function apiPost(path, params) {
   const res = await fetch(`${API}/${path}`, { method: 'POST', body: new URLSearchParams(params) });
@@ -303,7 +307,9 @@ async function loadTeams() {
   document.getElementById('resultCard').style.display = 'none';
   try {
     const data = await apiGet(`replay.php?year=${yearSelect.value}&round=${raceSelect.value}`);
-    currentStrategies = data.strategies;
+    currentCompounds = data.compounds;
+    minStints = data.minStints;
+    maxStints = data.maxStints;
     teamSelect.innerHTML = data.teams.map(t => `<option value="${t}">${t}</option>`).join('');
     renderStrategyPicker();
   } catch (e) {
@@ -312,35 +318,68 @@ async function loadTeams() {
 }
 
 function renderStrategyPicker() {
-  selectedStrategy = null;
+  stints = [];
   const el = document.getElementById('strategyArea');
   el.innerHTML = `
-    <div class="strategy-options" id="strategyOptions">
-      ${Object.entries(currentStrategies).map(([key, s]) => `
-        <div class="strategy-option" data-key="${key}">
-          <div class="label">${s.label}</div>
-          <div class="tyre-badges">${s.tyres.map(t => `<span class="tyre-badge ${t}">${t[0].toUpperCase()}</span>`).join('')}</div>
-          <div class="meta">bonus +${s.bonus} · risico ±${s.risk}</div>
-        </div>
+    <p style="color:var(--ink-secondary); font-size:12px;">Bouw je bandenstrategie (${minStints}-${maxStints} stints):</p>
+    <div class="compound-picker" id="compoundPicker">
+      ${Object.entries(currentCompounds).map(([key, c]) => `
+        <button type="button" class="compound-btn" data-add="${key}">
+          <span class="tyre-badge ${key}">${key[0].toUpperCase()}</span>${c.label}
+        </button>
       `).join('')}
     </div>
-    <button class="primary" id="replayBtn" disabled>Kies eerst een strategie</button>
+    <div class="stint-sequence" id="stintSequence"><span class="placeholder">Nog geen stints gekozen.</span></div>
+    <div class="strategy-preview" id="strategyPreview"></div>
+    <div class="controls-grid">
+      <div><button class="ghost" type="button" id="resetStintsBtn">Wis</button></div>
+      <div><button class="primary" id="replayBtn" disabled>Kies eerst een strategie</button></div>
+    </div>
   `;
-  document.querySelectorAll('.strategy-option').forEach(opt => {
-    opt.addEventListener('click', () => {
-      document.querySelectorAll('.strategy-option').forEach(o => o.classList.remove('selected'));
-      opt.classList.add('selected');
-      selectedStrategy = opt.dataset.key;
-      const btn = document.getElementById('replayBtn');
-      btn.disabled = false;
-      btn.textContent = 'Rij deze replay';
+  document.querySelectorAll('[data-add]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (stints.length >= maxStints) return;
+      stints.push(btn.dataset.add);
+      renderStints();
     });
   });
+  document.getElementById('resetStintsBtn').addEventListener('click', () => {
+    stints = [];
+    renderStints();
+  });
   document.getElementById('replayBtn').addEventListener('click', runReplay);
+  renderStints();
+}
+
+function computeStrategyPreview(compounds) {
+  const bonus = stints.reduce((sum, c) => sum + compounds[c].bonus, 0);
+  const risk = stints.reduce((sum, c) => sum + compounds[c].risk, 0) + Math.max(0, stints.length - 2);
+  return { bonus, risk };
+}
+
+function renderStints() {
+  const seqEl = document.getElementById('stintSequence');
+  seqEl.innerHTML = stints.length
+    ? stints.map(c => `<span class="tyre-badge ${c}">${c[0].toUpperCase()}</span>`).join('<span style="color:var(--ink-muted);">→</span>')
+    : '<span class="placeholder">Nog geen stints gekozen.</span>';
+
+  const valid = stints.length >= minStints && stints.length <= maxStints;
+  const previewEl = document.getElementById('strategyPreview');
+  if (valid) {
+    const { bonus, risk } = computeStrategyPreview(currentCompounds);
+    previewEl.innerHTML = `Bonus <strong>+${bonus}</strong> · risico <strong>±${risk}</strong>`;
+  } else {
+    previewEl.textContent = '';
+  }
+
+  document.querySelectorAll('[data-add]').forEach(btn => { btn.disabled = stints.length >= maxStints; });
+  const btn = document.getElementById('replayBtn');
+  btn.disabled = !valid;
+  btn.textContent = valid ? 'Rij deze replay' : `Kies minstens ${minStints} stints`;
 }
 
 async function runReplay() {
-  if (!selectedStrategy) return;
+  if (stints.length < minStints) return;
   const btn = document.getElementById('replayBtn');
   btn.disabled = true;
   setStatus('');
@@ -349,7 +388,7 @@ async function runReplay() {
       year: yearSelect.value,
       round: raceSelect.value,
       constructor_name: teamSelect.value,
-      strategy: selectedStrategy,
+      compounds: stints.join(','),
     });
     const delta = result.realPosition - result.simPosition;
     const deltaText = delta > 0 ? `<span class="delta-better">${delta} positie(s) beter</span>` : delta < 0 ? `<span class="delta-worse">${-delta} positie(s) slechter</span>` : 'gelijk aan het echte resultaat';

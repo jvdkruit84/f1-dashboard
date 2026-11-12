@@ -41,34 +41,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     foreach ($data['classification'] as $c) {
         if (!in_array($c['constructorName'], $teams, true)) $teams[] = $c['constructorName'];
     }
-    f1hub_json(['ok' => true, 'raceName' => $data['raceName'], 'teams' => $teams, 'strategies' => F1HUB_STRATEGIES]);
+    f1hub_json([
+        'ok' => true,
+        'raceName' => $data['raceName'],
+        'teams' => $teams,
+        'compounds' => F1HUB_TYRE_COMPOUNDS,
+        'minStints' => F1HUB_MIN_STINTS,
+        'maxStints' => F1HUB_MAX_STINTS,
+    ]);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $year = (int)($_POST['year'] ?? 0);
     $round = (int)($_POST['round'] ?? 0);
     $constructorName = (string)($_POST['constructor_name'] ?? '');
-    $strategyKey = (string)($_POST['strategy'] ?? '');
+    $compounds = array_filter(explode(',', (string)($_POST['compounds'] ?? '')));
+    $count = count($compounds);
 
     if (!$year || !$round || $constructorName === '') {
         f1hub_json(['ok' => false, 'error' => 'Ongeldige aanvraag.'], 422);
     }
-    if (!array_key_exists($strategyKey, F1HUB_STRATEGIES)) {
-        f1hub_json(['ok' => false, 'error' => 'Ongeldige strategie.'], 422);
+    if ($count < F1HUB_MIN_STINTS || $count > F1HUB_MAX_STINTS) {
+        f1hub_json(['ok' => false, 'error' => "Kies tussen de " . F1HUB_MIN_STINTS . " en " . F1HUB_MAX_STINTS . " bandenstints."], 422);
     }
+    foreach ($compounds as $c) {
+        if (!array_key_exists($c, F1HUB_TYRE_COMPOUNDS)) {
+            f1hub_json(['ok' => false, 'error' => 'Onbekende bandencompound.'], 422);
+        }
+    }
+    $strategy = f1hub_custom_strategy(array_values($compounds));
 
     $data = f1hub_fetch_race_classification($year, $round);
     if (!$data) {
         f1hub_json(['ok' => false, 'error' => 'Kon de uitslag van deze race niet ophalen.'], 404);
     }
 
-    $result = f1hub_simulate_replay($data['classification'], $constructorName, $strategyKey);
+    $result = f1hub_simulate_replay($data['classification'], $constructorName, $strategy);
     if (!$result) {
         f1hub_json(['ok' => false, 'error' => 'Dit team reed deze race niet mee.'], 422);
     }
 
+    $strategyLabel = implode('-', $strategy['tyres']);
     $stmt = $pdo->prepare('INSERT INTO replay_attempts (user_id, race_key, race_name, constructor_name, strategy, real_position, sim_position) VALUES (?, ?, ?, ?, ?, ?, ?)');
-    $stmt->execute([$userId, "{$year}-r{$round}", $data['raceName'], $constructorName, $strategyKey, $result['realPosition'], $result['simPosition']]);
+    $stmt->execute([$userId, "{$year}-r{$round}", $data['raceName'], $constructorName, $strategyLabel, $result['realPosition'], $result['simPosition']]);
 
     f1hub_json([
         'ok' => true,
