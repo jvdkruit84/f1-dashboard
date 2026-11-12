@@ -73,17 +73,33 @@
   .mode-tab.active { border-color: var(--accent); color: var(--accent); }
   .budget-tile { display: inline-block; background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; font-weight: 700; font-size: 15px; margin-bottom: 14px; }
   .budget-tile .label { font-size: 10px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; display: block; font-weight: 700; }
-  .driver-slot { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--page); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .driver-slot { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--page); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; animation: fadeInUp 0.3s ease both; transition: border-color 0.15s; }
+  .driver-slot:hover { border-color: var(--accent); }
+  .driver-slot .meta { display: flex; align-items: center; gap: 10px; }
   .driver-slot .meta .name { font-weight: 700; font-size: 14px; }
   .driver-slot .meta .sub { color: var(--ink-muted); font-size: 11px; }
   .driver-slot button { width: auto; padding: 8px 14px; }
   .pool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 10px; margin-top: 14px; }
-  .pool-option { border: 1px solid var(--border); border-radius: 6px; padding: 12px; background: var(--page); }
+  .pool-option { border: 1px solid var(--border); border-radius: 6px; padding: 12px; background: var(--page); animation: fadeInUp 0.3s ease both; transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s; }
+  .pool-option[data-pool] { cursor: pointer; }
+  .pool-option[data-pool]:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.3); }
   .pool-option.selected { border-color: var(--accent); }
+  .pool-option .head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
   .pool-option .name { font-weight: 700; font-size: 13px; }
   .pool-option .sub { color: var(--ink-muted); font-size: 11px; margin: 2px 0 8px; }
   .pool-option .price { color: var(--accent); font-weight: 700; font-size: 13px; }
   .pool-option .unknown { color: var(--ink-muted); font-size: 11px; margin: 2px 0 10px; }
+  .driver-avatar {
+    width: 32px; height: 32px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 12px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    border: 2px solid rgba(255,255,255,0.15);
+  }
+  .pool-option.mystery { position: relative; overflow: hidden; }
+  .pool-option.mystery .driver-avatar.silhouette { background: linear-gradient(135deg, #5a5a5f, #2a2a2e); color: var(--ink-muted); }
+  .pool-option.mystery .name.blurred { filter: blur(3px); user-select: none; }
+  .pool-option.mystery .unknown { display: flex; align-items: center; gap: 5px; }
+  .mystery-lock { position: absolute; top: 10px; right: 10px; width: 16px; height: 16px; color: var(--ink-muted); }
   footer.site-footer { max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0; border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px; }
   .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
   .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
@@ -208,6 +224,23 @@ let currentTeam = null;
 let releaseDriverId = null;
 let selectedPoolId = null;
 
+function driverInitials(name) {
+  const parts = (name || '').trim().split(/\s+/);
+  const first = parts[0] ? parts[0][0] : '';
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
+  return (first + last).toUpperCase() || '?';
+}
+function driverNameColor(name) {
+  let hash = 0;
+  for (let i = 0; i < (name || '').length; i++) hash = (hash * 31 + name.charCodeAt(i)) & 0xffffffff;
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 60%, 42%)`;
+}
+function driverAvatar(name, teamColorHex) {
+  const bg = teamColorHex ? `#${teamColorHex}` : driverNameColor(name);
+  return `<div class="driver-avatar" style="background:${bg}">${driverInitials(name)}</div>`;
+}
+
 async function apiPost(path, params) {
   const res = await fetch(`${API}/${path}`, { method: 'POST', body: new URLSearchParams(params) });
   const data = await res.json();
@@ -258,8 +291,11 @@ function renderTransferArea() {
       ${currentTeam.drivers.map(d => `
         <div class="driver-slot">
           <div class="meta">
-            <div class="name">${d.name}</div>
-            <div class="sub">pace ${d.pace} · consistentie ${d.consistency}</div>
+            ${driverAvatar(d.name, currentTeam.color_hex)}
+            <div>
+              <div class="name">${d.name}</div>
+              <div class="sub">pace ${d.pace} · consistentie ${d.consistency}</div>
+            </div>
           </div>
           <button data-release="${d.id}">Vervangen</button>
         </div>
@@ -298,8 +334,11 @@ function renderPoolGrid(releaseDriver, scoutData) {
         if (!p.scouted) {
           const canScout = budget >= scoutData.scoutCost;
           return `
-            <div class="pool-option">
-              <div class="name">${p.name}</div>
+            <div class="pool-option mystery">
+              <div class="mystery-lock" title="Nog niet gescout">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+              </div>
+              <div class="head"><div class="driver-avatar silhouette">?</div><div class="name blurred">${p.name}</div></div>
               <div class="unknown">Onbekende coureur — scout hem eerst.</div>
               <button data-scout="${p.id}" ${canScout ? '' : 'disabled'}>${canScout ? `Scout (€${scoutData.scoutCost}M)` : 'Onvoldoende budget'}</button>
             </div>
@@ -307,7 +346,7 @@ function renderPoolGrid(releaseDriver, scoutData) {
         }
         return `
           <div class="pool-option" data-pool="${p.id}">
-            <div class="name">${p.name}</div>
+            <div class="head">${driverAvatar(p.name)}<div class="name">${p.name}</div></div>
             <div class="sub">pace ${p.pace} · consistentie ${p.consistency}</div>
             <div class="price">€${p.askingPrice}M</div>
           </div>

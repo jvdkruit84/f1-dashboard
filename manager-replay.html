@@ -71,8 +71,11 @@
   #status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; margin-top: 10px; }
   #status.error { color: var(--critical); }
   .strategy-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 10px; margin: 14px 0; }
-  .strategy-option { border: 1px solid var(--border); border-radius: 6px; padding: 12px; cursor: pointer; background: var(--page); }
+  .strategy-option { border: 1px solid var(--border); border-radius: 6px; padding: 12px; cursor: pointer; background: var(--page); transition: border-color 0.12s, transform 0.12s; }
+  .strategy-option:hover { border-color: var(--accent); transform: translateY(-2px); }
   .strategy-option.selected { border-color: var(--accent); }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  #resultCard.revealed { animation: fadeInUp 0.4s ease both; }
   .strategy-option .label { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
   .strategy-option .meta { font-size: 11px; color: var(--ink-muted); }
   .tyre-badges { display: flex; gap: 4px; margin: 6px 0; }
@@ -83,6 +86,14 @@
   .grid-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
   .grid-table td { padding: 5px 8px; border-bottom: 1px solid var(--grid); }
   .grid-table tr.player td { color: var(--accent); font-weight: 700; }
+  .grid-table tr.podium td { font-weight: 700; }
+  .grid-table tr.pos-1 { background: rgba(255,215,0,0.07); }
+  .grid-table tr.pos-2 { background: rgba(200,200,200,0.06); }
+  .grid-table tr.pos-3 { background: rgba(205,127,50,0.06); }
+  .pos-badge { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; font-weight: 900; font-size: 11px; }
+  .pos-badge.gold { background: linear-gradient(135deg, #ffe066, #b8860b); color: #1a1200; }
+  .pos-badge.silver { background: linear-gradient(135deg, #f1f1f1, #9a9a9a); color: #1a1a1a; }
+  .pos-badge.bronze { background: linear-gradient(135deg, #e0a06a, #8b4513); color: #fff; }
   table.history { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.history th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-muted); padding: 8px; border-bottom: 1px solid var(--border); }
   table.history td { padding: 8px; border-bottom: 1px solid var(--grid); }
@@ -240,6 +251,16 @@ function setStatus(msg, isError) {
   el.classList.toggle('error', !!isError);
 }
 
+function positionCell(pos) {
+  if (pos === 1) return '<span class="pos-badge gold">1</span>';
+  if (pos === 2) return '<span class="pos-badge silver">2</span>';
+  if (pos === 3) return '<span class="pos-badge bronze">3</span>';
+  return `P${pos}`;
+}
+function podiumRowClass(pos) {
+  return pos <= 3 ? `podium pos-${pos}` : '';
+}
+
 const yearSelect = document.getElementById('yearSelect');
 const raceSelect = document.getElementById('raceSelect');
 const teamSelect = document.getElementById('teamSelect');
@@ -336,10 +357,13 @@ async function runReplay() {
     document.getElementById('resultBody').innerHTML = `
       <p style="font-size:16px; margin-bottom:8px;"><strong>P${result.simPosition}</strong> — echt resultaat was P${result.realPosition} (${deltaText})</p>
       <table class="grid-table">
-        ${result.grid.map(g => `<tr class="${g.isPlayer ? 'player' : ''}"><td>P${g.position}</td><td>${g.label}</td></tr>`).join('')}
+        ${result.grid.map(g => `<tr class="${g.isPlayer ? 'player' : ''} ${podiumRowClass(g.position)}"><td>${positionCell(g.position)}</td><td>${g.label}</td></tr>`).join('')}
       </table>
     `;
-    document.getElementById('resultCard').style.display = 'block';
+    const resultCard = document.getElementById('resultCard');
+    resultCard.style.display = 'block';
+    resultCard.classList.remove('revealed');
+    requestAnimationFrame(() => resultCard.classList.add('revealed'));
     await loadHistory();
   } catch (e) {
     setStatus(e.message, true);

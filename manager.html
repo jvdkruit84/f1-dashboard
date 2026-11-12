@@ -142,36 +142,50 @@
   }
   .mode-tab.active { border-color: var(--accent); color: var(--accent); }
 
-  .team-card { display: flex; align-items: center; gap: 14px; padding: 12px; background: var(--page); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 14px; }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes segPulse { 0%, 100% { box-shadow: 0 0 0 rgba(225,6,0,0); } 50% { box-shadow: 0 0 9px rgba(225,6,0,0.75); } }
+
+  .team-card { display: flex; align-items: center; gap: 14px; padding: 12px; background: var(--page); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 14px; animation: fadeInUp 0.35s ease both; transition: border-color 0.15s; }
+  .team-card:hover { border-color: var(--accent); }
   .team-meta { flex: 1; min-width: 0; }
   .team-swatch { width: 36px; height: 36px; border-radius: 50%; flex: none; border: 2px solid rgba(255,255,255,0.2); }
   .team-meta .name { font-weight: 700; font-size: 15px; }
   .team-meta .sub { color: var(--ink-muted); font-size: 11px; }
-  .driver-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-secondary); padding: 4px 0; }
+  .driver-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink-secondary); padding: 4px 0; gap: 10px; }
+  .driver-row-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .driver-avatar {
+    width: 26px; height: 26px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 10px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    border: 2px solid rgba(255,255,255,0.15);
+  }
+  .driver-row-left .driver-name { color: var(--ink-primary); font-weight: 600; }
 
   .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 10px; margin-bottom: 16px; }
-  .stat-tile { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .stat-tile { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; animation: fadeInUp 0.35s ease both; transition: transform 0.15s, border-color 0.15s; }
+  .stat-tile:hover { transform: translateY(-2px); border-color: var(--accent); }
   .stat-tile .label { font-size: 11px; color: var(--ink-muted); }
   .stat-tile .value { font-size: 18px; font-weight: 700; margin-top: 2px; }
 
-  .engine-card { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 16px; }
+  .engine-card { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 16px; animation: fadeInUp 0.35s ease both; }
   .engine-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
   .engine-title { font-weight: 700; font-size: 14px; }
   .engine-sub { color: var(--ink-muted); font-size: 11px; margin-top: 2px; }
   .engine-bar { display: flex; gap: 4px; }
-  .engine-seg { flex: 1; height: 10px; border-radius: 3px; background: var(--border); }
+  .engine-seg { flex: 1; height: 10px; border-radius: 3px; background: var(--border); transition: background 0.2s; }
   .engine-seg.filled { background: var(--accent); }
+  .engine-seg.filled.current { animation: segPulse 2.2s ease-in-out infinite; }
 
-  .next-race-card { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 16px; }
+  .next-race-card { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 16px; animation: fadeInUp 0.35s ease both; }
   .next-race-card .label { font-size: 11px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; }
   .next-race-card .value { font-weight: 700; font-size: 15px; margin-top: 4px; }
 
   .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 12px; }
   .feature-card {
     display: flex; flex-direction: column; background: var(--page); border: 1px solid var(--border);
-    border-radius: 8px; padding: 14px; text-decoration: none; color: inherit; transition: border-color 0.15s;
+    border-radius: 8px; padding: 14px; text-decoration: none; color: inherit; transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    animation: fadeInUp 0.35s ease both;
   }
-  .feature-card:hover { border-color: var(--accent); }
+  .feature-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.35); }
   .feature-card .icon { font-size: 20px; margin-bottom: 8px; }
   .feature-card .title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
   .feature-card .desc { color: var(--ink-muted); font-size: 11px; line-height: 1.4; flex: 1; }
@@ -326,6 +340,26 @@ function setStatus(msg, isError) {
   el.classList.toggle('error', !!isError);
 }
 
+function driverInitials(name) {
+  const parts = (name || '').trim().split(/\s+/);
+  const first = parts[0] ? parts[0][0] : '';
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
+  return (first + last).toUpperCase() || '?';
+}
+function driverNameColor(name) {
+  let hash = 0;
+  for (let i = 0; i < (name || '').length; i++) hash = (hash * 31 + name.charCodeAt(i)) & 0xffffffff;
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 60%, 42%)`;
+}
+function driverAvatar(name, teamColorHex) {
+  const bg = teamColorHex ? `#${teamColorHex}` : driverNameColor(name);
+  return `<div class="driver-avatar" style="background:${bg}">${driverInitials(name)}</div>`;
+}
+function driverRow(d, teamColorHex) {
+  return `<div class="driver-row"><div class="driver-row-left">${driverAvatar(d.name, teamColorHex)}<span class="driver-name">${d.name}</span></div><span>pace ${d.pace} · consistentie ${d.consistency}</span></div>`;
+}
+
 async function apiPost(path, params) {
   const res = await fetch(`${API}/${path}`, { method: 'POST', body: new URLSearchParams(params) });
   const data = await res.json();
@@ -411,7 +445,7 @@ function renderPartCard(opts) {
   const atMax = opts.nextCost === null;
   const canAfford = !atMax && opts.nextCost <= opts.budget;
   const segments = Array.from({ length: opts.maxLevel }, (_, i) =>
-    `<div class="engine-seg ${i < opts.level ? 'filled' : ''}"></div>`
+    `<div class="engine-seg ${i < opts.level ? 'filled' : ''} ${i === opts.level - 1 ? 'current' : ''}"></div>`
   ).join('');
   return `
     <div class="engine-card">
@@ -439,7 +473,7 @@ function renderDashboard(data) {
       <div class="team-meta">
         <div class="name">${team.name}</div>
         <div class="sub">Auto-rating: ${team.car_rating} / 100 · Budget: €${team.budget}M</div>
-        ${team.drivers.map(d => `<div class="driver-row"><span>${d.name}</span><span>pace ${d.pace} · consistentie ${d.consistency}</span></div>`).join('')}
+        ${team.drivers.map(d => driverRow(d, team.color_hex)).join('')}
       </div>
     </div>
 
@@ -555,7 +589,7 @@ async function renderRealTeamPicker() {
           <div class="team-meta">
             <div class="name">${t.name}</div>
             <div class="sub">Indicatieve auto-rating (op basis van de actuele WK-stand): ${t.carRating} / 100</div>
-            ${t.drivers.map(d => `<div class="driver-row"><span>${d.name}</span><span>pace ${d.pace} · consistentie ${d.consistency}</span></div>`).join('')}
+            ${t.drivers.map(d => driverRow(d, t.colorHex)).join('')}
           </div>
         </div>
       `;

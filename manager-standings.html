@@ -69,6 +69,17 @@
   table.history { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.history th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-muted); padding: 8px; border-bottom: 1px solid var(--border); }
   table.history td { padding: 8px; border-bottom: 1px solid var(--grid); }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  table.history tbody tr { animation: fadeInUp 0.3s ease both; transition: background 0.15s; }
+  table.history tbody tr:hover { background: rgba(255,255,255,0.03); }
+  table.history tr.podium td { font-weight: 700; }
+  table.history tr.pos-1 { background: rgba(255,215,0,0.07); }
+  table.history tr.pos-2 { background: rgba(200,200,200,0.06); }
+  table.history tr.pos-3 { background: rgba(205,127,50,0.06); }
+  .pos-badge { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; font-weight: 900; font-size: 11px; }
+  .pos-badge.gold { background: linear-gradient(135deg, #ffe066, #b8860b); color: #1a1200; }
+  .pos-badge.silver { background: linear-gradient(135deg, #f1f1f1, #9a9a9a); color: #1a1a1a; }
+  .pos-badge.bronze { background: linear-gradient(135deg, #e0a06a, #8b4513); color: #fff; }
   footer.site-footer { max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0; border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px; }
   .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
   .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
@@ -187,6 +198,16 @@
 const API = 'manager/api';
 let currentMode = 'season';
 
+function positionCell(pos) {
+  if (pos === 1) return '<span class="pos-badge gold">1</span>';
+  if (pos === 2) return '<span class="pos-badge silver">2</span>';
+  if (pos === 3) return '<span class="pos-badge bronze">3</span>';
+  return `${pos}`;
+}
+function podiumRowClass(pos) {
+  return pos <= 3 ? `podium pos-${pos}` : '';
+}
+
 async function apiGet(path) {
   const res = await fetch(`${API}/${path}`);
   const data = await res.json();
@@ -223,8 +244,8 @@ async function loadStandings() {
         <thead><tr><th>#</th><th>Team</th><th>Speler</th><th>Races</th><th>Punten</th></tr></thead>
         <tbody>
           ${data.leaderboard.map((t, i) => `
-            <tr style="${t.username === myUsername ? 'color:var(--accent); font-weight:700;' : ''}">
-              <td>${i + 1}</td>
+            <tr class="${podiumRowClass(i + 1)}" style="${t.username === myUsername ? 'color:var(--accent); font-weight:700;' : ''}">
+              <td>${positionCell(i + 1)}</td>
               <td><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#${t.colorHex}; margin-right:6px;"></span>${t.teamName}</td>
               <td>${t.username}</td>
               <td>${t.racesPlayed}</td>
