@@ -7,7 +7,7 @@ $userId = f1hub_require_login();
 $pdo = f1hub_db();
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $stmt = $pdo->prepare('SELECT id, mode, name, color_hex, car_rating FROM teams WHERE user_id = ?');
+    $stmt = $pdo->prepare('SELECT id, mode, name, color_hex, car_rating, budget FROM teams WHERE user_id = ?');
     $stmt->execute([$userId]);
     $teams = $stmt->fetchAll();
 

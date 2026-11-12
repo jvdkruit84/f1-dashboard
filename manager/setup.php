@@ -72,4 +72,17 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS replay_attempts (
     CONSTRAINT fk_replay_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+// idempotente kolom-toevoeging (veilig op een DB met bestaande teams/spelers)
+$stmt = $pdo->prepare(
+    "SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'teams' AND COLUMN_NAME = 'budget'"
+);
+$stmt->execute();
+if ((int)$stmt->fetchColumn() === 0) {
+    $pdo->exec("ALTER TABLE teams ADD COLUMN budget INT UNSIGNED NOT NULL DEFAULT 50 AFTER car_rating");
+    echo "Kolom 'budget' toegevoegd aan teams (bestaande teams kregen budget 50).\n";
+} else {
+    echo "Kolom 'budget' bestond al.\n";
+}
+
 echo "Setup voltooid: users, teams, drivers, race_results, replay_attempts zijn aangemaakt (of bestonden al).\n";

@@ -7,7 +7,7 @@ $userId = f1hub_require_login();
 $pdo = f1hub_db();
 
 function f1hub_get_team($pdo, $userId, $mode) {
-    $stmt = $pdo->prepare('SELECT id, name, color_hex, car_rating FROM teams WHERE user_id = ? AND mode = ?');
+    $stmt = $pdo->prepare('SELECT id, name, color_hex, car_rating, budget FROM teams WHERE user_id = ? AND mode = ?');
     $stmt->execute([$userId, $mode]);
     $team = $stmt->fetch();
     if (!$team) return null;
@@ -76,6 +76,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $stmt = $pdo->prepare('INSERT INTO race_results (team_id, mode, race_key, strategy, finish_position, points) VALUES (?, ?, ?, ?, ?, ?)');
         $stmt->execute([$team['id'], $mode, $next['raceKey'], $strategyKey, $result['position'], $result['points']]);
+
+        $stmt = $pdo->prepare('UPDATE teams SET budget = budget + ? WHERE id = ?');
+        $stmt->execute([$result['points'], $team['id']]);
     } catch (PDOException $e) {
         if ($e->getCode() === '23000') {
             f1hub_json(['ok' => false, 'error' => 'Deze race is al gespeeld.'], 409);
@@ -88,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'raceName' => $next['raceName'],
         'position' => $result['position'],
         'points' => $result['points'],
+        'budget' => (int)$team['budget'] + $result['points'],
         'grid' => $result['grid'],
     ]);
 }
