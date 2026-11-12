@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             f1hub_json(['ok' => false, 'error' => 'Onbekende bandencompound.'], 422);
         }
     }
-    $strategy = f1hub_custom_strategy(array_values($compounds));
+    $strategy = f1hub_custom_strategy(array_values($compounds), f1hub_stop_penalty_reduction($team['hq_pitcrew_level']));
 
     $next = f1hub_next_race($pdo, $team, $mode);
     if (!$next) {

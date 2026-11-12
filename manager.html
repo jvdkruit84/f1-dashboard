@@ -254,6 +254,7 @@
           <a href="manager-race.html" class="mgr-auth-only">Race</a>
           <a href="manager-replay.html" class="mgr-auth-only">Replay</a>
           <a href="manager-transfers.html" class="mgr-auth-only">Transfers</a>
+          <a href="manager-hq.html" class="mgr-auth-only">HQ</a>
           <a href="manager-standings.html">Stand</a>
         </div>
       </div>
@@ -481,6 +482,7 @@ function renderDashboard(data) {
       <div class="stat-tile"><div class="label">Budget</div><div class="value">€${team.budget}M</div></div>
       <div class="stat-tile"><div class="label">Races gespeeld</div><div class="value">${data.racesPlayed}</div></div>
       <div class="stat-tile"><div class="label">Totaalpunten</div><div class="value">${data.totalPoints}</div></div>
+      <div class="stat-tile"><div class="label">HQ-niveau</div><div class="value">${data.hqTotalLevel} / 20</div></div>
     </div>
 
     ${renderPartCard({
@@ -515,6 +517,11 @@ function renderDashboard(data) {
         <div class="icon">💰</div>
         <div class="title">Transfermarkt</div>
         <div class="desc">Scout coureurs om hun kwaliteiten en vraagprijs te onthullen, en teken ze.</div>
+      </a>
+      <a class="feature-card" href="manager-hq.html">
+        <div class="icon">🏢</div>
+        <div class="title">Hoofdkwartier</div>
+        <div class="desc">Investeer in windtunnel, CFD-simulator, racesimulator en pitcrew-faciliteiten, en train je coureurs.</div>
       </a>
       <a class="feature-card" href="manager-standings.html">
         <div class="icon">🏆</div>

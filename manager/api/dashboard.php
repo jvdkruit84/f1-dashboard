@@ -30,6 +30,7 @@ f1hub_json([
     'racesPlayed' => (int)$stats['races_played'],
     'totalPoints' => (int)$stats['total_points'],
     'partMaxLevel' => F1HUB_PART_MAX_LEVEL,
-    'nextEngineCost' => f1hub_next_part_cost((int)$team['engine_level']),
-    'nextAeroCost' => f1hub_next_part_cost((int)$team['aero_level']),
+    'nextEngineCost' => f1hub_discounted_part_cost((int)$team['engine_level'], f1hub_part_discount_percent((int)$team['hq_cfd_level'])),
+    'nextAeroCost' => f1hub_discounted_part_cost((int)$team['aero_level'], f1hub_part_discount_percent((int)$team['hq_windtunnel_level'])),
+    'hqTotalLevel' => (int)$team['hq_windtunnel_level'] + (int)$team['hq_cfd_level'] + (int)$team['hq_simulator_level'] + (int)$team['hq_pitcrew_level'],
 ]);

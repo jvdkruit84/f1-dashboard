@@ -1,9 +1,9 @@
 <?php
 require_once __DIR__ . '/f1_calendar.php';
 
-/** Haalt een team (incl. budget/engine_level/aero_level) + coureurs op voor de ingelogde gebruiker in een modus. */
+/** Haalt een team (incl. budget/engine_level/aero_level/hq_*_level) + coureurs op voor de ingelogde gebruiker in een modus. */
 function f1hub_get_team_full($pdo, $userId, $mode) {
-    $stmt = $pdo->prepare('SELECT id, name, color_hex, car_rating, budget, engine_level, aero_level FROM teams WHERE user_id = ? AND mode = ?');
+    $stmt = $pdo->prepare('SELECT id, name, color_hex, car_rating, budget, engine_level, aero_level, hq_windtunnel_level, hq_cfd_level, hq_simulator_level, hq_pitcrew_level FROM teams WHERE user_id = ? AND mode = ?');
     $stmt->execute([$userId, $mode]);
     $team = $stmt->fetch();
     if (!$team) return null;
@@ -49,4 +49,26 @@ const F1HUB_PART_MAX_LEVEL = 5;
 function f1hub_next_part_cost($level) {
     if ($level >= F1HUB_PART_MAX_LEVEL) return null;
     return F1HUB_PART_UPGRADE_COSTS[$level - 1];
+}
+
+/** Kortingspercentage (0-20) dat Windtunnel/CFD-niveau geeft op Aero/Motor-upgradekosten. */
+function f1hub_part_discount_percent($level) {
+    return ($level - 1) * 5;
+}
+
+/** Volgende upgradekosten voor Motor/Aero, verlaagd met het Windtunnel/CFD-kortingspercentage. */
+function f1hub_discounted_part_cost($level, $discountPercent) {
+    $cost = f1hub_next_part_cost($level);
+    if ($cost === null) return null;
+    return (int)round($cost * (1 - $discountPercent / 100));
+}
+
+// Vaste kosten per coureur-training (Racesimulator, v1.1) — zelfde ongeacht niveau,
+// alleen de winst per training schaalt met hq_simulator_level.
+const F1HUB_TRAINING_COST = 5;
+const F1HUB_TRAINING_STAT_CAP = 99;
+
+/** Fractie (0-0.8) waarmee Pitcrew-niveau de risicostraf van een extra pitstop vermindert. */
+function f1hub_stop_penalty_reduction($pitcrewLevel) {
+    return ($pitcrewLevel - 1) * 0.2;
 }

@@ -11,11 +11,15 @@ const F1HUB_TYRE_COMPOUNDS = [
 const F1HUB_MIN_STINTS = 2;
 const F1HUB_MAX_STINTS = 3;
 
-/** Bouwt een strategie-array (bonus/risk/tyres/label) uit een bandenvolgorde. */
-function f1hub_custom_strategy(array $compounds) {
+/**
+ * Bouwt een strategie-array (bonus/risk/tyres/label) uit een bandenvolgorde.
+ * $stopPenaltyReduction (0-0.8, van Pitcrew-faciliteiten, v1.1) verlaagt de
+ * risicostraf van een extra pitstop boven de verplichte eerste.
+ */
+function f1hub_custom_strategy(array $compounds, $stopPenaltyReduction = 0) {
     $bonus = array_sum(array_map(fn($c) => F1HUB_TYRE_COMPOUNDS[$c]['bonus'], $compounds));
     $risk = array_sum(array_map(fn($c) => F1HUB_TYRE_COMPOUNDS[$c]['risk'], $compounds))
-        + max(0, count($compounds) - 2); // elke pitstop boven de verplichte eerste kost extra tijd/risico
+        + max(0, count($compounds) - 2) * (1 - $stopPenaltyReduction);
     return [
         'bonus' => $bonus,
         'risk' => $risk,

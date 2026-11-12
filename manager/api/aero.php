@@ -21,13 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         'aeroLevel' => (int)$team['aero_level'],
         'maxLevel' => F1HUB_PART_MAX_LEVEL,
         'budget' => (int)$team['budget'],
-        'nextCost' => f1hub_next_part_cost((int)$team['aero_level']),
+        'nextCost' => f1hub_discounted_part_cost((int)$team['aero_level'], f1hub_part_discount_percent((int)$team['hq_windtunnel_level'])),
     ]);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $level = (int)$team['aero_level'];
-    $cost = f1hub_next_part_cost($level);
+    $cost = f1hub_discounted_part_cost($level, f1hub_part_discount_percent((int)$team['hq_windtunnel_level']));
     if ($cost === null) {
         f1hub_json(['ok' => false, 'error' => 'De aerodynamica zit al op het maximale niveau.'], 422);
     }
@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'aeroLevel' => (int)$updated['aero_level'],
         'maxLevel' => F1HUB_PART_MAX_LEVEL,
         'budget' => (int)$updated['budget'],
-        'nextCost' => f1hub_next_part_cost((int)$updated['aero_level']),
+        'nextCost' => f1hub_discounted_part_cost((int)$updated['aero_level'], f1hub_part_discount_percent((int)$updated['hq_windtunnel_level'])),
     ]);
 }
 
