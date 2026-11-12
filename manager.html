@@ -166,6 +166,16 @@
   .next-race-card .label { font-size: 11px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; }
   .next-race-card .value { font-weight: 700; font-size: 15px; margin-top: 4px; }
 
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 12px; }
+  .feature-card {
+    display: flex; flex-direction: column; background: var(--page); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px; text-decoration: none; color: inherit; transition: border-color 0.15s;
+  }
+  .feature-card:hover { border-color: var(--accent); }
+  .feature-card .icon { font-size: 20px; margin-bottom: 8px; }
+  .feature-card .title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .feature-card .desc { color: var(--ink-muted); font-size: 11px; line-height: 1.4; flex: 1; }
+
   footer.site-footer {
     max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0;
     border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px;
@@ -224,7 +234,7 @@
         </div>
       </div>
       <div class="nav-group active">
-        <button class="nav-group-trigger" type="button">Manager <span class="caret">▾</span></button>
+        <a class="nav-group-trigger" href="manager.html">Manager <span class="caret">▾</span></a>
         <div class="nav-dropdown">
           <a href="manager.html" class="mgr-auth-only active">Mijn Team</a>
           <a href="manager-race.html" class="mgr-auth-only">Race</a>
@@ -251,7 +261,7 @@
     var open = nl.classList.toggle('open');
     this.setAttribute('aria-expanded', open);
   });
-  document.querySelectorAll('.nav-group-trigger').forEach(function(btn) {
+  document.querySelectorAll('button.nav-group-trigger').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
       var group = btn.closest('.nav-group');
@@ -455,10 +465,28 @@ function renderDashboard(data) {
       </div>
     ` : ''}
 
-    <div class="controls-grid">
-      <div><a href="manager-race.html"><button>Naar race-weekend</button></a></div>
-      <div><a href="manager-transfers.html"><button class="ghost">Transfermarkt</button></a></div>
-      <div><a href="manager-standings.html"><button class="ghost">Bekijk stand</button></a></div>
+    <h2 style="margin-top:24px;">Wat kun je doen?</h2>
+    <div class="feature-grid">
+      <a class="feature-card" href="manager-race.html">
+        <div class="icon">🏁</div>
+        <div class="title">Race-weekend</div>
+        <div class="desc">Kies een bandenstrategie en rij de eerstvolgende race in deze modus.</div>
+      </a>
+      <a class="feature-card" href="manager-replay.html">
+        <div class="icon">⏮️</div>
+        <div class="title">Race Replay</div>
+        <div class="desc">Neem een al verreden echte GP over en probeer het echte resultaat te verbeteren.</div>
+      </a>
+      <a class="feature-card" href="manager-transfers.html">
+        <div class="icon">💰</div>
+        <div class="title">Transfermarkt</div>
+        <div class="desc">Scout coureurs om hun kwaliteiten en vraagprijs te onthullen, en teken ze.</div>
+      </a>
+      <a class="feature-card" href="manager-standings.html">
+        <div class="icon">🏆</div>
+        <div class="title">Stand</div>
+        <div class="desc">Bekijk de publieke ranglijst van alle Formule1Hub Manager-teams.</div>
+      </a>
     </div>
   `;
 

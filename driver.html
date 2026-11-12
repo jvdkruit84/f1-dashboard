@@ -250,7 +250,7 @@
         </div>
       </div>
       <div class="nav-group">
-        <button class="nav-group-trigger" type="button">Manager <span class="caret">▾</span></button>
+        <a class="nav-group-trigger" href="manager.html">Manager <span class="caret">▾</span></a>
         <div class="nav-dropdown">
           <a href="manager.html" class="mgr-auth-only">Mijn Team</a>
           <a href="manager-race.html" class="mgr-auth-only">Race</a>
@@ -277,7 +277,7 @@
     var open = nl.classList.toggle('open');
     this.setAttribute('aria-expanded', open);
   });
-  document.querySelectorAll('.nav-group-trigger').forEach(function(btn) {
+  document.querySelectorAll('button.nav-group-trigger').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
       var group = btn.closest('.nav-group');
