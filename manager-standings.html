@@ -117,7 +117,7 @@
       <div class="nav-group active">
         <button class="nav-group-trigger" type="button">Manager <span class="caret">▾</span></button>
         <div class="nav-dropdown">
-          <a href="manager.html">Dashboard</a>
+          <a href="manager.html">Mijn Team</a>
           <a href="manager-race.html">Race</a>
           <a href="manager-replay.html">Replay</a>
           <a href="manager-standings.html" class="active">Stand</a>
@@ -160,8 +160,8 @@
 <div class="hero">
   <div class="hero-inner">
     <div class="eyebrow">Formule1Hub · Manager</div>
-    <h1>Jouw stand</h1>
-    <div class="subtitle">Totaalpunten en racegeschiedenis per modus. v0.1 toont alleen je eigen team — ranglijsten tussen spelers volgen in een latere update.</div>
+    <h1>Stand</h1>
+    <div class="subtitle">De publieke ranglijst van alle Formule1Hub Manager-teams, per modus — geen account nodig om te bekijken.</div>
   </div>
 </div>
 
@@ -202,22 +202,30 @@ async function loadStandings() {
   const el = document.getElementById('standingsArea');
   el.textContent = 'Laden…';
   try {
-    const me = await apiGet('me.php');
-    if (!me.loggedIn) {
-      el.innerHTML = `<p style="color:var(--ink-secondary); font-size:13px;">Je bent niet ingelogd. Ga naar <a href="manager.html" style="color:var(--accent);">het dashboard</a> om in te loggen.</p>`;
+    let myUsername = null;
+    try {
+      const me = await apiGet('me.php');
+      if (me.loggedIn) myUsername = me.username;
+    } catch (e) { /* publieke pagina: ingelogd zijn is optioneel */ }
+
+    const data = await apiGet(`standings.php?mode=${currentMode}`);
+    if (!data.leaderboard.length) {
+      el.innerHTML = '<p style="color:var(--ink-muted); font-size:13px;">Nog geen teams in deze modus.</p>';
       return;
     }
-    const data = await apiGet(`standings.php?mode=${currentMode}`);
     el.innerHTML = `
-      <div class="stat-grid">
-        <div class="stat-tile"><div class="label">Team</div><div class="value">${data.team.name}</div></div>
-        <div class="stat-tile"><div class="label">Races gespeeld</div><div class="value">${data.racesPlayed}</div></div>
-        <div class="stat-tile"><div class="label">Totaalpunten</div><div class="value">${data.totalPoints}</div></div>
-      </div>
       <table class="history">
-        <thead><tr><th>Race</th><th>Strategie</th><th>Positie</th><th>Punten</th></tr></thead>
+        <thead><tr><th>#</th><th>Team</th><th>Speler</th><th>Races</th><th>Punten</th></tr></thead>
         <tbody>
-          ${data.history.length ? data.history.map(h => `<tr><td>${h.raceName}</td><td>${h.strategy}</td><td>P${h.position}</td><td>${h.points}</td></tr>`).join('') : '<tr><td colspan="4" style="color:var(--ink-muted);">Nog geen races gespeeld.</td></tr>'}
+          ${data.leaderboard.map((t, i) => `
+            <tr style="${t.username === myUsername ? 'color:var(--accent); font-weight:700;' : ''}">
+              <td>${i + 1}</td>
+              <td><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#${t.colorHex}; margin-right:6px;"></span>${t.teamName}</td>
+              <td>${t.username}</td>
+              <td>${t.racesPlayed}</td>
+              <td>${t.totalPoints}</td>
+            </tr>
+          `).join('')}
         </tbody>
       </table>
     `;

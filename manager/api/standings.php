@@ -1,8 +1,8 @@
 <?php
+// Publieke stand (v0.3) — geen login vereist. Rangschikt alle teams in een
+// modus op totaal aantal punten uit race_results.
 require __DIR__ . '/../db.php';
-require __DIR__ . '/../f1_calendar.php';
 
-$userId = f1hub_require_login();
 $pdo = f1hub_db();
 
 $mode = (string)($_GET['mode'] ?? '');
@@ -10,44 +10,27 @@ if (!in_array($mode, ['season', 'career'], true)) {
     f1hub_json(['ok' => false, 'error' => 'Ongeldige modus.'], 422);
 }
 
-$stmt = $pdo->prepare('SELECT id, name, color_hex, car_rating FROM teams WHERE user_id = ? AND mode = ?');
-$stmt->execute([$userId, $mode]);
-$team = $stmt->fetch();
-if (!$team) {
-    f1hub_json(['ok' => false, 'error' => 'Nog geen team in deze modus.'], 404);
-}
+$stmt = $pdo->prepare(
+    'SELECT u.username, t.name, t.color_hex, t.car_rating,
+            COUNT(rr.id) AS races_played,
+            COALESCE(SUM(rr.points), 0) AS total_points
+     FROM teams t
+     JOIN users u ON u.id = t.user_id
+     LEFT JOIN race_results rr ON rr.team_id = t.id
+     WHERE t.mode = ?
+     GROUP BY t.id, u.username, t.name, t.color_hex, t.car_rating
+     ORDER BY total_points DESC, races_played ASC, t.name ASC'
+);
+$stmt->execute([$mode]);
+$rows = $stmt->fetchAll();
 
-$stmt = $pdo->prepare('SELECT race_key, strategy, finish_position, points, created_at FROM race_results WHERE team_id = ? ORDER BY created_at ASC');
-$stmt->execute([$team['id']]);
-$results = $stmt->fetchAll();
+$leaderboard = array_map(fn($r) => [
+    'username' => $r['username'],
+    'teamName' => $r['name'],
+    'colorHex' => $r['color_hex'],
+    'carRating' => (int)$r['car_rating'],
+    'racesPlayed' => (int)$r['races_played'],
+    'totalPoints' => (int)$r['total_points'],
+], $rows);
 
-$raceNames = [];
-if ($mode === 'season') {
-    $year = (int)date('Y');
-    foreach (f1hub_fetch_season_calendar($year) as $race) {
-        $raceNames[$race['raceKey']] = $race['raceName'];
-    }
-}
-
-$history = array_map(function ($r) use ($raceNames, $mode) {
-    $label = $mode === 'season'
-        ? ($raceNames[$r['race_key']] ?? $r['race_key'])
-        : 'Carrière-race ' . str_replace('career-', '', $r['race_key']);
-    return [
-        'raceKey' => $r['race_key'],
-        'raceName' => $label,
-        'strategy' => $r['strategy'],
-        'position' => (int)$r['finish_position'],
-        'points' => (int)$r['points'],
-    ];
-}, $results);
-
-$totalPoints = array_sum(array_column($history, 'points'));
-
-f1hub_json([
-    'ok' => true,
-    'team' => $team,
-    'racesPlayed' => count($history),
-    'totalPoints' => $totalPoints,
-    'history' => $history,
-]);
+f1hub_json(['ok' => true, 'mode' => $mode, 'leaderboard' => $leaderboard]);

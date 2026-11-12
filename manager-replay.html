@@ -131,7 +131,7 @@
       <div class="nav-group active">
         <button class="nav-group-trigger" type="button">Manager <span class="caret">▾</span></button>
         <div class="nav-dropdown">
-          <a href="manager.html">Dashboard</a>
+          <a href="manager.html">Mijn Team</a>
           <a href="manager-race.html">Race</a>
           <a href="manager-replay.html" class="active">Replay</a>
           <a href="manager-standings.html">Stand</a>
@@ -179,7 +179,7 @@
   </div>
 </div>
 
-<div class="wrap">
+<div class="wrap" style="display:none;">
 
   <div class="card">
     <h2>Kies een race</h2>
@@ -241,9 +241,10 @@ teamSelect.addEventListener('change', renderStrategyPicker);
 async function init() {
   const me = await apiGet('me.php');
   if (!me.loggedIn) {
-    document.querySelector('.wrap').innerHTML = `<p style="color:var(--ink-secondary); font-size:13px;">Je bent niet ingelogd. Ga naar <a href="manager.html" style="color:var(--accent);">het dashboard</a> om in te loggen.</p>`;
+    window.location.href = 'manager-login.html';
     return;
   }
+  document.querySelector('.wrap').style.display = 'block';
   const data = await apiGet('replay.php');
   yearSelect.innerHTML = data.years.map(y => `<option value="${y}">${y}</option>`).join('');
   await loadRaces();

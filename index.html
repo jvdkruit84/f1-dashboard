@@ -114,6 +114,38 @@
   .btn-primary { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
   .btn-primary:hover { opacity: 0.88; }
   .btn-ghost { background: transparent; color: var(--ink-primary); border: 1px solid var(--border); }
+
+  .game-promo {
+    background: linear-gradient(135deg, var(--accent) 0%, #8f0400 100%);
+    border-radius: 10px;
+    padding: 28px;
+    margin: 24px auto 28px;
+    max-width: 1180px;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    flex-wrap: wrap;
+    box-shadow: 0 16px 40px rgba(225,6,0,0.25);
+  }
+  .game-promo .badge {
+    display: inline-block; background: rgba(255,255,255,0.2); color: #fff;
+    font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 4px 10px; border-radius: 999px; margin-bottom: 10px;
+  }
+  .game-promo h2 { font-size: 26px; font-weight: 900; text-transform: uppercase; color: #fff; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .game-promo p { color: rgba(255,255,255,0.92); font-size: 14px; margin: 0 0 14px; max-width: 520px; }
+  .game-promo .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .game-promo .chip { background: rgba(255,255,255,0.15); color: #fff; font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 6px; }
+  .game-promo .cta { flex: none; }
+  .game-promo .cta a {
+    display: inline-block; background: #fff; color: var(--accent); padding: 14px 28px;
+    border-radius: 6px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em;
+    font-size: 14px; text-decoration: none; transition: transform 0.15s;
+  }
+  .game-promo .cta a:hover { transform: scale(1.03); }
+  @media (max-width: 700px) {
+    .game-promo { flex-direction: column; align-items: flex-start; text-align: left; }
+    .game-promo .cta { width: 100%; }
+    .game-promo .cta a { width: 100%; text-align: center; }
+  }
   .btn-ghost:hover { border-color: var(--ink-secondary); }
 
   /* ---------- combined race-center widget (last race + next race) ---------- */
@@ -351,7 +383,7 @@
       <div class="nav-group">
         <button class="nav-group-trigger" type="button">Manager <span class="caret">▾</span></button>
         <div class="nav-dropdown">
-          <a href="manager.html">Dashboard</a>
+          <a href="manager.html">Mijn Team</a>
           <a href="manager-race.html">Race</a>
           <a href="manager-replay.html">Replay</a>
           <a href="manager-standings.html">Stand</a>
@@ -401,6 +433,21 @@
       <a class="btn-link btn-ghost" href="drivers.html">Bekijk coureurs</a>
     </div>
   </div>
+</div>
+
+<div class="game-promo">
+  <div>
+    <span class="badge">Nieuw · Speel mee</span>
+    <h2>Formule1Hub Manager</h2>
+    <p>Bouw je eigen F1-team — of neem een bestaand team over — en strijd in de seizoens- en carrièremodus. Speel een Race Replay en probeer een echte GP-uitslag te verbeteren.</p>
+    <div class="chips">
+      <span class="chip">Seizoensmodus</span>
+      <span class="chip">Carrièremodus</span>
+      <span class="chip">Race Replay</span>
+      <span class="chip">Publieke ranglijst</span>
+    </div>
+  </div>
+  <div class="cta"><a href="manager.html">Start je team →</a></div>
 </div>
 
 <div class="wrap news-wrap">

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manager — Formule1Hub</title>
+<title>Mijn Team — Formule1Hub Manager</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -209,7 +209,7 @@
       <div class="nav-group active">
         <button class="nav-group-trigger" type="button">Manager <span class="caret">▾</span></button>
         <div class="nav-dropdown">
-          <a href="manager.html" class="active">Dashboard</a>
+          <a href="manager.html" class="active">Mijn Team</a>
           <a href="manager-race.html">Race</a>
           <a href="manager-replay.html">Replay</a>
           <a href="manager-standings.html">Stand</a>
@@ -251,40 +251,16 @@
 
 <div class="hero">
   <div class="hero-inner">
-    <div class="eyebrow">Formule1Hub · Manager · v0.1</div>
-    <h1>Bouw je eigen F1-team</h1>
+    <div class="eyebrow">Formule1Hub · Manager · v0.3</div>
+    <h1>Mijn Team</h1>
     <div class="subtitle">
       Kies een modus, stel je team samen en speel races. Seizoensmodus volgt de echte kalender (1 race per verreden GP-weekend); carrièremodus speel je in je eigen tempo.
-      <span class="note">v0.1 — vaste coureurspool, vaste auto-rating bij aanmaak, 3 strategieën. Autowikkeling, transfers en een vrije strategie-editor volgen in latere maandelijkse updates.</span>
+      <span class="note">Autowikkeling, transfers en een vrije strategie-editor volgen in latere maandelijkse updates.</span>
     </div>
   </div>
 </div>
 
 <div class="wrap">
-
-  <div class="card" id="authCard">
-    <h2>Account</h2>
-    <div class="mode-tabs">
-      <div class="mode-tab active" data-auth="login">Ik heb al een account</div>
-      <div class="mode-tab" data-auth="register">Nieuw hier? Registreren</div>
-    </div>
-
-    <div id="loginForm">
-      <div class="controls-grid" style="margin-bottom:10px;">
-        <div><label for="loginUser">Gebruikersnaam</label><input id="loginUser" autocomplete="username"></div>
-        <div><label for="loginPass">Wachtwoord</label><input id="loginPass" type="password" autocomplete="current-password"></div>
-        <div><button id="loginBtn">Inloggen</button></div>
-      </div>
-    </div>
-    <div id="registerForm" style="display:none;">
-      <div class="controls-grid" style="margin-bottom:10px;">
-        <div><label for="regUser">Nieuwe gebruikersnaam</label><input id="regUser" autocomplete="username"></div>
-        <div><label for="regPass">Wachtwoord (min. 8 tekens)</label><input id="regPass" type="password" autocomplete="new-password"></div>
-        <div><button id="regBtn">Account aanmaken</button></div>
-      </div>
-    </div>
-    <div id="status"></div>
-  </div>
 
   <div id="loggedInArea" style="display:none;">
     <div class="card">
@@ -297,6 +273,7 @@
         <div class="mode-tab" data-mode="career">Carrièremodus</div>
       </div>
       <div id="teamArea"></div>
+      <div id="status"></div>
     </div>
   </div>
 
@@ -331,21 +308,9 @@ async function apiGet(path) {
   return data;
 }
 
-document.getElementById('loginBtn').addEventListener('click', async () => {
-  try {
-    await apiPost('login.php', { username: document.getElementById('loginUser').value, password: document.getElementById('loginPass').value });
-    await refreshSession();
-  } catch (e) { setStatus(e.message, true); }
-});
-document.getElementById('regBtn').addEventListener('click', async () => {
-  try {
-    await apiPost('register.php', { username: document.getElementById('regUser').value, password: document.getElementById('regPass').value });
-    await refreshSession();
-  } catch (e) { setStatus(e.message, true); }
-});
 document.getElementById('logoutBtn').addEventListener('click', async () => {
   await apiPost('logout.php', {});
-  await refreshSession();
+  window.location.href = 'manager-login.html';
 });
 document.querySelectorAll('.mode-tab[data-mode]').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -355,29 +320,17 @@ document.querySelectorAll('.mode-tab[data-mode]').forEach(tab => {
     renderTeamArea();
   });
 });
-document.querySelectorAll('.mode-tab[data-auth]').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.mode-tab[data-auth]').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    const isLogin = tab.dataset.auth === 'login';
-    document.getElementById('loginForm').style.display = isLogin ? 'block' : 'none';
-    document.getElementById('registerForm').style.display = isLogin ? 'none' : 'block';
-    setStatus('');
-  });
-});
 
 async function refreshSession() {
   setStatus('');
   const me = await apiGet('me.php');
-  if (me.loggedIn) {
-    document.getElementById('authCard').style.display = 'none';
-    document.getElementById('loggedInArea').style.display = 'block';
-    document.getElementById('whoami').textContent = `Ingelogd als ${me.username}`;
-    await loadTeams();
-  } else {
-    document.getElementById('authCard').style.display = 'block';
-    document.getElementById('loggedInArea').style.display = 'none';
+  if (!me.loggedIn) {
+    window.location.href = 'manager-login.html';
+    return;
   }
+  document.getElementById('loggedInArea').style.display = 'block';
+  document.getElementById('whoami').textContent = `Ingelogd als ${me.username}`;
+  await loadTeams();
 }
 
 async function loadTeams() {
