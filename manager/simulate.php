@@ -92,6 +92,15 @@ function f1hub_simulate_duel($challengerRating, $challengerDrivers, $challengerS
     ];
 }
 
+// Namen van de echte 2026 F1-constructeurs (zelfde "mooie" naam als elders op de site,
+// zie F1HUB_TEAM_NAME_ALIASES in real_teams.php), gebruikt als label voor de AI-tegenstanders
+// i.p.v. "AI-team N" — statisch hardgecodeerd zodat het rijden van een race nooit van een
+// live API-call afhangt (voorkomt de Jolpica-rate-limit-problemen die elders al zijn geraakt).
+const F1HUB_AI_TEAM_NAMES = [
+    'Mercedes', 'Ferrari', 'Red Bull Racing', 'McLaren', 'Racing Bulls',
+    'Alpine', 'Haas F1 Team', 'Audi', 'Williams', 'Aston Martin', 'Cadillac',
+];
+
 /**
  * Simuleert één race: speler + 19 AI-teams, retourneert de volledige uitslag
  * (gesorteerd op score) en de positie/punten van de speler. $playerStrategy is
@@ -99,6 +108,9 @@ function f1hub_simulate_duel($challengerRating, $challengerDrivers, $challengerS
  * vrije strategie-editor (v0.8). $riskReduction komt van de aero-upgrade
  * (v0.7) en geldt alleen voor de speler — AI-teams hebben geen onderdelen om
  * te upgraden, maar bouwen wel dezelfde soort willekeurige bandenstrategie.
+ * Elk AI-team krijgt de naam van een echt 2026-team (F1HUB_AI_TEAM_NAMES),
+ * cyclisch verdeeld over de 19 posities — net als op een echte grid komt een
+ * teamnaam daardoor normaal gesproken twee keer voor (twee auto's per team).
  */
 function f1hub_simulate_race($playerCarRating, $playerDrivers, $playerStrategy, $riskReduction = 0) {
     $entries = [];
@@ -109,6 +121,7 @@ function f1hub_simulate_race($playerCarRating, $playerDrivers, $playerStrategy, 
         'score' => f1hub_team_score($playerCarRating, $playerDrivers, $playerStrategy, $riskReduction),
     ];
 
+    $aiTeamCount = count(F1HUB_AI_TEAM_NAMES);
     for ($i = 0; $i < 19; $i++) {
         $aiCarRating = mt_rand(50, 95);
         $aiDrivers = [
@@ -118,7 +131,7 @@ function f1hub_simulate_race($playerCarRating, $playerDrivers, $playerStrategy, 
         $aiStrategy = f1hub_custom_strategy(f1hub_random_compounds(), 0, f1hub_random_pace_mode(), f1hub_random_ers_mode());
         $entries[] = [
             'isPlayer' => false,
-            'label' => 'AI-team ' . ($i + 1),
+            'label' => F1HUB_AI_TEAM_NAMES[$i % $aiTeamCount],
             'score' => f1hub_team_score($aiCarRating, $aiDrivers, $aiStrategy),
         ];
     }
