@@ -60,6 +60,10 @@
   .eyebrow::before { content: ""; width: 16px; height: 2px; background: var(--accent); display: inline-block; }
   h1 { font-size: 21px; font-weight: 900; text-transform: uppercase; margin: 0 0 4px; letter-spacing: -0.01em; line-height: 1.05; }
   .subtitle { color: var(--ink-secondary); font-size: 13px; margin-bottom: 0; }
+  .manager-subnav { max-width: 1180px; margin: 14px auto 0; padding: 0 24px; display: flex; gap: 8px; overflow-x: auto; }
+  .subnav-link { flex: none; padding: 8px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--page); color: var(--ink-secondary); text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; transition: border-color 0.15s, color 0.15s; }
+  .subnav-link:hover { border-color: var(--accent); color: var(--ink-primary); }
+  .subnav-link.active { border-color: var(--accent); color: var(--accent); }
   .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; padding: 18px 20px; margin-bottom: 16px; }
   .card h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-secondary); margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 9px; }
   button { width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 4px; border: 1px solid var(--border); background: var(--page); color: var(--ink-primary); font-family: inherit; }
@@ -148,18 +152,7 @@
           <a href="telemetry.html">Telemetrie</a>
         </div>
       </div>
-      <div class="nav-group active">
-        <a class="nav-group-trigger" href="manager.html">Manager <span class="caret">▾</span></a>
-        <div class="nav-dropdown">
-          <a href="manager.html" class="mgr-auth-only">Mijn Team</a>
-          <a href="manager-race.html" class="mgr-auth-only active">Race</a>
-          <a href="manager-replay.html" class="mgr-auth-only">Replay</a>
-          <a href="manager-transfers.html" class="mgr-auth-only">Transfers</a>
-          <a href="manager-hq.html" class="mgr-auth-only">HQ</a>
-          <a href="manager-headtohead.html" class="mgr-auth-only">Head-to-head</a>
-          <a href="manager-standings.html">Stand</a>
-        </div>
-      </div>
+      <a class="nav-link active" href="manager.html">Manager</a>
       <div class="nav-group">
         <button class="nav-group-trigger" type="button">Historie <span class="caret">▾</span></button>
         <div class="nav-dropdown">
@@ -203,6 +196,16 @@
     <h1>Race-weekend</h1>
     <div class="subtitle">Kies je strategie en rij de race. Seizoensmodus ontgrendelt een race zodra het echte GP-weekend is verreden.</div>
   </div>
+</div>
+
+<div class="manager-subnav">
+  <a href="manager.html" class="subnav-link">Dashboard</a>
+  <a href="manager-transfers.html" class="subnav-link">Transfermarkt</a>
+  <a href="manager-hq.html" class="subnav-link">Hoofdkwartier</a>
+  <a href="manager-race.html" class="subnav-link active">Race-weekend</a>
+  <a href="manager-replay.html" class="subnav-link">Replay</a>
+  <a href="manager-headtohead.html" class="subnav-link">Head-to-head</a>
+  <a href="manager-standings.html" class="subnav-link">Stand</a>
 </div>
 
 <div class="wrap" id="pageWrap" style="display:none;">

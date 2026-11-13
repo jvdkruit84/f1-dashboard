@@ -103,7 +103,10 @@
   .eyebrow::before { content: ""; width: 16px; height: 2px; background: var(--accent); display: inline-block; }
   h1 { font-size: 21px; font-weight: 900; text-transform: uppercase; margin: 0 0 4px; letter-spacing: -0.01em; line-height: 1.05; }
   .subtitle { color: var(--ink-secondary); font-size: 13px; margin-bottom: 0; }
-  .subtitle .note { display: block; color: var(--ink-muted); font-size: 11px; margin-top: 4px; }
+  .manager-subnav { max-width: 1180px; margin: 14px auto 0; padding: 0 24px; display: flex; gap: 8px; overflow-x: auto; }
+  .subnav-link { flex: none; padding: 8px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--page); color: var(--ink-secondary); text-decoration: none; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; transition: border-color 0.15s, color 0.15s; }
+  .subnav-link:hover { border-color: var(--accent); color: var(--ink-primary); }
+  .subnav-link.active { border-color: var(--accent); color: var(--accent); }
 
   .card {
     background: var(--surface-1);
@@ -262,18 +265,7 @@
           <a href="telemetry.html">Telemetrie</a>
         </div>
       </div>
-      <div class="nav-group active">
-        <a class="nav-group-trigger" href="manager.html">Manager <span class="caret">▾</span></a>
-        <div class="nav-dropdown">
-          <a href="manager.html" class="mgr-auth-only active">Mijn Team</a>
-          <a href="manager-race.html" class="mgr-auth-only">Race</a>
-          <a href="manager-replay.html" class="mgr-auth-only">Replay</a>
-          <a href="manager-transfers.html" class="mgr-auth-only">Transfers</a>
-          <a href="manager-hq.html" class="mgr-auth-only">HQ</a>
-          <a href="manager-headtohead.html" class="mgr-auth-only">Head-to-head</a>
-          <a href="manager-standings.html">Stand</a>
-        </div>
-      </div>
+      <a class="nav-link active" href="manager.html">Manager</a>
       <div class="nav-group">
         <button class="nav-group-trigger" type="button">Historie <span class="caret">▾</span></button>
         <div class="nav-dropdown">
@@ -313,13 +305,22 @@
 
 <div class="hero">
   <div class="hero-inner">
-    <div class="eyebrow">Formule1Hub · Manager · v0.7</div>
-    <h1>Mijn Team</h1>
+    <div class="eyebrow">Formule1Hub · Manager · v1.6</div>
+    <h1>Dashboard</h1>
     <div class="subtitle">
-      Kies een modus, stel je team samen, upgrade motor en aerodynamica en speel races. Seizoensmodus volgt de echte kalender (1 race per verreden GP-weekend); carrièremodus speel je in je eigen tempo.
-      <span class="note">Losse onderdelen, contractduur en een vrije strategie-editor volgen in latere maandelijkse updates.</span>
+      Kies een modus en stel je team samen — dat is de eerste stap. Seizoensmodus volgt de echte kalender (1 race per verreden GP-weekend); carrièremodus speel je in je eigen tempo.
     </div>
   </div>
+</div>
+
+<div class="manager-subnav">
+  <a href="manager.html" class="subnav-link active">Dashboard</a>
+  <a href="manager-transfers.html" class="subnav-link">Transfermarkt</a>
+  <a href="manager-hq.html" class="subnav-link">Hoofdkwartier</a>
+  <a href="manager-race.html" class="subnav-link">Race-weekend</a>
+  <a href="manager-replay.html" class="subnav-link">Replay</a>
+  <a href="manager-headtohead.html" class="subnav-link">Head-to-head</a>
+  <a href="manager-standings.html" class="subnav-link">Stand</a>
 </div>
 
 <div class="wrap">
@@ -612,26 +613,27 @@ function renderDashboard(data) {
     <div class="timeline-card" id="standingsMini">Laden…</div>
 
     <h2 style="margin-top:24px;">Wat kun je doen?</h2>
+    <p style="color:var(--ink-secondary); font-size:12px; margin-top:-10px; margin-bottom:14px;">Eerst je team opbouwen, dan racen, dan kijken hoe je ervoor staat.</p>
     <div class="feature-grid">
+      <a class="feature-card" href="manager-transfers.html">
+        <div class="icon">💰</div>
+        <div class="title">1. Transfermarkt</div>
+        <div class="desc">Scout coureurs om hun kwaliteiten en vraagprijs te onthullen, en teken ze.</div>
+      </a>
+      <a class="feature-card" href="manager-hq.html">
+        <div class="icon">🏢</div>
+        <div class="title">2. Hoofdkwartier</div>
+        <div class="desc">Investeer in windtunnel, CFD-simulator, racesimulator en pitcrew-faciliteiten, en train je coureurs.</div>
+      </a>
       <a class="feature-card" href="manager-race.html">
         <div class="icon">🏁</div>
-        <div class="title">Race-weekend</div>
+        <div class="title">3. Race-weekend</div>
         <div class="desc">Kies een bandenstrategie en rij de eerstvolgende race in deze modus.</div>
       </a>
       <a class="feature-card" href="manager-replay.html">
         <div class="icon">⏮️</div>
         <div class="title">Race Replay</div>
         <div class="desc">Neem een al verreden echte GP over en probeer het echte resultaat te verbeteren.</div>
-      </a>
-      <a class="feature-card" href="manager-transfers.html">
-        <div class="icon">💰</div>
-        <div class="title">Transfermarkt</div>
-        <div class="desc">Scout coureurs om hun kwaliteiten en vraagprijs te onthullen, en teken ze.</div>
-      </a>
-      <a class="feature-card" href="manager-hq.html">
-        <div class="icon">🏢</div>
-        <div class="title">Hoofdkwartier</div>
-        <div class="desc">Investeer in windtunnel, CFD-simulator, racesimulator en pitcrew-faciliteiten, en train je coureurs.</div>
       </a>
       <a class="feature-card" href="manager-headtohead.html">
         <div class="icon">⚔️</div>
