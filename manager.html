@@ -175,9 +175,24 @@
   .engine-seg.filled { background: var(--accent); }
   .engine-seg.filled.current { animation: segPulse 2.2s ease-in-out infinite; }
 
-  .next-race-card { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 16px; animation: fadeInUp 0.35s ease both; }
-  .next-race-card .label { font-size: 11px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; }
-  .next-race-card .value { font-weight: 700; font-size: 15px; margin-top: 4px; }
+  .timeline-card { background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; margin-bottom: 16px; animation: fadeInUp 0.35s ease both; }
+  .timeline-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--grid); }
+  .timeline-item:last-child { border-bottom: none; }
+  .timeline-icon { font-size: 18px; flex: none; width: 24px; text-align: center; }
+  .timeline-title { font-weight: 700; font-size: 13px; }
+  .timeline-sub { color: var(--ink-muted); font-size: 11px; margin-top: 2px; }
+  .timeline-item.critical .timeline-title { color: var(--critical); }
+
+  .standings-mini-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--grid); font-size: 13px; }
+  .standings-mini-row:last-child { border-bottom: none; }
+  .standings-mini-row.mine { color: var(--accent); font-weight: 700; }
+  .standings-mini-row .team-name { flex: 1; }
+  .pos-badge { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; font-weight: 900; font-size: 11px; flex: none; }
+  .pos-badge.gold { background: linear-gradient(135deg, #ffe066, #b8860b); color: #1a1200; }
+  .pos-badge.silver { background: linear-gradient(135deg, #f1f1f1, #9a9a9a); color: #1a1a1a; }
+  .pos-badge.bronze { background: linear-gradient(135deg, #e0a06a, #8b4513); color: #fff; }
+  .standings-mini-link { display: block; text-align: center; margin-top: 10px; color: var(--ink-secondary); font-size: 12px; text-decoration: none; }
+  .standings-mini-link:hover { color: var(--ink-primary); }
 
   .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 12px; }
   .feature-card {
@@ -335,6 +350,7 @@ let driverPool = [];
 let teamsByMode = {};
 let realTeams = null;
 let creationSource = 'custom';
+let myUsername = null;
 
 function setStatus(msg, isError) {
   const el = document.getElementById('status');
@@ -400,6 +416,7 @@ async function refreshSession() {
   }
   document.getElementById('loggedInArea').style.display = 'block';
   document.getElementById('whoami').textContent = `Ingelogd als ${me.username}`;
+  myUsername = me.username;
   await loadTeams();
 }
 
@@ -419,6 +436,7 @@ async function renderTeamArea() {
     try {
       const data = await apiGet(`dashboard.php?mode=${currentMode}`);
       renderDashboard(data);
+      loadStandingsMini(currentMode);
     } catch (e) {
       setStatus(e.message, true);
     }
@@ -443,6 +461,83 @@ async function renderTeamArea() {
     renderRealTeamPicker();
   } else {
     renderCustomTeamForm();
+  }
+}
+
+function renderTimelineItems(data, team) {
+  const items = [];
+
+  if (data.nextRace) {
+    const sub = data.nextRace.date
+      ? `Al verreden op ${data.nextRace.date} — klaar om te spelen`
+      : 'Klaar om te spelen';
+    items.push({ icon: '🏁', title: data.nextRace.raceName, sub, critical: false });
+  }
+
+  team.drivers
+    .filter(d => d.contract_races_left <= 3)
+    .sort((a, b) => a.contract_races_left - b.contract_races_left)
+    .forEach(d => {
+      items.push({
+        icon: '📄',
+        title: `Contract van ${d.name} loopt af over ${d.contract_races_left} races`,
+        sub: 'Verleng het op de transfermarkt voordat de stoel vacant komt.',
+        critical: d.contract_races_left <= 2,
+      });
+    });
+
+  if (!items.length) {
+    return '<p style="color:var(--ink-secondary); font-size:13px; padding:10px 0;">Niets dringends op dit moment.</p>';
+  }
+
+  return items.map(item => `
+    <div class="timeline-item ${item.critical ? 'critical' : ''}">
+      <div class="timeline-icon">${item.icon}</div>
+      <div>
+        <div class="timeline-title">${item.title}</div>
+        <div class="timeline-sub">${item.sub}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function loadStandingsMini(mode) {
+  const el = document.getElementById('standingsMini');
+  if (!el) return;
+  try {
+    const data = await apiGet(`standings.php?mode=${mode}`);
+    const board = data.leaderboard;
+    if (!board.length) {
+      el.innerHTML = '<p style="color:var(--ink-secondary); font-size:13px;">Nog geen teams in deze modus.</p>';
+      return;
+    }
+    const top = board.slice(0, 3);
+    const myIndex = board.findIndex(t => t.username === myUsername);
+    const mineInTop = myIndex > -1 && myIndex < 3;
+
+    const renderRow = (t, pos) => `
+      <div class="standings-mini-row ${t.username === myUsername ? 'mine' : ''}">
+        <span class="pos-badge ${pos === 1 ? 'gold' : pos === 2 ? 'silver' : 'bronze'}">${pos}</span>
+        <span class="team-name">${t.teamName} (${t.username})</span>
+        <span>${t.totalPoints} pt</span>
+      </div>
+    `;
+
+    let html = top.map((t, i) => renderRow(t, i + 1)).join('');
+    if (!mineInTop && myIndex > -1) {
+      const mine = board[myIndex];
+      html += `
+        <div class="standings-mini-row mine">
+          <span class="pos-badge" style="background:var(--border); color:var(--ink-primary);">${myIndex + 1}</span>
+          <span class="team-name">${mine.teamName} (${mine.username})</span>
+          <span>${mine.totalPoints} pt</span>
+        </div>
+      `;
+    }
+    html += '<a class="standings-mini-link" href="manager-standings.html">Bekijk volledige stand →</a>';
+    el.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = `<p style="color:var(--critical); font-size:13px;">${e.message}</p>`;
   }
 }
 
@@ -490,6 +585,11 @@ function renderDashboard(data) {
       <div class="stat-tile"><div class="label">HQ-niveau</div><div class="value">${data.hqTotalLevel} / 20</div></div>
     </div>
 
+    <h2 style="margin-top:20px;">Aankomend</h2>
+    <div class="timeline-card">
+      ${renderTimelineItems(data, team)}
+    </div>
+
     ${renderPartCard({
       title: 'Motor', level: team.engine_level, maxLevel: data.partMaxLevel, nextCost: data.nextEngineCost,
       budget: team.budget, subtitle: `prestatiebonus +${(team.engine_level - 1) * 4}`, btnId: 'engineUpgradeBtn',
@@ -499,12 +599,8 @@ function renderDashboard(data) {
       budget: team.budget, subtitle: `risico −${team.aero_level - 1} bij elke strategie`, btnId: 'aeroUpgradeBtn',
     })}
 
-    ${data.nextRace ? `
-      <div class="next-race-card">
-        <div class="label">Eerstvolgende race</div>
-        <div class="value">${data.nextRace.raceName}</div>
-      </div>
-    ` : ''}
+    <h2 style="margin-top:20px;">Stand</h2>
+    <div class="timeline-card" id="standingsMini">Laden…</div>
 
     <h2 style="margin-top:24px;">Wat kun je doen?</h2>
     <div class="feature-grid">

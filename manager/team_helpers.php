@@ -47,7 +47,7 @@ function f1hub_next_race($pdo, $team, $mode) {
     foreach ($calendar as $race) {
         if ($race['date'] === null || $race['date'] > $today) continue; // nog niet verreden
         if (in_array($race['raceKey'], $played, true)) continue; // al gespeeld
-        return ['raceKey' => $race['raceKey'], 'raceName' => $race['raceName']];
+        return ['raceKey' => $race['raceKey'], 'raceName' => $race['raceName'], 'date' => $race['date']];
     }
     return null;
 }
