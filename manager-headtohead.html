@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Head-to-head — Formule1Hub Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --surface-1: #15151e;
+    --page: #0a0a0c;
+    --ink-primary: #ffffff;
+    --ink-secondary: #9a9aa2;
+    --ink-muted: #6b6b72;
+    --grid: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.12);
+    --accent: #e10600;
+    --good: #19a974;
+    --critical: #e10600;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Titillium Web', system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(ellipse 900px 300px at 50% -80px, rgba(225,6,0,0.10), transparent 70%),
+      var(--page);
+    color: var(--ink-primary);
+    padding: 0 0 32px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+  .topnav { background: #000; border-bottom: 1px solid var(--border); }
+  .topnav-inner { max-width: 1180px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+  .brand-mark { background: var(--accent); color: #fff; font-weight: 900; font-size: 13px; padding: 3px 7px; border-radius: 3px; letter-spacing: 0.01em; font-style: italic; }
+  .brand-text { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-secondary); }
+  .nav-links { display: flex; gap: 16px; height: 100%; }
+  .nav-link { display: flex; align-items: center; height: 100%; color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent; transition: color 0.15s; white-space: nowrap; }
+  .nav-link:hover { color: var(--ink-primary); }
+  .nav-link.active { color: var(--ink-primary); border-bottom-color: var(--accent); }
+  .nav-group { position: relative; height: 100%; }
+  .nav-group-trigger { background: none; border: none; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 4px; height: 100%; color: var(--ink-secondary); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid transparent; transition: color 0.15s; white-space: nowrap; padding: 0; }
+  .nav-group-trigger:hover { color: var(--ink-primary); }
+  .nav-group-trigger .caret { font-size: 9px; transition: transform 0.15s; }
+  .nav-group.open .nav-group-trigger .caret { transform: rotate(180deg); }
+  .nav-group.active .nav-group-trigger { color: var(--ink-primary); border-bottom-color: var(--accent); }
+  .nav-dropdown { display: none; position: absolute; top: 56px; left: 0; min-width: 190px; background: #000; border: 1px solid var(--border); border-top: none; border-radius: 0 0 6px 6px; flex-direction: column; padding: 6px 0; z-index: 60; box-shadow: 0 12px 24px rgba(0,0,0,0.4); }
+  .nav-group:hover .nav-dropdown, .nav-group.open .nav-dropdown { display: flex; }
+  .nav-dropdown a { padding: 10px 16px; color: var(--ink-secondary); text-decoration: none; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; border-left: 2px solid transparent; }
+  .nav-dropdown a:hover { color: var(--ink-primary); background: rgba(255,255,255,0.05); }
+  .nav-dropdown a.active { color: var(--ink-primary); border-left-color: var(--accent); background: rgba(225,6,0,0.08); }
+  .nav-dropdown a.mgr-auth-only { display: none; }
+  .hero { position: relative; overflow: hidden; background: linear-gradient(135deg, #000 0%, #0f0f12 60%, #1a1a1e 100%); border-bottom: 1px solid var(--border); padding: 18px 24px 16px; margin-bottom: 20px; }
+  .hero::before { content: ""; position: absolute; inset: 0; background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 40px); pointer-events: none; }
+  .hero-inner { max-width: 1180px; margin: 0 auto; position: relative; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  .eyebrow::before { content: ""; width: 16px; height: 2px; background: var(--accent); display: inline-block; }
+  h1 { font-size: 21px; font-weight: 900; text-transform: uppercase; margin: 0 0 4px; letter-spacing: -0.01em; line-height: 1.05; }
+  .subtitle { color: var(--ink-secondary); font-size: 13px; margin-bottom: 0; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; padding: 18px 20px; margin-bottom: 16px; }
+  .card h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-secondary); margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 9px; }
+  button { width: 100%; font-size: 13px; padding: 9px 12px; border-radius: 4px; border: 1px solid var(--border); background: var(--page); color: var(--ink-primary); font-family: inherit; cursor: pointer; }
+  button.primary { background: var(--accent); color: #fff; border: 1px solid var(--accent); cursor: pointer; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; }
+  button.primary:hover { opacity: 0.88; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  #status { font-size: 12px; color: var(--ink-secondary); min-height: 16px; margin-top: 10px; }
+  #status.error { color: var(--critical); }
+  .mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .mode-tab { flex: 1; text-align: center; padding: 10px; border-radius: 4px; border: 1px solid var(--border); background: var(--page); cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+  .mode-tab.active { border-color: var(--accent); color: var(--accent); }
+  .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; }
+  .pool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 10px; margin-top: 6px; }
+  .pool-option { border: 1px solid var(--border); border-radius: 6px; padding: 12px; background: var(--page); animation: fadeInUp 0.3s ease both; transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s; cursor: pointer; }
+  .pool-option:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.3); }
+  .pool-option.selected { border-color: var(--accent); }
+  .pool-option .head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .pool-option .name { font-weight: 700; font-size: 13px; }
+  .pool-option .sub { color: var(--ink-muted); font-size: 11px; margin: 2px 0; }
+  .team-swatch-sm { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+  .tyre-badges { display: flex; gap: 4px; margin: 6px 0; }
+  .tyre-badge { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: #000; }
+  .tyre-badge.soft { background: #e10600; color: #fff; }
+  .tyre-badge.medium { background: #ffd21f; }
+  .tyre-badge.hard { background: #f2f2f2; border: 1px solid var(--border); }
+  .compound-picker { display: flex; gap: 8px; margin: 14px 0 10px; }
+  .compound-btn { flex: 1; padding: 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--page); cursor: pointer; font-weight: 700; font-size: 12px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.12s, border-color 0.12s; }
+  .compound-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .compound-btn:not(:disabled):hover { border-color: var(--accent); transform: translateY(-2px); }
+  .toggle-group-label { color: var(--ink-secondary); font-size: 12px; margin: 14px 0 6px; }
+  .toggle-group { display: flex; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+  .toggle-btn { flex: 1; min-width: 90px; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--page); cursor: pointer; font-weight: 700; font-size: 11px; text-transform: uppercase; transition: transform 0.12s, border-color 0.12s, color 0.12s; }
+  .toggle-btn:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .toggle-btn.selected { border-color: var(--accent); color: var(--accent); }
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  #resultCard.revealed { animation: fadeInUp 0.4s ease both; }
+  .stint-sequence { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 8px 0; flex-wrap: wrap; }
+  .stint-sequence .placeholder { color: var(--ink-muted); font-size: 12px; }
+  .strategy-preview { font-size: 12px; color: var(--ink-secondary); margin: 6px 0 14px; }
+  .strategy-preview strong { color: var(--ink-primary); }
+  .duel-scores { display: flex; gap: 14px; align-items: center; justify-content: center; margin: 10px 0; }
+  .duel-score { text-align: center; padding: 14px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--page); min-width: 140px; }
+  .duel-score.winner { border-color: var(--good); }
+  .duel-score .name { font-size: 12px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+  .duel-score .value { font-size: 24px; font-weight: 900; }
+  .duel-score.winner .value { color: var(--good); }
+  .duel-vs { color: var(--ink-muted); font-weight: 900; font-size: 14px; }
+  table.history { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.history th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-muted); padding: 8px; border-bottom: 1px solid var(--border); }
+  table.history td { padding: 8px; border-bottom: 1px solid var(--grid); }
+  table.history tbody tr { animation: fadeInUp 0.3s ease both; transition: background 0.15s; }
+  table.history tbody tr:hover { background: rgba(255,255,255,0.03); }
+  .result-won { color: var(--good); font-weight: 700; }
+  .result-lost { color: var(--critical); font-weight: 700; }
+  footer.site-footer { max-width: 1180px; margin: 8px auto 0; padding: 18px 24px 0; border-top: 1px solid var(--border); color: var(--ink-muted); font-size: 11px; }
+  .nav-toggle { display: none; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 36px; height: 36px; background: transparent; border: none; cursor: pointer; padding: 0; flex: none; }
+  .nav-toggle span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
+  @media (max-width: 860px) {
+    .nav-toggle { display: flex; }
+    .topnav { position: relative; }
+    .nav-links { display: none; position: absolute; top: 56px; left: 0; right: 0; background: #000; border-bottom: 1px solid var(--border); flex-direction: column; gap: 0; height: auto; padding: 8px 0; z-index: 50; }
+    .nav-links.open { display: flex; }
+    .nav-link { height: auto; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-link.active { border-left-color: var(--accent); }
+    .nav-group { height: auto; }
+    .nav-group-trigger { width: 100%; justify-content: space-between; padding: 14px 24px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-group.active .nav-group-trigger { border-left-color: var(--accent); }
+    .nav-dropdown { position: static; display: none; background: rgba(255,255,255,0.03); border: none; box-shadow: none; padding: 0; }
+    .nav-group.open .nav-dropdown { display: flex; }
+    .nav-dropdown a { padding: 12px 24px 12px 36px; border-bottom: 1px solid var(--grid); border-left: 3px solid transparent; }
+    .nav-dropdown a.active { border-left-color: var(--accent); }
+    .brand-text { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="topnav-inner">
+    <a class="brand" href="index.html"><span class="brand-mark">F1</span><span class="brand-text">HUB</span></a>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="nav-links" id="navLinks">
+      <a class="nav-link" href="index.html">Home</a>
+      <div class="nav-group">
+        <button class="nav-group-trigger" type="button">Actueel <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="schedule.html">Kalender</a>
+          <a href="results.html">Resultaten</a>
+          <a href="drivers.html">Coureurs</a>
+          <a href="teams.html">Teams</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="nav-group-trigger" type="button">Analyse <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="head2head.html">Head-to-head</a>
+          <a href="circuit.html">Circuit</a>
+          <a href="telemetry.html">Telemetrie</a>
+        </div>
+      </div>
+      <div class="nav-group active">
+        <a class="nav-group-trigger" href="manager.html">Manager <span class="caret">▾</span></a>
+        <div class="nav-dropdown">
+          <a href="manager.html" class="mgr-auth-only">Mijn Team</a>
+          <a href="manager-race.html" class="mgr-auth-only">Race</a>
+          <a href="manager-replay.html" class="mgr-auth-only">Replay</a>
+          <a href="manager-transfers.html" class="mgr-auth-only">Transfers</a>
+          <a href="manager-hq.html" class="mgr-auth-only">HQ</a>
+          <a href="manager-headtohead.html" class="mgr-auth-only active">Head-to-head</a>
+          <a href="manager-standings.html">Stand</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <button class="nav-group-trigger" type="button">Historie <span class="caret">▾</span></button>
+        <div class="nav-dropdown">
+          <a href="history.html">Historie</a>
+          <a href="records.html">Hall of Fame</a>
+          <a href="legends.html">Legends</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('navToggle').addEventListener('click', function() {
+    var nl = document.getElementById('navLinks');
+    var open = nl.classList.toggle('open');
+    this.setAttribute('aria-expanded', open);
+  });
+  document.querySelectorAll('button.nav-group-trigger').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var group = btn.closest('.nav-group');
+      var wasOpen = group.classList.contains('open');
+      document.querySelectorAll('.nav-group.open').forEach(function(g) { g.classList.remove('open'); });
+      if (!wasOpen) group.classList.add('open');
+    });
+  });
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.nav-group')) {
+      document.querySelectorAll('.nav-group.open').forEach(function(g) { g.classList.remove('open'); });
+    }
+  });
+  fetch('manager/api/me.php').then(function(r) { return r.json(); }).then(function(me) {
+    if (me.loggedIn) document.querySelectorAll('.mgr-auth-only').forEach(function(el) { el.classList.remove('mgr-auth-only'); });
+  }).catch(function() {});
+</script>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Formule1Hub · Manager · v1.4</div>
+    <h1>Head-to-head</h1>
+    <div class="subtitle">Daag een ander team uit op basis van hun huidige teamgegevens — asynchroon, zonder dat hun team wordt aangeraakt.</div>
+  </div>
+</div>
+
+<div class="wrap" id="pageWrap" style="display:none;">
+
+  <div class="card">
+    <h2>Modus</h2>
+    <div class="mode-tabs">
+      <div class="mode-tab active" data-mode="season">Seizoensmodus</div>
+      <div class="mode-tab" data-mode="career">Carrièremodus</div>
+    </div>
+    <div id="h2hArea">Laden…</div>
+    <div id="status"></div>
+  </div>
+
+  <div class="card" id="resultCard" style="display:none;">
+    <h2 id="resultHeading">Uitslag</h2>
+    <div id="resultBody"></div>
+  </div>
+
+  <div class="card">
+    <h2>Geschiedenis</h2>
+    <div id="historyArea">Laden…</div>
+  </div>
+
+  <footer class="site-footer">Formule1Hub Manager is een onofficieel, fictief managementspel en heeft geen affiliatie met Formula 1® of de F1 Manager-videogames.</footer>
+
+</div>
+
+<script>
+const API = 'manager/api';
+let currentMode = 'season';
+let currentTeam = null;
+let opponents = [];
+let selectedOpponentId = null;
+let currentCompounds = {};
+let minStints = 2;
+let maxStints = 3;
+let stints = [];
+let currentPaceModes = {};
+let currentErsModes = {};
+let paceMode = 'balanced';
+let ersMode = 'neutral';
+
+async function apiPost(path, params) {
+  const res = await fetch(`${API}/${path}`, { method: 'POST', body: new URLSearchParams(params) });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Onbekende fout.');
+  return data;
+}
+async function apiGet(path) {
+  const res = await fetch(`${API}/${path}`);
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'Onbekende fout.');
+  return data;
+}
+function setStatus(msg, isError) {
+  const el = document.getElementById('status');
+  el.textContent = msg || '';
+  el.classList.toggle('error', !!isError);
+}
+
+document.querySelectorAll('.mode-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    document.getElementById('resultCard').style.display = 'none';
+    loadState();
+  });
+});
+
+async function loadState() {
+  setStatus('');
+  selectedOpponentId = null;
+  stints = [];
+  const el = document.getElementById('h2hArea');
+  el.textContent = 'Laden…';
+  try {
+    const data = await apiGet(`headtohead.php?mode=${currentMode}`);
+    currentTeam = data.team;
+    opponents = data.opponents;
+    currentCompounds = data.compounds;
+    minStints = data.minStints;
+    maxStints = data.maxStints;
+    currentPaceModes = data.paceModes;
+    currentErsModes = data.ersModes;
+    renderOpponentPicker();
+    loadHistory();
+  } catch (e) {
+    el.innerHTML = `<p style="color:var(--ink-secondary); font-size:13px;">${e.message}</p>`;
+  }
+}
+
+function renderOpponentPicker() {
+  const el = document.getElementById('h2hArea');
+  if (!opponents.length) {
+    el.innerHTML = '<p style="color:var(--ink-secondary); font-size:13px;">Nog geen andere teams in deze modus om uit te dagen.</p>';
+    return;
+  }
+  el.innerHTML = `
+    <p style="color:var(--ink-secondary); font-size:12px;">Kies een tegenstander:</p>
+    <div class="pool-grid" id="opponentGrid">
+      ${opponents.map(o => `
+        <div class="pool-option" data-opponent="${o.teamId}">
+          <div class="head"><span class="team-swatch-sm" style="background:#${o.colorHex}"></span><div class="name">${o.teamName}</div></div>
+          <div class="sub">${o.username} · auto-rating ${o.carRating}/100 · ${o.totalPoints} punten</div>
+        </div>
+      `).join('')}
+    </div>
+    <div id="strategyArea"></div>
+  `;
+  document.querySelectorAll('[data-opponent]').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('[data-opponent]').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+      selectedOpponentId = Number(opt.dataset.opponent);
+      renderStrategyEditor();
+    });
+  });
+}
+
+function renderStrategyEditor() {
+  stints = [];
+  paceMode = 'balanced';
+  ersMode = 'neutral';
+  const el = document.getElementById('strategyArea');
+  el.innerHTML = `
+    <p style="color:var(--ink-secondary); font-size:12px; margin-top:14px;">Bouw je bandenstrategie (${minStints}-${maxStints} stints):</p>
+    <div class="compound-picker" id="compoundPicker">
+      ${Object.entries(currentCompounds).map(([key, c]) => `
+        <button type="button" class="compound-btn" data-add="${key}">
+          <span class="tyre-badge ${key}">${key[0].toUpperCase()}</span>${c.label}
+        </button>
+      `).join('')}
+    </div>
+    <div class="stint-sequence" id="stintSequence"><span class="placeholder">Nog geen stints gekozen.</span></div>
+    <div class="toggle-group-label">Rij-tempo</div>
+    <div class="toggle-group" id="paceModeGroup">
+      ${Object.entries(currentPaceModes).map(([key, m]) => `
+        <button type="button" class="toggle-btn ${key === paceMode ? 'selected' : ''}" data-pace="${key}">${m.label}</button>
+      `).join('')}
+    </div>
+    <div class="toggle-group-label">ERS-modus</div>
+    <div class="toggle-group" id="ersModeGroup">
+      ${Object.entries(currentErsModes).map(([key, m]) => `
+        <button type="button" class="toggle-btn ${key === ersMode ? 'selected' : ''}" data-ers="${key}">${m.label}</button>
+      `).join('')}
+    </div>
+    <div class="strategy-preview" id="strategyPreview"></div>
+    <div class="controls-grid">
+      <div><button class="ghost" type="button" id="resetStintsBtn">Wis</button></div>
+      <div><button class="primary" id="duelBtn" disabled>Kies eerst een strategie</button></div>
+    </div>
+  `;
+  document.querySelectorAll('[data-add]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (stints.length >= maxStints) return;
+      stints.push(btn.dataset.add);
+      renderStints();
+    });
+  });
+  document.getElementById('resetStintsBtn').addEventListener('click', () => {
+    stints = [];
+    renderStints();
+  });
+  document.querySelectorAll('[data-pace]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      paceMode = btn.dataset.pace;
+      document.querySelectorAll('[data-pace]').forEach(b => b.classList.toggle('selected', b.dataset.pace === paceMode));
+      renderStints();
+    });
+  });
+  document.querySelectorAll('[data-ers]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      ersMode = btn.dataset.ers;
+      document.querySelectorAll('[data-ers]').forEach(b => b.classList.toggle('selected', b.dataset.ers === ersMode));
+      renderStints();
+    });
+  });
+  document.getElementById('duelBtn').addEventListener('click', runDuel);
+  renderStints();
+}
+
+function computeStrategyPreview(compounds) {
+  const bonus = stints.reduce((sum, c) => sum + compounds[c].bonus, 0)
+    + currentPaceModes[paceMode].bonus + currentErsModes[ersMode].bonus;
+  const risk = stints.reduce((sum, c) => sum + compounds[c].risk, 0) + Math.max(0, stints.length - 2)
+    + currentPaceModes[paceMode].risk + currentErsModes[ersMode].risk;
+  return { bonus, risk };
+}
+
+function renderStints() {
+  const seqEl = document.getElementById('stintSequence');
+  seqEl.innerHTML = stints.length
+    ? stints.map(c => `<span class="tyre-badge ${c}">${c[0].toUpperCase()}</span>`).join('<span style="color:var(--ink-muted);">→</span>')
+    : '<span class="placeholder">Nog geen stints gekozen.</span>';
+
+  const valid = stints.length >= minStints && stints.length <= maxStints;
+  const previewEl = document.getElementById('strategyPreview');
+  if (valid) {
+    const { bonus, risk } = computeStrategyPreview(currentCompounds);
+    previewEl.innerHTML = `Bonus <strong>+${bonus}</strong> · risico <strong>±${risk}</strong>`;
+  } else {
+    previewEl.textContent = '';
+  }
+
+  document.querySelectorAll('[data-add]').forEach(btn => { btn.disabled = stints.length >= maxStints; });
+  const duelBtn = document.getElementById('duelBtn');
+  duelBtn.disabled = !valid;
+  duelBtn.textContent = valid ? 'Start het duel' : `Kies minstens ${minStints} stints`;
+}
+
+async function runDuel() {
+  if (stints.length < minStints || !selectedOpponentId) return;
+  const btn = document.getElementById('duelBtn');
+  btn.disabled = true;
+  setStatus('');
+  try {
+    const result = await apiPost('headtohead.php', {
+      mode: currentMode,
+      opponent_team_id: selectedOpponentId,
+      compounds: stints.join(','),
+      pace_mode: paceMode,
+      ers_mode: ersMode,
+    });
+    document.getElementById('resultHeading').textContent = result.challengerWon ? 'Gewonnen!' : 'Verloren';
+    document.getElementById('resultBody').innerHTML = `
+      <div class="duel-scores">
+        <div class="duel-score ${result.challengerWon ? 'winner' : ''}">
+          <div class="name">${currentTeam.name}</div>
+          <div class="value">${result.challengerScore}</div>
+        </div>
+        <div class="duel-vs">VS</div>
+        <div class="duel-score ${!result.challengerWon ? 'winner' : ''}">
+          <div class="name">${result.opponentName}</div>
+          <div class="value">${result.opponentScore}</div>
+        </div>
+      </div>
+      <p style="text-align:center; color:var(--ink-secondary); font-size:13px;">
+        ${result.challengerWon ? `+€${result.bonus}M budget — nu €${result.budget}M.` : `Geen bonus deze keer. Budget blijft €${result.budget}M.`}
+      </p>
+    `;
+    const resultCard = document.getElementById('resultCard');
+    resultCard.style.display = 'block';
+    resultCard.classList.remove('revealed');
+    requestAnimationFrame(() => resultCard.classList.add('revealed'));
+    loadHistory();
+    btn.disabled = false;
+  } catch (e) {
+    setStatus(e.message, true);
+    btn.disabled = false;
+  }
+}
+
+async function loadHistory() {
+  const el = document.getElementById('historyArea');
+  el.textContent = 'Laden…';
+  try {
+    const data = await apiGet(`headtohead.php?mode=${currentMode}&history=1`);
+    if (!data.history.length) {
+      el.innerHTML = '<p style="color:var(--ink-secondary); font-size:13px;">Nog geen uitdagingen gespeeld in deze modus.</p>';
+      return;
+    }
+    el.innerHTML = `
+      <table class="history">
+        <thead><tr><th>Tegenstander</th><th>Strategie</th><th>Resultaat</th><th>Datum</th></tr></thead>
+        <tbody>
+          ${data.history.map(h => `
+            <tr>
+              <td>${h.opponent_name} (${h.opponent_username})</td>
+              <td>${h.challenger_strategy}</td>
+              <td class="${h.challenger_won == 1 ? 'result-won' : 'result-lost'}">${h.challenger_won == 1 ? 'Gewonnen' : 'Verloren'}</td>
+              <td>${h.created_at}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (e) {
+    el.innerHTML = `<p style="color:var(--critical); font-size:13px;">${e.message}</p>`;
+  }
+}
+
+(async function guardAndInit() {
+  const me = await apiGet('me.php');
+  if (!me.loggedIn) {
+    window.location.href = 'manager-login.html';
+    return;
+  }
+  document.getElementById('pageWrap').style.display = 'block';
+  loadState();
+})();
+</script>
+</body>
+</html>

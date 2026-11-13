@@ -76,6 +76,23 @@ function f1hub_team_score($carRating, $drivers, $strategy, $riskReduction = 0) {
 }
 
 /**
+ * Head-to-head (v1.4): vergelijkt twee teams rechtstreeks met elkaar, zelfde
+ * scoreformule als f1hub_team_score() (geen nieuw model). De tegenstander
+ * speelt geen actieve rol — hun strategie wordt willekeurig bepaald door de
+ * aanroeper (zie manager/api/headtohead.php), net als de AI-tegenstanders in
+ * f1hub_simulate_race().
+ */
+function f1hub_simulate_duel($challengerRating, $challengerDrivers, $challengerStrategy, $challengerRiskReduction, $opponentRating, $opponentDrivers, $opponentStrategy, $opponentRiskReduction) {
+    $challengerScore = f1hub_team_score($challengerRating, $challengerDrivers, $challengerStrategy, $challengerRiskReduction);
+    $opponentScore = f1hub_team_score($opponentRating, $opponentDrivers, $opponentStrategy, $opponentRiskReduction);
+    return [
+        'challengerScore' => $challengerScore,
+        'opponentScore' => $opponentScore,
+        'challengerWon' => $challengerScore > $opponentScore,
+    ];
+}
+
+/**
  * Simuleert één race: speler + 19 AI-teams, retourneert de volledige uitslag
  * (gesorteerd op score) en de positie/punten van de speler. $playerStrategy is
  * een array (zie f1hub_custom_strategy()), geen preset-sleutel meer sinds de

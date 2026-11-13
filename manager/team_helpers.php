@@ -1,16 +1,32 @@
 <?php
 require_once __DIR__ . '/f1_calendar.php';
 
-/** Haalt een team (incl. budget/engine_level/aero_level/hq_*_level) + coureurs op voor de ingelogde gebruiker in een modus. */
-function f1hub_get_team_full($pdo, $userId, $mode) {
-    $stmt = $pdo->prepare('SELECT id, name, color_hex, car_rating, budget, engine_level, aero_level, hq_windtunnel_level, hq_cfd_level, hq_simulator_level, hq_pitcrew_level FROM teams WHERE user_id = ? AND mode = ?');
-    $stmt->execute([$userId, $mode]);
-    $team = $stmt->fetch();
-    if (!$team) return null;
+const F1HUB_TEAM_COLUMNS = 'id, name, color_hex, car_rating, budget, engine_level, aero_level, hq_windtunnel_level, hq_cfd_level, hq_simulator_level, hq_pitcrew_level';
+
+/** Voegt de coureurs van een team toe aan het team-array (muteert niet, retourneert het aangevulde array). */
+function f1hub_attach_drivers($pdo, $team) {
     $dstmt = $pdo->prepare('SELECT id, name, pace, consistency, contract_races_left FROM drivers WHERE team_id = ?');
     $dstmt->execute([$team['id']]);
     $team['drivers'] = $dstmt->fetchAll();
     return $team;
+}
+
+/** Haalt een team (incl. budget/engine_level/aero_level/hq_*_level) + coureurs op voor de ingelogde gebruiker in een modus. */
+function f1hub_get_team_full($pdo, $userId, $mode) {
+    $stmt = $pdo->prepare('SELECT ' . F1HUB_TEAM_COLUMNS . ' FROM teams WHERE user_id = ? AND mode = ?');
+    $stmt->execute([$userId, $mode]);
+    $team = $stmt->fetch();
+    if (!$team) return null;
+    return f1hub_attach_drivers($pdo, $team);
+}
+
+/** Haalt een team (zelfde vorm als f1hub_get_team_full()) op via zijn team-id, voor head-to-head-tegenstanders (v1.4). */
+function f1hub_get_team_by_id($pdo, $teamId) {
+    $stmt = $pdo->prepare('SELECT ' . F1HUB_TEAM_COLUMNS . ' FROM teams WHERE id = ?');
+    $stmt->execute([$teamId]);
+    $team = $stmt->fetch();
+    if (!$team) return null;
+    return f1hub_attach_drivers($pdo, $team);
 }
 
 /** Bepaalt de eerstvolgende te spelen race voor dit team, of null als er (nu) geen is. */

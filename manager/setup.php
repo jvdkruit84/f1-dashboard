@@ -82,6 +82,18 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS scouted_drivers (
     CONSTRAINT fk_scouted_team FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+$pdo->exec("CREATE TABLE IF NOT EXISTS headtohead_matches (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    mode ENUM('season','career') NOT NULL,
+    challenger_team_id INT UNSIGNED NOT NULL,
+    opponent_team_id INT UNSIGNED NOT NULL,
+    challenger_strategy VARCHAR(30) NOT NULL,
+    challenger_won TINYINT(1) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_h2h_challenger FOREIGN KEY (challenger_team_id) REFERENCES teams(id) ON DELETE CASCADE,
+    CONSTRAINT fk_h2h_opponent FOREIGN KEY (opponent_team_id) REFERENCES teams(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
 // idempotente kolom-toevoeging (veilig op een DB met bestaande teams/spelers)
 function f1hub_add_column_if_missing($pdo, $table, $column, $definition) {
     $stmt = $pdo->prepare(
@@ -106,4 +118,4 @@ f1hub_add_column_if_missing($pdo, 'teams', 'hq_simulator_level', 'hq_simulator_l
 f1hub_add_column_if_missing($pdo, 'teams', 'hq_pitcrew_level', 'hq_pitcrew_level TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER hq_simulator_level');
 f1hub_add_column_if_missing($pdo, 'drivers', 'contract_races_left', 'contract_races_left TINYINT UNSIGNED NOT NULL DEFAULT 8 AFTER consistency');
 
-echo "Setup voltooid: users, teams, drivers, race_results, replay_attempts, scouted_drivers zijn aangemaakt (of bestonden al).\n";
+echo "Setup voltooid: users, teams, drivers, race_results, replay_attempts, scouted_drivers, headtohead_matches zijn aangemaakt (of bestonden al).\n";
