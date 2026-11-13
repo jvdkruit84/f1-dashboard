@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/f1_calendar.php';
 
-const F1HUB_TEAM_COLUMNS = 'id, name, color_hex, car_rating, budget, engine_level, aero_level, hq_windtunnel_level, hq_cfd_level, hq_simulator_level, hq_pitcrew_level';
+const F1HUB_TEAM_COLUMNS = 'id, name, color_hex, car_rating, budget, engine_level, aero_level, hq_windtunnel_level, hq_cfd_level, hq_simulator_level, hq_pitcrew_level, chassis_level, chassis_project_races_left';
 
 /** Voegt de coureurs van een team toe aan het team-array (muteert niet, retourneert het aangevulde array). */
 function f1hub_attach_drivers($pdo, $team) {
@@ -52,9 +52,11 @@ function f1hub_next_race($pdo, $team, $mode) {
     return null;
 }
 
-/** Effectieve car_rating inclusief motorbonus (+4 per niveau boven 1), alleen gebruikt bij het rijden van races. */
+/** Effectieve car_rating incl. motorbonus (+4/niveau) en chassisbonus (+3/niveau), alleen gebruikt bij het rijden van races. */
 function f1hub_effective_car_rating($team) {
-    return (int)$team['car_rating'] + ((int)$team['engine_level'] - 1) * 4;
+    return (int)$team['car_rating']
+        + ((int)$team['engine_level'] - 1) * 4
+        + ((int)$team['chassis_level'] - 1) * 3;
 }
 
 // kosten om van niveau N naar N+1 te gaan; index 0 = 1->2, ... index 3 = 4->5. Max niveau 5.
@@ -92,3 +94,7 @@ function f1hub_stop_penalty_reduction($pitcrewLevel) {
 // Contractverloop (v1.3): vaste looptijd (in races) en vaste verlengingsprijs voor elke coureur.
 const F1HUB_CONTRACT_LENGTH = 8;
 const F1HUB_CONTRACT_RENEWAL_COST = 10;
+
+// Chassis-ontwikkelproject (v1.6): een gestart project duurt dit aantal gespeelde races
+// voordat het niveau daadwerkelijk omhoog gaat (zelfde kostencurve als Motor/Aero).
+const F1HUB_CHASSIS_PROJECT_DURATION = 3;

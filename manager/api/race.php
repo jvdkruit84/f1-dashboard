@@ -89,6 +89,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$team['id']]);
     }
 
+    $chassisProjectCompleted = false;
+    if ((int)$team['chassis_project_races_left'] > 0) {
+        $racesLeft = (int)$team['chassis_project_races_left'] - 1;
+        if ($racesLeft <= 0) {
+            $stmt = $pdo->prepare('UPDATE teams SET chassis_level = chassis_level + 1, chassis_project_races_left = 0 WHERE id = ?');
+            $stmt->execute([$team['id']]);
+            $chassisProjectCompleted = true;
+        } else {
+            $stmt = $pdo->prepare('UPDATE teams SET chassis_project_races_left = ? WHERE id = ?');
+            $stmt->execute([$racesLeft, $team['id']]);
+        }
+    }
+
     f1hub_json([
         'ok' => true,
         'raceName' => $next['raceName'],
@@ -97,6 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'budget' => (int)$team['budget'] + $result['points'],
         'grid' => $result['grid'],
         'expiredDrivers' => array_column($expired, 'name'),
+        'chassisProjectCompleted' => $chassisProjectCompleted,
     ]);
 }
 

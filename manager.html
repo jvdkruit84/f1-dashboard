@@ -542,11 +542,15 @@ async function loadStandingsMini(mode) {
 }
 
 function renderPartCard(opts) {
+  const inProgress = !!opts.projectRacesLeft;
   const atMax = opts.nextCost === null;
   const canAfford = !atMax && opts.nextCost <= opts.budget;
   const segments = Array.from({ length: opts.maxLevel }, (_, i) =>
     `<div class="engine-seg ${i < opts.level ? 'filled' : ''} ${i === opts.level - 1 ? 'current' : ''}"></div>`
   ).join('');
+  const btnLabel = inProgress
+    ? `In ontwikkeling — nog ${opts.projectRacesLeft} races`
+    : (atMax ? 'Max. niveau' : (canAfford ? `Upgrade (€${opts.nextCost}M)` : `Onvoldoende budget (€${opts.nextCost}M)`));
   return `
     <div class="engine-card">
       <div class="engine-header">
@@ -554,8 +558,8 @@ function renderPartCard(opts) {
           <div class="engine-title">${opts.title}</div>
           <div class="engine-sub">Niveau ${opts.level} / ${opts.maxLevel} · ${opts.subtitle}</div>
         </div>
-        <button id="${opts.btnId}" style="width:auto;" ${atMax || !canAfford ? 'disabled' : ''}>
-          ${atMax ? 'Max. niveau' : (canAfford ? `Upgrade (€${opts.nextCost}M)` : `Onvoldoende budget (€${opts.nextCost}M)`)}
+        <button id="${opts.btnId}" style="width:auto;" ${inProgress || atMax || !canAfford ? 'disabled' : ''}>
+          ${btnLabel}
         </button>
       </div>
       <div class="engine-bar">${segments}</div>
@@ -597,6 +601,11 @@ function renderDashboard(data) {
     ${renderPartCard({
       title: 'Aerodynamica', level: team.aero_level, maxLevel: data.partMaxLevel, nextCost: data.nextAeroCost,
       budget: team.budget, subtitle: `risico −${team.aero_level - 1} bij elke strategie`, btnId: 'aeroUpgradeBtn',
+    })}
+    ${renderPartCard({
+      title: 'Chassis', level: team.chassis_level, maxLevel: data.partMaxLevel, nextCost: data.nextChassisCost,
+      budget: team.budget, subtitle: `rating +${(team.chassis_level - 1) * 3}`, btnId: 'chassisUpgradeBtn',
+      projectRacesLeft: team.chassis_project_races_left,
     })}
 
     <h2 style="margin-top:20px;">Stand</h2>
@@ -646,6 +655,12 @@ function renderDashboard(data) {
   document.getElementById('aeroUpgradeBtn').addEventListener('click', async () => {
     try {
       await apiPost('aero.php', { mode: currentMode });
+      renderTeamArea();
+    } catch (e) { setStatus(e.message, true); }
+  });
+  document.getElementById('chassisUpgradeBtn').addEventListener('click', async () => {
+    try {
+      await apiPost('chassis.php', { mode: currentMode });
       renderTeamArea();
     } catch (e) { setStatus(e.message, true); }
   });

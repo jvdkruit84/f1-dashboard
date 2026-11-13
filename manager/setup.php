@@ -117,5 +117,7 @@ f1hub_add_column_if_missing($pdo, 'teams', 'hq_cfd_level', 'hq_cfd_level TINYINT
 f1hub_add_column_if_missing($pdo, 'teams', 'hq_simulator_level', 'hq_simulator_level TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER hq_cfd_level');
 f1hub_add_column_if_missing($pdo, 'teams', 'hq_pitcrew_level', 'hq_pitcrew_level TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER hq_simulator_level');
 f1hub_add_column_if_missing($pdo, 'drivers', 'contract_races_left', 'contract_races_left TINYINT UNSIGNED NOT NULL DEFAULT 8 AFTER consistency');
+f1hub_add_column_if_missing($pdo, 'teams', 'chassis_level', 'chassis_level TINYINT UNSIGNED NOT NULL DEFAULT 1 AFTER hq_pitcrew_level');
+f1hub_add_column_if_missing($pdo, 'teams', 'chassis_project_races_left', 'chassis_project_races_left TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER chassis_level');
 
 echo "Setup voltooid: users, teams, drivers, race_results, replay_attempts, scouted_drivers, headtohead_matches zijn aangemaakt (of bestonden al).\n";

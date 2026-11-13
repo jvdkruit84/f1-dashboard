@@ -395,6 +395,7 @@ async function runRace() {
     document.getElementById('resultBody').innerHTML = `
       <p style="font-size:16px; margin-bottom:8px;"><strong>P${result.position}</strong> — ${result.points} punten (+€${result.points}M budget, nu €${result.budget}M)</p>
       ${result.expiredDrivers && result.expiredDrivers.length ? `<p style="color:var(--critical); font-size:13px; margin-bottom:8px;">Let op: het contract van ${result.expiredDrivers.join(' en ')} is verlopen — vind een vervanger via de <a href="manager-transfers.html" style="color:var(--critical);">transfermarkt</a>.</p>` : ''}
+      ${result.chassisProjectCompleted ? `<p style="color:var(--good); font-size:13px; margin-bottom:8px;">Chassis-project voltooid — niveau omhoog!</p>` : ''}
       <table class="grid-table">
         ${result.grid.map(g => `<tr class="${g.isPlayer ? 'player' : ''} ${podiumRowClass(g.position)}"><td>${positionCell(g.position)}</td><td>${g.label}</td></tr>`).join('')}
       </table>
