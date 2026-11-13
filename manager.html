@@ -574,6 +574,43 @@ function renderDashboard(data) {
 
   el.innerHTML = `
     ${team.drivers.length < 2 ? `<p style="color:var(--critical); font-size:13px; margin-bottom:12px;">Je team is niet compleet — ga naar de <a href="manager-transfers.html" style="color:var(--critical);">Transfermarkt</a> om een coureur te tekenen.</p>` : ''}
+
+    <h2>Wat kun je doen?</h2>
+    <p style="color:var(--ink-secondary); font-size:12px; margin-top:-10px; margin-bottom:14px;">Eerst je team opbouwen, dan racen, dan kijken hoe je ervoor staat.</p>
+    <div class="feature-grid">
+      <a class="feature-card" href="manager-transfers.html">
+        <div class="icon">💰</div>
+        <div class="title">1. Transfermarkt</div>
+        <div class="desc">Scout coureurs om hun kwaliteiten en vraagprijs te onthullen, en teken ze.</div>
+      </a>
+      <a class="feature-card" href="manager-hq.html">
+        <div class="icon">🏢</div>
+        <div class="title">2. Hoofdkwartier</div>
+        <div class="desc">Investeer in windtunnel, CFD-simulator, racesimulator en pitcrew-faciliteiten, en train je coureurs.</div>
+      </a>
+      <a class="feature-card" href="manager-race.html">
+        <div class="icon">🏁</div>
+        <div class="title">3. Race-weekend</div>
+        <div class="desc">Kies een bandenstrategie en rij de eerstvolgende race in deze modus.</div>
+      </a>
+      <a class="feature-card" href="manager-replay.html">
+        <div class="icon">⏮️</div>
+        <div class="title">Race Replay</div>
+        <div class="desc">Neem een al verreden echte GP over en probeer het echte resultaat te verbeteren.</div>
+      </a>
+      <a class="feature-card" href="manager-headtohead.html">
+        <div class="icon">⚔️</div>
+        <div class="title">Head-to-head</div>
+        <div class="desc">Daag een ander team uit op basis van hun huidige teamgegevens.</div>
+      </a>
+      <a class="feature-card" href="manager-standings.html">
+        <div class="icon">🏆</div>
+        <div class="title">Stand</div>
+        <div class="desc">Bekijk de publieke ranglijst van alle Formule1Hub Manager-teams.</div>
+      </a>
+    </div>
+
+    <h2 style="margin-top:24px;">Jouw team</h2>
     <div class="team-card">
       <div class="team-swatch" style="background:#${team.color_hex}"></div>
       <div class="team-meta">
@@ -611,41 +648,6 @@ function renderDashboard(data) {
 
     <h2 style="margin-top:20px;">Stand</h2>
     <div class="timeline-card" id="standingsMini">Laden…</div>
-
-    <h2 style="margin-top:24px;">Wat kun je doen?</h2>
-    <p style="color:var(--ink-secondary); font-size:12px; margin-top:-10px; margin-bottom:14px;">Eerst je team opbouwen, dan racen, dan kijken hoe je ervoor staat.</p>
-    <div class="feature-grid">
-      <a class="feature-card" href="manager-transfers.html">
-        <div class="icon">💰</div>
-        <div class="title">1. Transfermarkt</div>
-        <div class="desc">Scout coureurs om hun kwaliteiten en vraagprijs te onthullen, en teken ze.</div>
-      </a>
-      <a class="feature-card" href="manager-hq.html">
-        <div class="icon">🏢</div>
-        <div class="title">2. Hoofdkwartier</div>
-        <div class="desc">Investeer in windtunnel, CFD-simulator, racesimulator en pitcrew-faciliteiten, en train je coureurs.</div>
-      </a>
-      <a class="feature-card" href="manager-race.html">
-        <div class="icon">🏁</div>
-        <div class="title">3. Race-weekend</div>
-        <div class="desc">Kies een bandenstrategie en rij de eerstvolgende race in deze modus.</div>
-      </a>
-      <a class="feature-card" href="manager-replay.html">
-        <div class="icon">⏮️</div>
-        <div class="title">Race Replay</div>
-        <div class="desc">Neem een al verreden echte GP over en probeer het echte resultaat te verbeteren.</div>
-      </a>
-      <a class="feature-card" href="manager-headtohead.html">
-        <div class="icon">⚔️</div>
-        <div class="title">Head-to-head</div>
-        <div class="desc">Daag een ander team uit op basis van hun huidige teamgegevens.</div>
-      </a>
-      <a class="feature-card" href="manager-standings.html">
-        <div class="icon">🏆</div>
-        <div class="title">Stand</div>
-        <div class="desc">Bekijk de publieke ranglijst van alle Formule1Hub Manager-teams.</div>
-      </a>
-    </div>
   `;
 
   document.getElementById('engineUpgradeBtn').addEventListener('click', async () => {
