@@ -11,15 +11,32 @@ const F1HUB_TYRE_COMPOUNDS = [
 const F1HUB_MIN_STINTS = 2;
 const F1HUB_MAX_STINTS = 3;
 
+// Rij-tempo & ERS-modus (v1.2): twee extra, onafhankelijke bonus/risico-hefbomen
+// bovenop de bandenstrategie, zelfde mechaniek als F1HUB_TYRE_COMPOUNDS hierboven.
+const F1HUB_PACE_MODES = [
+    'conserve' => ['label' => 'Banden sparen', 'bonus' => -1, 'risk' => -1.5],
+    'balanced' => ['label' => 'Gebalanceerd',  'bonus' => 0,  'risk' => 0],
+    'push'     => ['label' => 'Pushen',        'bonus' => 2,  'risk' => 2.5],
+];
+const F1HUB_ERS_MODES = [
+    'conserve' => ['label' => 'Sparen',     'bonus' => -1, 'risk' => -0.5],
+    'neutral'  => ['label' => 'Neutraal',   'bonus' => 0,  'risk' => 0],
+    'overtake' => ['label' => 'Inhalen',    'bonus' => 2,  'risk' => 1],
+    'defend'   => ['label' => 'Verdedigen', 'bonus' => 0,  'risk' => -1],
+];
+
 /**
  * Bouwt een strategie-array (bonus/risk/tyres/label) uit een bandenvolgorde.
  * $stopPenaltyReduction (0-0.8, van Pitcrew-faciliteiten, v1.1) verlaagt de
- * risicostraf van een extra pitstop boven de verplichte eerste.
+ * risicostraf van een extra pitstop boven de verplichte eerste. $paceMode en
+ * $ersMode (v1.2) tellen hun eigen bonus/risico op bovenop de bandenkeuze.
  */
-function f1hub_custom_strategy(array $compounds, $stopPenaltyReduction = 0) {
-    $bonus = array_sum(array_map(fn($c) => F1HUB_TYRE_COMPOUNDS[$c]['bonus'], $compounds));
+function f1hub_custom_strategy(array $compounds, $stopPenaltyReduction = 0, $paceMode = 'balanced', $ersMode = 'neutral') {
+    $bonus = array_sum(array_map(fn($c) => F1HUB_TYRE_COMPOUNDS[$c]['bonus'], $compounds))
+        + F1HUB_PACE_MODES[$paceMode]['bonus'] + F1HUB_ERS_MODES[$ersMode]['bonus'];
     $risk = array_sum(array_map(fn($c) => F1HUB_TYRE_COMPOUNDS[$c]['risk'], $compounds))
-        + max(0, count($compounds) - 2) * (1 - $stopPenaltyReduction);
+        + max(0, count($compounds) - 2) * (1 - $stopPenaltyReduction)
+        + F1HUB_PACE_MODES[$paceMode]['risk'] + F1HUB_ERS_MODES[$ersMode]['risk'];
     return [
         'bonus' => $bonus,
         'risk' => $risk,
@@ -34,6 +51,16 @@ function f1hub_random_compounds() {
     $compounds = [];
     for ($i = 0; $i < $n; $i++) $compounds[] = $keys[array_rand($keys)];
     return $compounds;
+}
+
+function f1hub_random_pace_mode() {
+    $keys = array_keys(F1HUB_PACE_MODES);
+    return $keys[array_rand($keys)];
+}
+
+function f1hub_random_ers_mode() {
+    $keys = array_keys(F1HUB_ERS_MODES);
+    return $keys[array_rand($keys)];
 }
 
 function f1hub_random_float($min, $max) {
@@ -71,7 +98,7 @@ function f1hub_simulate_race($playerCarRating, $playerDrivers, $playerStrategy, 
             ['pace' => mt_rand(50, 95), 'consistency' => mt_rand(50, 95)],
             ['pace' => mt_rand(50, 95), 'consistency' => mt_rand(50, 95)],
         ];
-        $aiStrategy = f1hub_custom_strategy(f1hub_random_compounds());
+        $aiStrategy = f1hub_custom_strategy(f1hub_random_compounds(), 0, f1hub_random_pace_mode(), f1hub_random_ers_mode());
         $entries[] = [
             'isPlayer' => false,
             'label' => 'AI-team ' . ($i + 1),

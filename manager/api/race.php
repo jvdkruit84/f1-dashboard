@@ -25,6 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         'compounds' => F1HUB_TYRE_COMPOUNDS,
         'minStints' => F1HUB_MIN_STINTS,
         'maxStints' => F1HUB_MAX_STINTS,
+        'paceModes' => F1HUB_PACE_MODES,
+        'ersModes' => F1HUB_ERS_MODES,
     ]);
 }
 
@@ -39,7 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             f1hub_json(['ok' => false, 'error' => 'Onbekende bandencompound.'], 422);
         }
     }
-    $strategy = f1hub_custom_strategy(array_values($compounds), f1hub_stop_penalty_reduction($team['hq_pitcrew_level']));
+    $paceMode = (string)($_POST['pace_mode'] ?? 'balanced');
+    if (!array_key_exists($paceMode, F1HUB_PACE_MODES)) {
+        f1hub_json(['ok' => false, 'error' => 'Onbekend rij-tempo.'], 422);
+    }
+    $ersMode = (string)($_POST['ers_mode'] ?? 'neutral');
+    if (!array_key_exists($ersMode, F1HUB_ERS_MODES)) {
+        f1hub_json(['ok' => false, 'error' => 'Onbekende ERS-modus.'], 422);
+    }
+    $strategy = f1hub_custom_strategy(array_values($compounds), f1hub_stop_penalty_reduction($team['hq_pitcrew_level']), $paceMode, $ersMode);
 
     $next = f1hub_next_race($pdo, $team, $mode);
     if (!$next) {

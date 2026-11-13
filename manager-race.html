@@ -80,6 +80,11 @@
   .compound-btn { flex: 1; padding: 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--page); cursor: pointer; font-weight: 700; font-size: 12px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.12s, border-color 0.12s; }
   .compound-btn:disabled { opacity: 0.4; cursor: not-allowed; }
   .compound-btn:not(:disabled):hover { border-color: var(--accent); transform: translateY(-2px); }
+  .toggle-group-label { color: var(--ink-secondary); font-size: 12px; margin: 14px 0 6px; }
+  .toggle-group { display: flex; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+  .toggle-btn { flex: 1; min-width: 90px; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--page); cursor: pointer; font-weight: 700; font-size: 11px; text-transform: uppercase; transition: transform 0.12s, border-color 0.12s, color 0.12s; }
+  .toggle-btn:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .toggle-btn.selected { border-color: var(--accent); color: var(--accent); }
   @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   #resultCard.revealed { animation: fadeInUp 0.4s ease both; }
   .stint-sequence { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 8px 0; flex-wrap: wrap; }
@@ -227,6 +232,10 @@ let currentCompounds = {};
 let minStints = 2;
 let maxStints = 3;
 let stints = [];
+let currentPaceModes = {};
+let currentErsModes = {};
+let paceMode = 'balanced';
+let ersMode = 'neutral';
 
 async function apiPost(path, params) {
   const res = await fetch(`${API}/${path}`, { method: 'POST', body: new URLSearchParams(params) });
@@ -280,6 +289,10 @@ async function loadRaceState() {
     currentCompounds = data.compounds;
     minStints = data.minStints;
     maxStints = data.maxStints;
+    currentPaceModes = data.paceModes;
+    currentErsModes = data.ersModes;
+    paceMode = 'balanced';
+    ersMode = 'neutral';
     el.innerHTML = `
       <p style="font-size:14px; font-weight:700; margin-bottom:6px;">${data.nextRace.raceName}</p>
       <p style="color:var(--ink-secondary); font-size:12px;">${data.team.name} — auto-rating ${data.team.car_rating}/100 · budget €${data.team.budget}M</p>
@@ -292,6 +305,18 @@ async function loadRaceState() {
         `).join('')}
       </div>
       <div class="stint-sequence" id="stintSequence"><span class="placeholder">Nog geen stints gekozen.</span></div>
+      <div class="toggle-group-label">Rij-tempo</div>
+      <div class="toggle-group" id="paceModeGroup">
+        ${Object.entries(currentPaceModes).map(([key, m]) => `
+          <button type="button" class="toggle-btn ${key === paceMode ? 'selected' : ''}" data-pace="${key}">${m.label}</button>
+        `).join('')}
+      </div>
+      <div class="toggle-group-label">ERS-modus</div>
+      <div class="toggle-group" id="ersModeGroup">
+        ${Object.entries(currentErsModes).map(([key, m]) => `
+          <button type="button" class="toggle-btn ${key === ersMode ? 'selected' : ''}" data-ers="${key}">${m.label}</button>
+        `).join('')}
+      </div>
       <div class="strategy-preview" id="strategyPreview"></div>
       <div class="controls-grid">
         <div><button class="ghost" type="button" id="resetStintsBtn">Wis</button></div>
@@ -309,6 +334,20 @@ async function loadRaceState() {
       stints = [];
       renderStints();
     });
+    document.querySelectorAll('[data-pace]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        paceMode = btn.dataset.pace;
+        document.querySelectorAll('[data-pace]').forEach(b => b.classList.toggle('selected', b.dataset.pace === paceMode));
+        renderStints();
+      });
+    });
+    document.querySelectorAll('[data-ers]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        ersMode = btn.dataset.ers;
+        document.querySelectorAll('[data-ers]').forEach(b => b.classList.toggle('selected', b.dataset.ers === ersMode));
+        renderStints();
+      });
+    });
     document.getElementById('raceBtn').addEventListener('click', runRace);
     renderStints();
   } catch (e) {
@@ -317,8 +356,10 @@ async function loadRaceState() {
 }
 
 function computeStrategyPreview(compounds) {
-  const bonus = stints.reduce((sum, c) => sum + compounds[c].bonus, 0);
-  const risk = stints.reduce((sum, c) => sum + compounds[c].risk, 0) + Math.max(0, stints.length - 2);
+  const bonus = stints.reduce((sum, c) => sum + compounds[c].bonus, 0)
+    + currentPaceModes[paceMode].bonus + currentErsModes[ersMode].bonus;
+  const risk = stints.reduce((sum, c) => sum + compounds[c].risk, 0) + Math.max(0, stints.length - 2)
+    + currentPaceModes[paceMode].risk + currentErsModes[ersMode].risk;
   return { bonus, risk };
 }
 
@@ -348,7 +389,7 @@ async function runRace() {
   const btn = document.getElementById('raceBtn');
   btn.disabled = true;
   try {
-    const result = await apiPost('race.php', { mode: currentMode, compounds: stints.join(',') });
+    const result = await apiPost('race.php', { mode: currentMode, compounds: stints.join(','), pace_mode: paceMode, ers_mode: ersMode });
     document.getElementById('resultHeading').textContent = `Uitslag — ${result.raceName}`;
     document.getElementById('resultBody').innerHTML = `
       <p style="font-size:16px; margin-bottom:8px;"><strong>P${result.position}</strong> — ${result.points} punten (+€${result.points}M budget, nu €${result.budget}M)</p>
