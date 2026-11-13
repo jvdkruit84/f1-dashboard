@@ -7,7 +7,7 @@ function f1hub_get_team_full($pdo, $userId, $mode) {
     $stmt->execute([$userId, $mode]);
     $team = $stmt->fetch();
     if (!$team) return null;
-    $dstmt = $pdo->prepare('SELECT id, name, pace, consistency FROM drivers WHERE team_id = ?');
+    $dstmt = $pdo->prepare('SELECT id, name, pace, consistency, contract_races_left FROM drivers WHERE team_id = ?');
     $dstmt->execute([$team['id']]);
     $team['drivers'] = $dstmt->fetchAll();
     return $team;
@@ -72,3 +72,7 @@ const F1HUB_TRAINING_STAT_CAP = 99;
 function f1hub_stop_penalty_reduction($pitcrewLevel) {
     return ($pitcrewLevel - 1) * 0.2;
 }
+
+// Contractverloop (v1.3): vaste looptijd (in races) en vaste verlengingsprijs voor elke coureur.
+const F1HUB_CONTRACT_LENGTH = 8;
+const F1HUB_CONTRACT_RENEWAL_COST = 10;

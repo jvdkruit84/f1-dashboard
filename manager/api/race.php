@@ -31,6 +31,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (count($team['drivers']) !== 2) {
+        f1hub_json(['ok' => false, 'error' => 'Je hebt geen volledig team — vind een vervanger via de transfermarkt.'], 422);
+    }
+
     $compounds = array_filter(explode(',', (string)($_POST['compounds'] ?? '')));
     $count = count($compounds);
     if ($count < F1HUB_MIN_STINTS || $count > F1HUB_MAX_STINTS) {
@@ -74,6 +78,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         f1hub_json(['ok' => false, 'error' => 'Opslaan van de uitslag is mislukt.'], 500);
     }
 
+    $stmt = $pdo->prepare('UPDATE drivers SET contract_races_left = contract_races_left - 1 WHERE team_id = ? AND contract_races_left > 0');
+    $stmt->execute([$team['id']]);
+
+    $stmt = $pdo->prepare('SELECT id, name FROM drivers WHERE team_id = ? AND contract_races_left <= 0');
+    $stmt->execute([$team['id']]);
+    $expired = $stmt->fetchAll();
+    if ($expired) {
+        $stmt = $pdo->prepare('DELETE FROM drivers WHERE team_id = ? AND contract_races_left <= 0');
+        $stmt->execute([$team['id']]);
+    }
+
     f1hub_json([
         'ok' => true,
         'raceName' => $next['raceName'],
@@ -81,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'points' => $result['points'],
         'budget' => (int)$team['budget'] + $result['points'],
         'grid' => $result['grid'],
+        'expiredDrivers' => array_column($expired, 'name'),
     ]);
 }
 

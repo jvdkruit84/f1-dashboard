@@ -358,7 +358,10 @@ function driverAvatar(name, teamColorHex) {
   return `<div class="driver-avatar" style="background:${bg}">${driverInitials(name)}</div>`;
 }
 function driverRow(d, teamColorHex) {
-  return `<div class="driver-row"><div class="driver-row-left">${driverAvatar(d.name, teamColorHex)}<span class="driver-name">${d.name}</span></div><span>pace ${d.pace} · consistentie ${d.consistency}</span></div>`;
+  const contract = d.contract_races_left !== undefined
+    ? `<span style="${d.contract_races_left <= 2 ? 'color:var(--critical);' : ''}"> · contract: nog ${d.contract_races_left} races</span>`
+    : '';
+  return `<div class="driver-row"><div class="driver-row-left">${driverAvatar(d.name, teamColorHex)}<span class="driver-name">${d.name}</span></div><span>pace ${d.pace} · consistentie ${d.consistency}${contract}</span></div>`;
 }
 
 async function apiPost(path, params) {
@@ -469,6 +472,7 @@ function renderDashboard(data) {
   const team = data.team;
 
   el.innerHTML = `
+    ${team.drivers.length < 2 ? `<p style="color:var(--critical); font-size:13px; margin-bottom:12px;">Je team is niet compleet — ga naar de <a href="manager-transfers.html" style="color:var(--critical);">Transfermarkt</a> om een coureur te tekenen.</p>` : ''}
     <div class="team-card">
       <div class="team-swatch" style="background:#${team.color_hex}"></div>
       <div class="team-meta">

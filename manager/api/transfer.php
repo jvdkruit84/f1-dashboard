@@ -17,20 +17,24 @@ if (!$team) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    f1hub_json(['ok' => true, 'team' => $team, 'driverPool' => F1HUB_DRIVER_POOL]);
+    f1hub_json([
+        'ok' => true,
+        'team' => $team,
+        'driverPool' => F1HUB_DRIVER_POOL,
+        'contractRenewalCost' => F1HUB_CONTRACT_RENEWAL_COST,
+    ]);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $releaseDriverId = (int)($_POST['release_driver_id'] ?? 0);
     $poolDriverId = (int)($_POST['pool_driver_id'] ?? 0);
+    $hasVacancy = count($team['drivers']) < 2;
 
     $releaseDriver = null;
-    $keepDriver = null;
     foreach ($team['drivers'] as $d) {
         if ((int)$d['id'] === $releaseDriverId) $releaseDriver = $d;
-        else $keepDriver = $d;
     }
-    if (!$releaseDriver) {
+    if (!$hasVacancy && !$releaseDriver) {
         f1hub_json(['ok' => false, 'error' => 'Die coureur hoort niet bij jouw team.'], 422);
     }
 
@@ -38,8 +42,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$poolDriver) {
         f1hub_json(['ok' => false, 'error' => 'Onbekende coureur gekozen.'], 422);
     }
-    if ($keepDriver && $keepDriver['name'] === $poolDriver['name']) {
-        f1hub_json(['ok' => false, 'error' => 'Deze coureur zit al in je team.'], 422);
+    foreach ($team['drivers'] as $d) {
+        if ((int)$d['id'] !== $releaseDriverId && $d['name'] === $poolDriver['name']) {
+            f1hub_json(['ok' => false, 'error' => 'Deze coureur zit al in je team.'], 422);
+        }
     }
 
     $stmt = $pdo->prepare('SELECT asking_price FROM scouted_drivers WHERE team_id = ? AND pool_driver_id = ?');
@@ -55,8 +61,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $pdo->beginTransaction();
     try {
-        $stmt = $pdo->prepare('DELETE FROM drivers WHERE id = ? AND team_id = ?');
-        $stmt->execute([$releaseDriverId, $team['id']]);
+        if ($releaseDriver) {
+            $stmt = $pdo->prepare('DELETE FROM drivers WHERE id = ? AND team_id = ?');
+            $stmt->execute([$releaseDriverId, $team['id']]);
+        }
 
         $stmt = $pdo->prepare('INSERT INTO drivers (team_id, name, pace, consistency) VALUES (?, ?, ?, ?)');
         $stmt->execute([$team['id'], $poolDriver['name'], $poolDriver['pace'], $poolDriver['consistency']]);

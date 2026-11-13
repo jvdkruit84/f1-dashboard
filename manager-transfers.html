@@ -224,6 +224,7 @@ let currentMode = 'season';
 let currentTeam = null;
 let releaseDriverId = null;
 let selectedPoolId = null;
+let contractRenewalCost = 10;
 
 function driverInitials(name) {
   const parts = (name || '').trim().split(/\s+/);
@@ -278,6 +279,7 @@ async function loadTransferState() {
   try {
     const data = await apiGet(`transfer.php?mode=${currentMode}`);
     currentTeam = data.team;
+    contractRenewalCost = data.contractRenewalCost;
     renderTransferArea();
   } catch (e) {
     el.innerHTML = `<p style="color:var(--ink-secondary); font-size:13px;">${e.message}</p>`;
@@ -295,19 +297,50 @@ function renderTransferArea() {
             ${driverAvatar(d.name, currentTeam.color_hex)}
             <div>
               <div class="name">${d.name}</div>
-              <div class="sub">pace ${d.pace} · consistentie ${d.consistency}</div>
+              <div class="sub" style="${d.contract_races_left <= 2 ? 'color:var(--critical);' : ''}">pace ${d.pace} · consistentie ${d.consistency} · contract: nog ${d.contract_races_left} races</div>
             </div>
           </div>
-          <button data-release="${d.id}">Vervangen</button>
+          <div style="display:flex; gap:8px;">
+            <button data-renew="${d.id}" style="width:auto;">Verlengen (€${contractRenewalCost}M)</button>
+            <button data-release="${d.id}" style="width:auto;">Vervangen</button>
+          </div>
         </div>
       `).join('')}
+      ${currentTeam.drivers.length < 2 ? `
+        <div class="driver-slot">
+          <div class="meta">
+            <div class="driver-avatar" style="background:#5a5a5f;">?</div>
+            <div>
+              <div class="name">Vacature</div>
+              <div class="sub">Deze stoel is leeg — teken een coureur om weer compleet te zijn.</div>
+            </div>
+          </div>
+          <button data-release="0" style="width:auto;">Kies coureur</button>
+        </div>
+      ` : ''}
     </div>
     <div id="poolArea"></div>
   `;
   document.querySelectorAll('[data-release]').forEach(btn => {
     btn.addEventListener('click', () => {
-      releaseDriverId = Number(btn.dataset.release);
+      releaseDriverId = Number(btn.dataset.release) || null;
       renderPool();
+    });
+  });
+  document.querySelectorAll('[data-renew]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try {
+        const result = await apiPost('contract.php', { mode: currentMode, driver_id: btn.dataset.renew });
+        currentTeam.budget = result.budget;
+        const driver = currentTeam.drivers.find(d => d.id === Number(btn.dataset.renew));
+        driver.contract_races_left = result.contractRacesLeft;
+        renderTransferArea();
+        setStatus(`Contract van ${driver.name} verlengd.`);
+      } catch (e) {
+        setStatus(e.message, true);
+        btn.disabled = false;
+      }
     });
   });
 }
@@ -315,8 +348,9 @@ function renderTransferArea() {
 async function renderPool() {
   selectedPoolId = null;
   const el = document.getElementById('poolArea');
-  const releaseDriver = currentTeam.drivers.find(d => d.id === releaseDriverId);
-  el.innerHTML = `<h2 style="margin-top:18px;">Kies een vervanger voor ${releaseDriver.name}</h2><p style="color:var(--ink-secondary); font-size:13px;">Laden…</p>`;
+  const releaseDriver = releaseDriverId ? currentTeam.drivers.find(d => d.id === releaseDriverId) : null;
+  const heading = releaseDriver ? `Kies een vervanger voor ${releaseDriver.name}` : 'Kies een coureur voor de vacante plek';
+  el.innerHTML = `<h2 style="margin-top:18px;">${heading}</h2><p style="color:var(--ink-secondary); font-size:13px;">Laden…</p>`;
   try {
     const data = await apiGet(`scout.php?mode=${currentMode}`);
     renderPoolGrid(releaseDriver, data);
@@ -328,8 +362,9 @@ async function renderPool() {
 function renderPoolGrid(releaseDriver, scoutData) {
   const el = document.getElementById('poolArea');
   const budget = scoutData.budget;
+  const heading = releaseDriver ? `Kies een vervanger voor ${releaseDriver.name}` : 'Kies een coureur voor de vacante plek';
   el.innerHTML = `
-    <h2 style="margin-top:18px;">Kies een vervanger voor ${releaseDriver.name}</h2>
+    <h2 style="margin-top:18px;">${heading}</h2>
     <div class="pool-grid" id="poolGrid">
       ${scoutData.pool.map(p => {
         if (!p.scouted) {
@@ -381,12 +416,12 @@ function renderPoolGrid(releaseDriver, scoutData) {
 }
 
 async function confirmTransfer() {
-  if (!releaseDriverId || !selectedPoolId) return;
+  if (!selectedPoolId) return;
   setStatus('');
   try {
     const data = await apiPost('transfer.php', {
       mode: currentMode,
-      release_driver_id: releaseDriverId,
+      release_driver_id: releaseDriverId || 0,
       pool_driver_id: selectedPoolId,
     });
     currentTeam = data.team;
