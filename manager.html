@@ -196,6 +196,18 @@
   .pos-badge.bronze { background: linear-gradient(135deg, #e0a06a, #8b4513); color: #fff; }
   .standings-mini-link { display: block; text-align: center; margin-top: 10px; color: var(--ink-secondary); font-size: 12px; text-decoration: none; }
   .standings-mini-link:hover { color: var(--ink-primary); }
+  .track-wrap { position: relative; background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+  .track-wrap svg { width: 100%; height: auto; display: block; }
+  .speed-legend { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 11px; color: var(--ink-muted); }
+  .speed-bar { flex: 1; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #3a6df0, #19a974, #ffcf40, #e10600); }
+  .drs-legend { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 11px; color: var(--ink-muted); }
+  .drs-legend .chip { width: 22px; height: 8px; border-radius: 4px; background: rgba(0,230,130,0.85); flex: none; }
+  .circuit-sub { color: var(--ink-muted); font-size: 11px; margin-top: 2px; }
+  .winners-list { margin-top: 14px; }
+  .winners-list h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); margin: 0 0 8px; }
+  .winner-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-secondary); padding: 5px 0; border-bottom: 1px solid var(--grid); }
+  .winner-row:last-child { border-bottom: none; }
+  .winner-row .year { color: var(--ink-primary); font-weight: 700; width: 44px; flex: none; }
 
   .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 12px; }
   .feature-card {
@@ -438,6 +450,7 @@ async function renderTeamArea() {
       const data = await apiGet(`dashboard.php?mode=${currentMode}`);
       renderDashboard(data);
       loadStandingsMini(currentMode);
+      loadCircuitLayout(data.flavorCircuit, data.circuitWinners);
     } catch (e) {
       setStatus(e.message, true);
     }
@@ -632,6 +645,22 @@ function renderDashboard(data) {
       ${renderTimelineItems(data, team)}
     </div>
 
+    <div id="circuitCard" style="display:none;">
+      <h2 id="circuitHeading" style="margin-top:20px;">Circuitlayout</h2>
+      <div class="circuit-sub" id="circuitSub" style="margin-top:-8px; margin-bottom:10px;"></div>
+      <div id="circuitStatus" style="color:var(--ink-secondary); font-size:13px; margin-bottom:10px;"></div>
+      <div id="circuitVisual" style="display:none;">
+        <div class="track-wrap"><svg id="circuitSvg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet"></svg></div>
+        <div class="speed-legend">
+          <span id="speedMinLabel">0 km/h</span>
+          <div class="speed-bar"></div>
+          <span id="speedMaxLabel">0 km/h</span>
+        </div>
+        <div class="drs-legend"><div class="chip"></div><span>DRS open (op basis van ruwe telemetrie van deze ronde, geen officiële FIA-zonetekening)</span></div>
+      </div>
+      <div id="circuitWinners"></div>
+    </div>
+
     ${renderPartCard({
       title: 'Motor', level: team.engine_level, maxLevel: data.partMaxLevel, nextCost: data.nextEngineCost,
       budget: team.budget, subtitle: `prestatiebonus +${(team.engine_level - 1) * 4}`, btnId: 'engineUpgradeBtn',
@@ -668,6 +697,229 @@ function renderDashboard(data) {
       renderTeamArea();
     } catch (e) { setStatus(e.message, true); }
   });
+}
+
+// --- Circuitlayout + DRS-zones (hergebruik van manager-race.html's logica) ---
+// Puur decoratief, niet-blokkerend: faalt dit (netwerk/rate-limit), dan blijft de rest
+// van het dashboard gewoon werken. Zelfde rate-limited apiGet()-stijl als circuit.html, maar
+// tegen OpenF1 i.p.v. de interne manager-API — vandaar een eigen naam (openf1Get) om niet te botsen.
+const OPENF1 = 'https://api.openf1.org/v1';
+let lastOpenf1CallAt = 0;
+async function openf1Get(path, attempt = 0) {
+  const minGap = 360;
+  const wait = Math.max(0, minGap - (Date.now() - lastOpenf1CallAt));
+  if (wait) await new Promise(r => setTimeout(r, wait));
+  lastOpenf1CallAt = Date.now();
+  const res = await fetch(`${OPENF1}/${path}`);
+  if (res.status === 429 && attempt < 6) {
+    await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
+    return openf1Get(path, attempt + 1);
+  }
+  if (!res.ok) throw new Error(`OpenF1-fout ${res.status}`);
+  return res.json();
+}
+
+function speedColor(t) {
+  const stops = [[58, 109, 240], [25, 169, 116], [255, 207, 64], [225, 6, 0]];
+  const scaled = Math.min(0.999, Math.max(0, t)) * (stops.length - 1);
+  const i = Math.floor(scaled);
+  const f = scaled - i;
+  const [r1, g1, b1] = stops[i];
+  const [r2, g2, b2] = stops[i + 1];
+  return `rgb(${Math.round(r1 + (r2 - r1) * f)},${Math.round(g1 + (g2 - g1) * f)},${Math.round(b1 + (b2 - b1) * f)})`;
+}
+
+/* DRS-codering gevalideerd met POC op Zandvoort/Monza 2024 (zie telemetry.html):
+   0/1 = dicht, 12/14 = open, 2/3/8 = overgang. Geen officiële OpenF1-spec. */
+function drsState(v) {
+  if (v === 0 || v === 1) return 'dicht';
+  if (v === 12 || v === 14) return 'open';
+  return 'overgang';
+}
+
+/** meeting.date_start is het begin van het GP-weekend (vrijdag), niet racedag zelf —
+    zoek de dichtstbijzijnde weekendstart vóór de racedatum, binnen een week. */
+async function resolveCircuitMeeting(flavorCircuit) {
+  const year = flavorCircuit.date.slice(0, 4);
+  const meetings = await openf1Get(`meetings?year=${year}`);
+  const raceTime = new Date(flavorCircuit.date).getTime();
+  let best = null, bestDiff = Infinity;
+  for (const m of meetings) {
+    const t = new Date(m.date_start).getTime();
+    const diff = raceTime - t;
+    if (diff >= 0 && diff <= 6 * 24 * 60 * 60 * 1000 && diff < bestDiff) {
+      best = m;
+      bestDiff = diff;
+    }
+  }
+  return best;
+}
+
+function renderCircuitWinners(circuitWinners) {
+  const el = document.getElementById('circuitWinners');
+  if (!circuitWinners || !circuitWinners.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div class="winners-list">
+      <h3>Winnaars laatste jaren</h3>
+      ${circuitWinners.map(w => `
+        <div class="winner-row"><span class="year">${w.year}</span><span>${w.driverName} (${w.constructorName})</span></div>
+      `).join('')}
+    </div>
+  `;
+}
+
+async function loadCircuitLayout(flavorCircuit, circuitWinners) {
+  const card = document.getElementById('circuitCard');
+  if (!card) return;
+  const statusEl = document.getElementById('circuitStatus');
+  const visualEl = document.getElementById('circuitVisual');
+  card.style.display = 'block';
+  visualEl.style.display = 'none';
+  document.getElementById('circuitHeading').textContent = 'Circuitlayout';
+  document.getElementById('circuitSub').textContent = '';
+  renderCircuitWinners(circuitWinners);
+
+  if (!flavorCircuit || !flavorCircuit.circuitId) {
+    statusEl.textContent = 'Geen circuit beschikbaar voor deze race.';
+    return;
+  }
+  statusEl.textContent = `Circuit laden (${flavorCircuit.circuitName || flavorCircuit.raceName})…`;
+
+  try {
+    const cacheKey = `circuitlayout_v2_${flavorCircuit.circuitId}_${flavorCircuit.date}`;
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem(cacheKey)); } catch (e) {}
+    if (cached && cached.points) {
+      renderCircuitTrack(cached, flavorCircuit);
+      statusEl.textContent = '';
+      visualEl.style.display = 'block';
+      return;
+    }
+
+    const meeting = await resolveCircuitMeeting(flavorCircuit);
+    if (!meeting) {
+      statusEl.textContent = 'Circuitlayout niet beschikbaar voor deze race.';
+      return;
+    }
+
+    const sessions = await openf1Get(`sessions?meeting_key=${meeting.meeting_key}`);
+    const session = sessions.find(s => s.session_name === 'Race') || sessions[0];
+    if (!session) { statusEl.textContent = 'Circuitlayout niet beschikbaar voor deze race.'; return; }
+
+    const drivers = await openf1Get(`drivers?session_key=${session.session_key}`);
+    if (!drivers.length) { statusEl.textContent = 'Circuitlayout niet beschikbaar voor deze race.'; return; }
+
+    // Probeer een paar coureurs tot er een met zichtbare DRS-activiteit op zijn snelste
+    // (niet-openingsronde) ronde gevonden is — anders kan de overlay toevallig leeg zijn
+    // (bv. lap 1 bij een standing start heeft sowieso nooit DRS).
+    let bestPoints = null;
+    let bestLapDuration = null;
+    let bestDrsCount = -1;
+    const attempts = drivers.slice(0, 5);
+    for (const d of attempts) {
+      const driverNum = d.driver_number;
+      let laps;
+      try {
+        laps = await openf1Get(`laps?session_key=${session.session_key}&driver_number=${driverNum}`);
+      } catch (e) { continue; }
+      const clean = laps.filter(l => l.lap_duration != null && !l.is_pit_out_lap && l.lap_number > 1);
+      const pool = clean.length ? clean : laps.filter(l => l.lap_duration != null && !l.is_pit_out_lap);
+      if (!pool.length) continue;
+      const fastest = pool.reduce((a, b) => (a.lap_duration < b.lap_duration ? a : b));
+
+      const start = new Date(fastest.date_start);
+      const next = laps.find(l => l.lap_number === fastest.lap_number + 1);
+      const end = next ? new Date(next.date_start) : new Date(start.getTime() + fastest.lap_duration * 1000 + 500);
+      const isoStart = start.toISOString().replace('Z', '');
+      const isoEnd = end.toISOString().replace('Z', '');
+
+      let location, carData;
+      try {
+        [location, carData] = await Promise.all([
+          openf1Get(`location?session_key=${session.session_key}&driver_number=${driverNum}&date>=${isoStart}&date<=${isoEnd}`),
+          openf1Get(`car_data?session_key=${session.session_key}&driver_number=${driverNum}&date>=${isoStart}&date<=${isoEnd}`),
+        ]);
+      } catch (e) { continue; }
+      if (location.length < 5 || carData.length < 5) continue;
+
+      const loc = location.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+      const samples = carData.slice().sort((a, b) => new Date(a.date) - new Date(b.date));
+      let j = 0;
+      const points = loc.map(p => {
+        const t = new Date(p.date).getTime();
+        while (j < samples.length - 1 && Math.abs(new Date(samples[j + 1].date) - t) <= Math.abs(new Date(samples[j].date) - t)) j++;
+        const s = samples[j];
+        return s ? { x: p.x, y: p.y, speed: s.speed, drs: s.drs } : null;
+      }).filter(p => p && p.speed != null);
+      if (points.length < 5) continue;
+
+      const drsCount = points.filter(p => drsState(p.drs) === 'open').length;
+      if (drsCount > bestDrsCount) {
+        bestPoints = points;
+        bestLapDuration = fastest.lap_duration;
+        bestDrsCount = drsCount;
+      }
+      if (drsCount > 0) break; // goed genoeg, niet meer coureurs proberen
+    }
+    if (!bestPoints) {
+      statusEl.textContent = 'Circuitlayout niet beschikbaar voor deze race.';
+      return;
+    }
+
+    const payload = { points: bestPoints, lapDuration: bestLapDuration };
+    try { localStorage.setItem(cacheKey, JSON.stringify(payload)); } catch (e) {}
+    renderCircuitTrack(payload, flavorCircuit);
+    statusEl.textContent = '';
+    visualEl.style.display = 'block';
+  } catch (e) {
+    // Puur decoratief — bij een fout (netwerk/rate-limit) tonen we een nette melding i.p.v. niets.
+    statusEl.textContent = 'Circuitlayout kon niet geladen worden (netwerk of rate-limit).';
+  }
+}
+
+function renderCircuitTrack(payload, flavorCircuit) {
+  const points = payload.points;
+  const xs = points.map(p => p.x), ys = points.map(p => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const padding = 40;
+  const vbW = 800, vbH = 600;
+  const scale = Math.min((vbW - padding * 2) / (maxX - minX || 1), (vbH - padding * 2) / (maxY - minY || 1));
+  const offX = (vbW - (maxX - minX) * scale) / 2;
+  const offY = (vbH - (maxY - minY) * scale) / 2;
+  const toSvg = (x, y) => [offX + (x - minX) * scale, vbH - (offY + (y - minY) * scale)];
+
+  const speeds = points.map(p => p.speed);
+  const minSpeed = Math.min(...speeds), maxSpeed = Math.max(...speeds);
+
+  let segments = '';
+  let drsSegments = '';
+  for (let i = 0; i < points.length - 1; i++) {
+    const [x1, y1] = toSvg(points[i].x, points[i].y);
+    const [x2, y2] = toSvg(points[i + 1].x, points[i + 1].y);
+    const avgSpeed = (points[i].speed + points[i + 1].speed) / 2;
+    const t = (avgSpeed - minSpeed) / ((maxSpeed - minSpeed) || 1);
+    segments += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${speedColor(t)}" stroke-width="6" stroke-linecap="round" />`;
+    if (drsState(points[i].drs) === 'open') {
+      drsSegments += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="rgba(0,230,130,0.8)" stroke-width="10" stroke-linecap="round" />`;
+    }
+  }
+
+  const [startX, startY] = toSvg(points[0].x, points[0].y);
+  const svg = document.getElementById('circuitSvg');
+  svg.innerHTML = `
+    ${drsSegments}
+    ${segments}
+    <circle cx="${startX.toFixed(1)}" cy="${startY.toFixed(1)}" r="9" fill="#0a0a0c" stroke="#fff" stroke-width="2" />
+    <text x="${startX.toFixed(1)}" y="${(startY - 14).toFixed(1)}" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">START/FINISH</text>
+  `;
+  document.getElementById('speedMinLabel').textContent = `${Math.round(minSpeed)} km/h`;
+  document.getElementById('speedMaxLabel').textContent = `${Math.round(maxSpeed)} km/h`;
+  const year = (flavorCircuit.date || '').slice(0, 4);
+  document.getElementById('circuitHeading').textContent = `Circuitlayout — ${flavorCircuit.circuitName || flavorCircuit.raceName}`;
+  document.getElementById('circuitSub').textContent = currentMode === 'career'
+    ? `Carrièremodus: ter sfeer gekoppeld aan ${flavorCircuit.raceName} (${year}) — heeft geen invloed op de race-uitslag.`
+    : `${flavorCircuit.raceName} (${year})`;
 }
 
 function renderCustomTeamForm() {

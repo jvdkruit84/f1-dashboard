@@ -18,6 +18,8 @@ if (!$team) {
 }
 
 $next = f1hub_next_race($pdo, $team, $mode);
+$flavorCircuit = $next ? f1hub_resolve_flavor_circuit($mode, $next) : null;
+$circuitWinners = $flavorCircuit ? f1hub_fetch_circuit_winners($flavorCircuit['circuitId']) : [];
 
 $stmt = $pdo->prepare('SELECT COUNT(*) AS races_played, COALESCE(SUM(points), 0) AS total_points FROM race_results WHERE team_id = ?');
 $stmt->execute([$team['id']]);
@@ -27,6 +29,8 @@ f1hub_json([
     'ok' => true,
     'team' => $team,
     'nextRace' => $next,
+    'flavorCircuit' => $flavorCircuit,
+    'circuitWinners' => $circuitWinners,
     'racesPlayed' => (int)$stats['races_played'],
     'totalPoints' => (int)$stats['total_points'],
     'partMaxLevel' => F1HUB_PART_MAX_LEVEL,
