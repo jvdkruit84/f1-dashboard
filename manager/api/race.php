@@ -18,10 +18,14 @@ if (!$team) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $next = f1hub_next_race($pdo, $team, $mode);
+    $flavorCircuit = $next ? f1hub_resolve_flavor_circuit($mode, $next) : null;
+    $circuitWinners = $flavorCircuit ? f1hub_fetch_circuit_winners($flavorCircuit['circuitId']) : [];
     f1hub_json([
         'ok' => true,
         'team' => $team,
         'nextRace' => $next,
+        'flavorCircuit' => $flavorCircuit,
+        'circuitWinners' => $circuitWinners,
         'compounds' => F1HUB_TYRE_COMPOUNDS,
         'minStints' => F1HUB_MIN_STINTS,
         'maxStints' => F1HUB_MAX_STINTS,
